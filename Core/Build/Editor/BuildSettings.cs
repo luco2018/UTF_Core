@@ -1,12 +1,15 @@
-﻿using UnityEditor;
+﻿using System;
+using System.Collections.Generic;
+using UnityEditor;
 using UnityEditor.Build;
 using UnityEngine;
-using System;
 
 namespace GraphicsTestFramework
 {
     public class BuildSettings : EditorWindow
     {
+        public BuildConfiguration buildConfiguration;
+
         // Scripting defines for the core
         static string[] coreScriptingDefines = new string[1]
         {
@@ -14,7 +17,7 @@ namespace GraphicsTestFramework
         };
 
         // Menu Item
-        [MenuItem("RuntimeTestFramework/BuildSettings")]
+        [MenuItem("UTF/Build Pipeline")]
         public static void ShowWindow()
         {
             GetWindow(typeof(BuildSettings)); // Get window
@@ -23,11 +26,31 @@ namespace GraphicsTestFramework
         // GUI
         void OnGUI()
         {
-            GUILayout.Label("Update Suite Information", EditorStyles.boldLabel); // Label
-            if (GUILayout.Button("Build Suite List")) // If button
+            GUILayout.Label("Project Preperation", EditorStyles.boldLabel); // Label
+            if (GUILayout.Button("Prepare Project")) // If button
                 PrepareBuild(); // Prepare build
-            if (GUILayout.Button("Build Debug Suite List")) // If button
+            if (GUILayout.Button("Prepare Project (Debug)")) // If button
                 PrepareDebugBuild(); // Prepare debug build
+
+            EditorGUILayout.Space();
+
+            GUILayout.Label("Build Pipeline", EditorStyles.boldLabel); // Label
+
+            //EditorGUILayout.PropertyField(obj);
+            buildConfiguration = (BuildConfiguration)EditorGUILayout.ObjectField(buildConfiguration, typeof(BuildConfiguration), false);
+            if (GUILayout.Button("Execute Build Pipeline")) // If button
+                RunBuildPipeline(); // Prepare build
+        }
+
+        public void RunBuildPipeline()
+        {
+            GetUnityVersionInfo(); // Get unity version info
+            SetApplicationSettings(); // Set application settings
+            SetScriptingDefines(); // Set defines
+            SetPlayerSettings(); // Set player settings
+            SetQualitySettings(); // Set quality settings
+            ProjectSettings projectSettings = SuiteManager.GetProjectSettings();
+            this.StartCoroutine(BuildPipeline.ProcessBuildPipeline(buildConfiguration, projectSettings));
         }
 
         // Setup for build
@@ -50,6 +73,7 @@ namespace GraphicsTestFramework
             SetApplicationSettings(); // Set application settings
             SetScriptingDefines(); // Set defines
             SetPlayerSettings(); // Set player settings
+            SetQualitySettings(); // Set quality settings
             PlayerSettings.bundleVersion = Common.applicationVersion; // Set application version
         }
 
@@ -105,10 +129,9 @@ namespace GraphicsTestFramework
             ProjectSettings projectSettings = SuiteManager.GetProjectSettings();
             if(projectSettings)
             {
-                if(projectSettings.buildNameOverride != null)
+                if(projectSettings.buildNameOverride != null && projectSettings.buildNameOverride.Length > 0)
                 {
-                    if (projectSettings.buildNameOverride.Length > 0)
-                        productName = projectSettings.buildNameOverride;
+                    productName = projectSettings.buildNameOverride;
                 }
                 else
                 {
@@ -140,7 +163,7 @@ namespace GraphicsTestFramework
     {
         public int callbackOrder { get { return 0; } }
 
-        public void OnPreprocessBuild(BuildTarget target, string path)
+        public void OnPreprocessBuild(UnityEditor.BuildTarget target, string path)
         {
 #if UNITY_EDITOR
             BuildSettings.GetUnityVersionInfo(); // Get unity version info
