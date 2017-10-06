@@ -18,9 +18,6 @@ namespace GraphicsTestFramework
         SerializedProperty m_TextureFormat;
         SerializedProperty m_FilterMode;
 
-        // Data
-        bool showAdvanced;
-
         public override void OnInspectorGUI()
 		{
             m_Target = (FrameComparisonModel)target; // Cast target
@@ -35,7 +32,8 @@ namespace GraphicsTestFramework
             m_TextureFormat = m_Object.FindProperty("m_Settings.textureFormat");
             m_FilterMode = m_Object.FindProperty("m_Settings.filterMode");
 
-            DrawCommon(m_Object); // Draw the SettingsBase settings
+            DrawCommon(m_Object); // Draw the SettingsBase settings (mandatory)
+
             EditorGUILayout.Slider(m_PassFailThreshold, 0f, 100f, new GUIContent("Pass / Fail Threshold(% Difference)"), new GUILayoutOption[0]); // Slider for pass/fail as it is a percentage of pixel difference
 
             EditorGUILayout.Space(); // Some space before custom settings
@@ -46,16 +44,15 @@ namespace GraphicsTestFramework
                 EditorGUILayout.HelpBox("Please select a camera for the Frame Comparison to use.", MessageType.Warning); // Draw warning
             EditorGUILayout.PropertyField(m_FrameResolution, new GUIContent("Capture Resolution")); // Draw frame resolution
 
-            showAdvanced = EditorGUILayout.Foldout(showAdvanced, "Advanced"); // Get advanced state
-            if (showAdvanced) // If enabled
-            {
-                EditorGUI.indentLevel++; // Indent
-                EditorGUILayout.PropertyField(m_TextureFormat, new GUIContent("Texture Format")); // Draw texture format
-                EditorGUILayout.PropertyField(m_FilterMode, new GUIContent("Filter Mode")); // Draw filter mode
-                EditorGUI.indentLevel--; // Indent
-            }
+            DrawAdvanced(m_Object); // Draw the advanced foldout (mandatory)
 
             m_Object.ApplyModifiedProperties(); // Apply modified
         }
-	}
+
+        public override void DrawAdvancedContent()
+        {
+            EditorGUILayout.PropertyField(m_TextureFormat, new GUIContent("Texture Format")); // Draw texture format
+            EditorGUILayout.PropertyField(m_FilterMode, new GUIContent("Filter Mode")); // Draw filter mode
+        }
+    }
 }
