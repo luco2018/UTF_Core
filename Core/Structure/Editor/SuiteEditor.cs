@@ -21,7 +21,8 @@ namespace GraphicsTestFramework.Experimental
 
             EditorGUILayout.PropertyField(serializedObject.FindProperty("suiteName"), false); // Draw suiteName;
             EditorGUILayout.PropertyField(serializedObject.FindProperty("isDebugSuite"), false); // Draw suiteName;
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("defaultTestSettings"), false); // Draw suiteName;
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("defaultTestSettings"), false); // Draw test settings;
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("defaultRenderPipeline"), false); // Draw render pipeline;
             var groups = serializedObject.FindProperty("groups"); // Get groups list
             EditorGUILayout.PropertyField(groups, false); // Draw groups
             if (groups.isExpanded) // If the groups list is expanded

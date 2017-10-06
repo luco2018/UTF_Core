@@ -1,7 +1,7 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEditor;
+using UnityEngine.Rendering;
+using UnityEngine.Experimental.Rendering;
 
 namespace GraphicsTestFramework
 {
@@ -10,6 +10,7 @@ namespace GraphicsTestFramework
     {
         // Serialized Properties
         SerializedProperty m_TestSettings;
+        SerializedProperty m_RenderPipeline;
         SerializedProperty m_Platforms;
         SerializedProperty m_WaitType;
         SerializedProperty m_WaitFrames;
@@ -19,6 +20,7 @@ namespace GraphicsTestFramework
         {
             // Get properties
             m_TestSettings = inputObject.FindProperty("m_Settings.testSettings");
+            m_RenderPipeline = inputObject.FindProperty("m_Settings.renderPipeline");
             m_Platforms = inputObject.FindProperty("m_Settings.platformMask");
             m_WaitType = inputObject.FindProperty("m_Settings.waitType");
             m_WaitFrames = inputObject.FindProperty("m_Settings.waitFrames");
@@ -26,6 +28,7 @@ namespace GraphicsTestFramework
 
             EditorGUILayout.LabelField ("Common Settings", EditorStyles.boldLabel); // Draw label
             m_TestSettings.objectReferenceValue = EditorGUILayout.ObjectField("Test Settings", m_TestSettings.objectReferenceValue, typeof(TestSettings), false);
+            m_RenderPipeline.objectReferenceValue = EditorGUILayout.ObjectField("Render Pipeline", m_RenderPipeline.objectReferenceValue, typeof(RenderPipelineAsset), false);
             m_Platforms.intValue = EditorGUILayout.MaskField(new GUIContent("Platforms"), m_Platforms.intValue, System.Enum.GetNames(typeof(RuntimePlatform))); // Draw type
             EditorGUILayout.PropertyField(m_WaitType, new GUIContent("Wait Type", "Choose the type of start delay: \nFrames = Wait 'X' rendered frames \nSeconds = Wait 'X' seconds \nStable Framerate = Wait for a steady framerate \nCallback = Wait for a custom callback from a script"));
 
