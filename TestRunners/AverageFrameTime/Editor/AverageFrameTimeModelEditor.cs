@@ -30,7 +30,8 @@ namespace GraphicsTestFramework
             m_CustomTimingMultiplier = m_Object.FindProperty("m_Settings.customTimingMultiplier");
             m_SampleFrames = m_Object.FindProperty("m_Settings.sampleFrames");
 
-            DrawCommon(m_Object); // Draw the SettingsBase settings
+            DrawCommon(m_Object); // Draw the SettingsBase settings (mandatory)
+
             EditorGUILayout.PropertyField(m_PassFailThreshold, new GUIContent("Pass/Fail Threshold (ms Difference)")); // Draw Pass fail
             EditorGUILayout.Space(); // Some space before custom settings
 
@@ -39,6 +40,8 @@ namespace GraphicsTestFramework
             if((AverageFrameTimeSettings.TimingType)m_TimingType.intValue == AverageFrameTimeSettings.TimingType.Custom) // If using custom timing multiplier
                 EditorGUILayout.PropertyField(m_CustomTimingMultiplier, new GUIContent("Custom Timing Multiplier", "This number is used to multiply the ticks output by the sampling")); // Draw custom timing multiplier
             EditorGUILayout.PropertyField(m_SampleFrames, new GUIContent("Sample Frames", "The amount of rendered frames to capture performance over")); // Draw sample frames
+
+            DrawAdvanced(m_Object); // Draw the advanced foldout (mandatory)
 
             m_Object.ApplyModifiedProperties(); // Apply modified
         }

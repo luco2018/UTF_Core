@@ -2,6 +2,8 @@
 using System.Text;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering;
+using UnityEngine.Experimental.Rendering;
 
 namespace GraphicsTestFramework
 {
@@ -88,7 +90,7 @@ namespace GraphicsTestFramework
             output.Device = systemData.Device; // Extract from SystemData
             output.Platform = systemData.Platform; // Extract from SystemData
             output.API = systemData.API; // Extract from SystemData
-            output.RenderPipe = "Standard Legacy"; // TODO - Remove hardcoding
+            output.RenderPipe = GetRenderPipelineName(); // Get the currently assigned pipeline
             output.Custom = ""; // Futureproof
             return output; // Return
         }        
@@ -200,11 +202,11 @@ namespace GraphicsTestFramework
         // Find if Unity version is above specified index from unityVersionList
         public static bool IsUnityVersionAboveMinimum(int input)
         {
-            Settings settings = SuiteManager.GetSettings(); // Get settings
+            ProjectSettings projectSettings = SuiteManager.GetProjectSettings(); // Get settings
             int versionIndex = 0; // Create version index
             for (int i = 0; i < unityVersionList.Length; i++) // Iterate version list
             {
-                if (settings.unityVersion.Contains(unityVersionList[i])) // If unity version contains current index
+                if (projectSettings.unityVersion.Contains(unityVersionList[i])) // If unity version contains current index
                     versionIndex = i; // Set output index
             }
             if (input > versionIndex) // If minimum is higher than current
@@ -317,6 +319,60 @@ namespace GraphicsTestFramework
             }
             return (value / i) * 100; // Divide total value by pixel count and multiply by 100 to return average percent
         }
+
+        public static void SetTestSettings(TestSettings testSettings)
+        {
+            QualitySettings.pixelLightCount = testSettings.pixelLightCount;
+            QualitySettings.anisotropicFiltering = testSettings.anisotropicFiltering;
+            QualitySettings.antiAliasing = testSettings.antiAliasing;
+            QualitySettings.softParticles = testSettings.softParticles;
+            QualitySettings.realtimeReflectionProbes = testSettings.realtimeReflectionProbes;
+            QualitySettings.billboardsFaceCameraPosition = testSettings.billboardsFacingCameraPosition;
+            QualitySettings.shadows = testSettings.shadows;
+            QualitySettings.shadowResolution = testSettings.shadowResolution;
+            QualitySettings.shadowProjection = testSettings.shadowProjection;
+            QualitySettings.shadowDistance = testSettings.shadowDistance;
+            QualitySettings.shadowNearPlaneOffset = testSettings.shadowNearPlaneOffset;
+            QualitySettings.shadowCascades = testSettings.shadowCascades;
+            QualitySettings.shadowCascade2Split = testSettings.shadowCascade2Split;
+            QualitySettings.shadowCascade4Split = testSettings.shadowCascade4Split;
+            QualitySettings.blendWeights = testSettings.blendWeights;
+            QualitySettings.vSyncCount = testSettings.vSyncCount;
+            QualitySettings.lodBias = testSettings.lodBias;
+            QualitySettings.maximumLODLevel = testSettings.maximumLodLevel;
+            QualitySettings.particleRaycastBudget = testSettings.particleRaycastBudget;
+            QualitySettings.asyncUploadTimeSlice = testSettings.asyncUploadTimeSlice;
+            QualitySettings.asyncUploadBufferSize = testSettings.asyncUploadBufferSize;
+        }
+
+        // Get the active Render Pipeline asset
+        public static RenderPipelineAsset GetRenderPipeline()
+        {
+#if UNITY_5_6
+            return GraphicsSettings.renderPipelineAsset;
+#elif UNITY_2017_1_OR_NEWER
+			return RenderPipelineManager.currentPipeline;
+#endif
+            return null;
+        }
+
+        // Get the active Render Pipeline name
+        public static string GetRenderPipelineName()
+        {
+            string defaultPipeline = "Standard Legacy"; // If no pipeline is loaded then will be set to this
+#if UNITY_5_6
+            if (GraphicsSettings.renderPipelineAsset == null)
+                return defaultPipeline; // return the default pipeline string
+            else
+                return GraphicsSettings.renderPipelineAsset.GetType().ToString() + "|" + GraphicsSettings.renderPipelineAsset.name; // Gets the currently active pieplines name in 5.6
+#elif UNITY_2017_1_OR_NEWER
+			if(RenderPipelineManager.currentPipeline == null)
+				return defaultPipeline; // return the default pipeline string
+			else
+				return RenderPipelineManager.currentPipeline.GetType().ToString() + "|" + RenderPipelineManager.currentPipeline.name; // Gets the currently active pieplines name in 2017.1 // TODO - not tested
+#endif
+            return defaultPipeline;
+		}
     }
 
     // ------------------------------------------------------------------------------------

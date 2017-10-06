@@ -85,35 +85,35 @@ namespace GraphicsTestFramework
                 model.SetLogic(); // Need to set logic before generating type instances
                 TestTypeManager.Instance.GenerateTestTypeInstance(model); // Generate an instance object for test logic/display
             }
-            Settings settings = SuiteManager.GetSettings(); // Get the suite list
-            if (settings == null) // If no suite list found
+            ProjectSettings projectSettings = SuiteManager.GetProjectSettings(); // Get the suite list
+            if (projectSettings == null) // If no suite list found
                 StopAllCoroutines(); // Abort
-            for (int su = 0; su < settings.suiteList.Count; su++) // Iterate suites on suite list
+            for (int su = 0; su < projectSettings.suiteList.Count; su++) // Iterate suites on suite list
             {
                 Suite newSuite = new Suite(); // Create new suite instance
-                newSuite.suiteName = settings.suiteList[su].suiteName; // Set suite name from suite list
+                newSuite.suiteName = projectSettings.suiteList[su].suiteName; // Set suite name from suite list
                 newSuite.types = CloneTestTypeList(typeList); // Clone the type list
-                for (int gr = 0; gr < settings.suiteList[su].groups.Count; gr++) // Iterate groups
+                for (int gr = 0; gr < projectSettings.suiteList[su].groups.Count; gr++) // Iterate groups
                 {
-                    for (int te = 0; te < settings.suiteList[su].groups[gr].tests.Count; te++) // Iterate tests
+                    for (int te = 0; te < projectSettings.suiteList[su].groups[gr].tests.Count; te++) // Iterate tests
                     {
-                        GraphicsTestFramework.Test test = settings.suiteList[su].groups[gr].tests[te]; // Get test
+                        GraphicsTestFramework.Test test = projectSettings.suiteList[su].groups[gr].tests[te]; // Get test
                         if(Common.IsTestApplicable(test))
                         {
                             int[] types = TestTypeManager.Instance.GetTypeSelectionFromBitMask(test.testTypes); // Get type array from test's bitmask
                             for (int ty = 0; ty < types.Length; ty++) // Iterate types of the test
                             {
-                                Group newGroup = FindDuplicateGroupInType(newSuite, types[ty], settings.suiteList[su].groups[gr].groupName); // Find duplicate groups in the type
+                                Group newGroup = FindDuplicateGroupInType(newSuite, types[ty], projectSettings.suiteList[su].groups[gr].groupName); // Find duplicate groups in the type
                                 if (newGroup == null) // If not found
                                 {
                                     newGroup = new Group(); // Create a new group instance
-                                    newGroup.groupName = settings.suiteList[su].groups[gr].groupName; // Set group name
+                                    newGroup.groupName = projectSettings.suiteList[su].groups[gr].groupName; // Set group name
                                     FindDuplicateTypeInSuite(newSuite, types[ty]).groups.Add(newGroup); // Add the group to the type
                                 }
                                 Test newTest = new Test(); // Create new test instance
-                                string[] pathSplit = settings.suiteList[su].groups[gr].tests[te].scenePath.Split('/'); // Split path for scene name
+                                string[] pathSplit = projectSettings.suiteList[su].groups[gr].tests[te].scenePath.Split('/'); // Split path for scene name
                                 newTest.testName = pathSplit[pathSplit.Length - 1].Replace(".unity", ""); ; // Set test name
-                                newTest.scenePath = settings.suiteList[su].groups[gr].tests[te].scenePath; // Set scene path
+                                newTest.scenePath = projectSettings.suiteList[su].groups[gr].tests[te].scenePath; // Set scene path
                                 newGroup.tests.Add(newTest); // Add test to scene
                             }
                         }

@@ -5,11 +5,11 @@ using UnityEngine;
 namespace GraphicsTestFramework
 {
     // ------------------------------------------------------------------------------------
-    // Suite List Scriptable Object
+    // Project Settings Scriptable Object
     // - Created automatically by Suite Manager during pre build
 
     //[CreateAssetMenu]
-    public class Settings : ScriptableObject
+    public class ProjectSettings : ScriptableObject
     {
         [SerializeField]
         public string buildNameOverride;

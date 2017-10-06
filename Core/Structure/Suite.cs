@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering;
+using UnityEngine.Experimental.Rendering;
 
 namespace GraphicsTestFramework
 {
@@ -14,6 +16,8 @@ namespace GraphicsTestFramework
     {
         [SerializeField] public string suiteName;
         [SerializeField] public bool isDebugSuite;
+        [SerializeField] public TestSettings defaultTestSettings;
+        [SerializeField] public RenderPipelineAsset defaultRenderPipeline;
         [SerializeField] public List<Group> groups = new List<Group>();
     }
 

@@ -17,57 +17,69 @@ namespace GraphicsTestFramework
         // Get a string array of all suite names
         public static string[] GetSuiteNames()
         {
-            Settings settings = GetSettings(); // Get the suite list
-            string[] suiteNames = new string[settings.suiteList.Count]; // Create string array of correct length
+            ProjectSettings projectSettings = GetProjectSettings(); // Get the suite list
+            string[] suiteNames = new string[projectSettings.suiteList.Count]; // Create string array of correct length
             for (int i = 0; i < suiteNames.Length; i++) // Iterate suites
-                suiteNames[i] = settings.suiteList[i].suiteName; // Add to array
+                suiteNames[i] = projectSettings.suiteList[i].suiteName; // Add to array
             return suiteNames; // Return
         }
 
         // Get a specific suite name
         public static string GetSuiteName(int index)
         {
-            Settings settings = GetSettings(); // Get the suite list
-            return settings.suiteList[index].suiteName; // Return requested
+            ProjectSettings projectSettings = GetProjectSettings(); // Get the suite list
+            return projectSettings.suiteList[index].suiteName; // Return requested
+        }
+
+        // Get a specififc suite by name
+        public static Suite GetSuiteByName(string name)
+        {
+            ProjectSettings projectSettings = GetProjectSettings(); // Get the suite list
+            for(int i = 0; i < projectSettings.suiteList.Count; i++)
+            {
+                if (projectSettings.suiteList[i].suiteName == name)
+                    return projectSettings.suiteList[i];
+            }
+            return null;
         }
 
         // Get a specific test
         public static Test GetTest(TestEntry inputEntry)
         {
-            Settings settings = GetSettings(); // Get the suite list
-            return settings.suiteList[inputEntry.suiteIndex].groups[inputEntry.groupIndex].tests[inputEntry.testIndex]; // Return requested
+            ProjectSettings projectSettings = GetProjectSettings(); // Get the suite list
+            return projectSettings.suiteList[inputEntry.suiteIndex].groups[inputEntry.groupIndex].tests[inputEntry.testIndex]; // Return requested
         }
 
         // Get the Settings object
-        public static Settings GetSettings()
+        public static ProjectSettings GetProjectSettings()
         {
-            Settings[] settingsArray = Resources.LoadAll<Settings>(""); // Find all suite lists
-            if (settingsArray.Length == 0) // If no suite list found
+            ProjectSettings[] projectSettingsArray = Resources.LoadAll<ProjectSettings>(""); // Find all suite lists
+            if (projectSettingsArray.Length == 0) // If no suite list found
             {
 #if UNITY_EDITOR
-                return GenerateSettings(); // Create one
+                return GenerateProjectSettings(); // Create one
 #else
                 Console.Instance.Write(DebugLevel.Critical, MessageLevel.LogError, "No Settings object found. Aborting."); // Write to console
                 return null;
 #endif
             }
             else
-                return settingsArray[0]; // Return suite list
+                return projectSettingsArray[0]; // Return suite list
         }
 
         // Set the Settings object
-        public static void SetSettings(Settings input)
+        public static void SetProjectSettings(ProjectSettings input)
         {
-            Settings[] settingsArray = Resources.LoadAll<Settings>(""); // Find all suite lists
-            if (settingsArray.Length == 0) // If no suite list found
+            ProjectSettings[] projectSettingsArray = Resources.LoadAll<ProjectSettings>(""); // Find all suite lists
+            if (projectSettingsArray.Length == 0) // If no suite list found
             {
                 Console.Instance.Write(DebugLevel.Critical, MessageLevel.LogError, "No Settings object found. Aborting."); // Write to console
             }
             else
             {
-                settingsArray[0] = input;
+                projectSettingsArray[0] = input;
 #if(UNITY_EDITOR)
-                UnityEditor.EditorUtility.SetDirty(settingsArray[0]);
+                UnityEditor.EditorUtility.SetDirty(projectSettingsArray[0]);
 #endif
             }
         }
@@ -81,27 +93,27 @@ namespace GraphicsTestFramework
         [ExecuteInEditMode]
         public static void GenerateSceneList(bool debug)
         {
-            Settings settings = GetSettings(); //Get the suite list
-            settings.suiteList.Clear(); // Clear suites list
+            ProjectSettings projectSettings = GetProjectSettings(); //Get the suite list
+            projectSettings.suiteList.Clear(); // Clear suites list
             Suite[] foundSuites = Resources.LoadAll<Suite>(""); // Load all Suite scriptable objects into array
             for (int i = 0; i < foundSuites.Length; i++)
             {
                 if (debug && foundSuites[i].isDebugSuite || !debug && !foundSuites[i].isDebugSuite)
-                    settings.suiteList.Add(foundSuites[i]);
+                    projectSettings.suiteList.Add(foundSuites[i]);
             }
-            UnityEditor.EditorUtility.SetDirty(settings); // Set dirty
+            UnityEditor.EditorUtility.SetDirty(projectSettings); // Set dirty
             List<UnityEditor.EditorBuildSettingsScene> buildSettingsScenes = new List<UnityEditor.EditorBuildSettingsScene>(); // Create new build settings scene list
             AddManualMasterScene(buildSettingsScenes); // Add manual master TODO - Switch this for full automation
-            for (int su = 0; su < settings.suiteList.Count; su++) // Iterate scriptable object list
+            for (int su = 0; su < projectSettings.suiteList.Count; su++) // Iterate scriptable object list
             {
-                for (int gr = 0; gr < settings.suiteList[su].groups.Count; gr++) // Iterate groups on the suite
+                for (int gr = 0; gr < projectSettings.suiteList[su].groups.Count; gr++) // Iterate groups on the suite
                 {
-                    for (int te = 0; te < settings.suiteList[su].groups[gr].tests.Count; te++) // Iterate tests on the group
+                    for (int te = 0; te < projectSettings.suiteList[su].groups[gr].tests.Count; te++) // Iterate tests on the group
                     {
-                        settings.suiteList[su].groups[gr].tests[te].scenePath = UnityEditor.AssetDatabase.GetAssetPath(settings.suiteList[su].groups[gr].tests[te].scene);
-                        UnityEditor.EditorUtility.SetDirty(settings.suiteList[su]);
-                        UnityEditor.EditorBuildSettingsScene scene = new UnityEditor.EditorBuildSettingsScene(settings.suiteList[su].groups[gr].tests[te].scenePath, true); // Create new build settings scene from asset path
-                        if (!FindDuplicateScene(buildSettingsScenes, settings.suiteList[su].groups[gr].tests[te].scenePath)) // If no duplicate scene found
+                        projectSettings.suiteList[su].groups[gr].tests[te].scenePath = UnityEditor.AssetDatabase.GetAssetPath(projectSettings.suiteList[su].groups[gr].tests[te].scene);
+                        UnityEditor.EditorUtility.SetDirty(projectSettings.suiteList[su]);
+                        UnityEditor.EditorBuildSettingsScene scene = new UnityEditor.EditorBuildSettingsScene(projectSettings.suiteList[su].groups[gr].tests[te].scenePath, true); // Create new build settings scene from asset path
+                        if (!FindDuplicateScene(buildSettingsScenes, projectSettings.suiteList[su].groups[gr].tests[te].scenePath)) // If no duplicate scene found
                             buildSettingsScenes.Add(scene); // Add to build settings scenes list
                     }
                 }
@@ -110,15 +122,15 @@ namespace GraphicsTestFramework
         }
 
         // Generate a new suite list object
-        static Settings GenerateSettings()
+        static ProjectSettings GenerateProjectSettings()
         {
-            Settings newSettings = ScriptableObject.CreateInstance<Settings>(); // Create instance
+            ProjectSettings newProjectSettings = ScriptableObject.CreateInstance<ProjectSettings>(); // Create instance
             if (!UnityEditor.AssetDatabase.IsValidFolder("Assets/Resources")) // Check folder exists
                 UnityEditor.AssetDatabase.CreateFolder("Assets", "Resources"); // Create it
-            UnityEditor.AssetDatabase.CreateAsset(newSettings, "Assets/Resources/Settings.asset"); // Create asset
+            UnityEditor.AssetDatabase.CreateAsset(newProjectSettings, "Assets/Resources/Settings.asset"); // Create asset
             UnityEditor.AssetDatabase.SaveAssets(); // Save assets
             UnityEditor.AssetDatabase.Refresh(); // Refresh database
-            return newSettings; // Return the suite list
+            return newProjectSettings; // Return the suite list
         }
 
         // Add the manual master scene
@@ -132,8 +144,8 @@ namespace GraphicsTestFramework
         // Find duplicate suite by name
         static bool FindDuplicateSuite(string name)
         {
-            Settings settings = GetSettings(); // Get the suite list
-            foreach (Suite suite in settings.suiteList) // Iterate local suites
+            ProjectSettings projectSettings = GetProjectSettings(); // Get the suite list
+            foreach (Suite suite in projectSettings.suiteList) // Iterate local suites
             {
                 if (suite.suiteName == name) // If equal to input suite
                     return true; // Duplicate. Return true
