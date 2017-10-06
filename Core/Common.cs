@@ -200,11 +200,11 @@ namespace GraphicsTestFramework
         // Find if Unity version is above specified index from unityVersionList
         public static bool IsUnityVersionAboveMinimum(int input)
         {
-            Settings settings = SuiteManager.GetSettings(); // Get settings
+            ProjectSettings projectSettings = SuiteManager.GetProjectSettings(); // Get settings
             int versionIndex = 0; // Create version index
             for (int i = 0; i < unityVersionList.Length; i++) // Iterate version list
             {
-                if (settings.unityVersion.Contains(unityVersionList[i])) // If unity version contains current index
+                if (projectSettings.unityVersion.Contains(unityVersionList[i])) // If unity version contains current index
                     versionIndex = i; // Set output index
             }
             if (input > versionIndex) // If minimum is higher than current
@@ -316,6 +316,31 @@ namespace GraphicsTestFramework
                 }
             }
             return (value / i) * 100; // Divide total value by pixel count and multiply by 100 to return average percent
+        }
+
+        public static void SetTestSettings(TestSettings testSettings)
+        {
+            QualitySettings.pixelLightCount = testSettings.pixelLightCount;
+            QualitySettings.anisotropicFiltering = testSettings.anisotropicFiltering;
+            QualitySettings.antiAliasing = testSettings.antiAliasing;
+            QualitySettings.softParticles = testSettings.softParticles;
+            QualitySettings.realtimeReflectionProbes = testSettings.realtimeReflectionProbes;
+            QualitySettings.billboardsFaceCameraPosition = testSettings.billboardsFacingCameraPosition;
+            QualitySettings.shadows = testSettings.shadows;
+            QualitySettings.shadowResolution = testSettings.shadowResolution;
+            QualitySettings.shadowProjection = testSettings.shadowProjection;
+            QualitySettings.shadowDistance = testSettings.shadowDistance;
+            QualitySettings.shadowNearPlaneOffset = testSettings.shadowNearPlaneOffset;
+            QualitySettings.shadowCascades = testSettings.shadowCascades;
+            QualitySettings.shadowCascade2Split = testSettings.shadowCascade2Split;
+            QualitySettings.shadowCascade4Split = testSettings.shadowCascade4Split;
+            QualitySettings.blendWeights = testSettings.blendWeights;
+            QualitySettings.vSyncCount = testSettings.vSyncCount;
+            QualitySettings.lodBias = testSettings.lodBias;
+            QualitySettings.maximumLODLevel = testSettings.maximumLodLevel;
+            QualitySettings.particleRaycastBudget = testSettings.particleRaycastBudget;
+            QualitySettings.asyncUploadTimeSlice = testSettings.asyncUploadTimeSlice;
+            QualitySettings.asyncUploadBufferSize = testSettings.asyncUploadBufferSize;
         }
     }
 
