@@ -40,7 +40,7 @@ namespace GraphicsTestFramework
 			//setup SQL IO
 			if (SQL.SQLIO.Instance == null)
 				gameObject.AddComponent<SQL.SQLIO> ();
-			//SQL.SQLIO.Instance.Init (sysData);
+			SQL.SQLIO.Instance.Init (sysData);
 
 			if (!companionMode)
 				StartCoroutine (Init ());
