@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 using System;
-using System.Data;
 using System.Text;
 
 namespace GraphicsTestFramework.SQL
@@ -55,8 +54,6 @@ namespace GraphicsTestFramework.SQL
             UnityWebRequest www = UnityWebRequest.Post(_webservice, form); //POST data is sent via the URL
             yield return www.Send();
 
-            Debug.LogWarning(_input);
-
             if (string.IsNullOrEmpty(www.error))
             {
                 Console.Instance.Write(DebugLevel.File, MessageLevel.Log, "SQL response:" + www.downloadHandler.text); // Write to console
@@ -78,8 +75,6 @@ namespace GraphicsTestFramework.SQL
             UnityWebRequest www = UnityWebRequest.Post(_webservice, form); //POST data is sent via the URL
             yield return www.Send();
 
-            Debug.LogWarning(_query);
-
             if (string.IsNullOrEmpty(www.error))
             {
 				if(www.downloadHandler.text != "Null")
@@ -95,7 +90,7 @@ namespace GraphicsTestFramework.SQL
             }
             else
             {
-                Debug.LogWarning(www.error);
+                Console.Instance.Write(DebugLevel.File, MessageLevel.LogError, www.error);
                 data(null);
             }
         }

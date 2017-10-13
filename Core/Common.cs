@@ -128,7 +128,6 @@ namespace GraphicsTestFramework
             Texture2D output = new Texture2D(2, 2); // Create output Texture2D
             output.name = textureName; // Set texture name
 			byte[] decodedBytes = new byte[input.Length / 2]; // Create byte array to hold data
-            Debug.LogError(input.Length);
             for(int i = 0; i < input.Length; i +=2){ // Convert input string from Hex to byte array
 				decodedBytes [i / 2] = Convert.ToByte (input.Substring (i, 2), 16);
 			}
