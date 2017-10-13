@@ -65,7 +65,7 @@ public class CloudConnectorEditor
 			return;
 		}
 		
-		if (www.isNetworkError)
+		if (www.isError)
 		{
 			CloudConnectorCore.ProcessResponse(CloudConnectorCore.MSG_CONN_ERR + "Connection error after " + elapsedTime.ToString() + " seconds: " + www.error, (float)elapsedTime);
 			return;

@@ -40,7 +40,7 @@ namespace GraphicsTestFramework
 			//setup SQL IO
 			if (SQL.SQLIO.Instance == null)
 				gameObject.AddComponent<SQL.SQLIO> ();
-			SQL.SQLIO.Instance.Init (sysData);
+			//SQL.SQLIO.Instance.Init (sysData);
 
 			if (!companionMode)
 				StartCoroutine (Init ());
@@ -71,24 +71,39 @@ namespace GraphicsTestFramework
 			do {
 				yield return new WaitForEndOfFrame ();
 				timeout += Time.deltaTime;
-			} while(SQL.SQLIO.Instance.liveConnection != connectionStatus.Server && timeout < 10f);
+			} while(SQL.SQLIO.Instance.liveConnection == connectionStatus.Internet && timeout < 10f);
+
+			//if timeout reaches 10f then no network
 
 			//fetch suite names from the suite manager
 			string[] suiteNames = SuiteManager.GetSuiteNames ();
-			if (suiteNames.Length == 0) {
+
+			if (suiteNames.Length == 0) {//if there are no suites loaded fail - TODO need to add code path for this
 				Console.Instance.Write (DebugLevel.Critical, MessageLevel.LogWarning, "No suites loaded in SuiteManager, unable to continue"); // Write to console
 			} else {
+
+				//now we check local timestamps vs server to make sure up to date, then add the outdated ones to be pulled
 				foreach (string suiteName in suiteNames) {
 					Console.Instance.Write (DebugLevel.File, MessageLevel.Log, "Fetching baseline timestamps from cloud");
-					//Get timestamp for suite via SQL
-					DateTime dt = SQL.SQLIO.Instance.GetbaselineTimestamp (suiteName);
-					if(dt != DateTime.MinValue)//Min value is null(doesnt exist)
+                    //Get timestamp for suite via SQL
+                    DateTime dt = DateTime.MaxValue;
+                    StartCoroutine(SQL.SQLIO.Instance.GetbaselineTimestamp(suiteName, (value => { dt = value; })));
+					while (dt == DateTime.MaxValue)
+                    {
+                        yield return null;
+                    }
+                    if(dt != DateTime.MinValue)//Min value is null(doesnt exist)
 						CompareBaselineTimestamps (suiteName, dt.ToString ());
 				}
 
 				if (suiteBaselinesPullList.Count > 0) {
-					ResultsIOData[] data = SQL.SQLIO.Instance.FetchBaselines (suiteBaselinesPullList.ToArray (), sysData.Platform, sysData.API);
-					Console.Instance.Write (DebugLevel.File, MessageLevel.Log, "Cloud baselines pulled, writing local files");
+                    ResultsIOData[] data = null;
+                    StartCoroutine(SQL.SQLIO.Instance.FetchBaselines(suiteBaselinesPullList.ToArray(), sysData.Platform, sysData.API, (value => { data = value; })));
+					while(data == null){
+                        yield return null;
+                    }
+                    //ResultsIOData[] data = SQL.SQLIO.Instance.FetchBaselines (suiteBaselinesPullList.ToArray (), sysData.Platform, sysData.API);
+                    Console.Instance.Write (DebugLevel.File, MessageLevel.Log, "Cloud baselines pulled, writing local files");
 					foreach(ResultsIOData rd in data){
 						StartCoroutine (LocalIO.Instance.WriteDataFiles (rd, fileType.Baseline));
 					}
@@ -189,31 +204,36 @@ namespace GraphicsTestFramework
 		/// <param name="testType">Test type.</param>
 		/// <param name="inputData">Input data.</param>
 		/// <param name="baseline">Baseline data?</param>
-		public void ProcessResults (string suiteName, string testType, ResultsIOData inputData, int baseline)
+		public IEnumerator ProcessResults (string suiteName, string testType, ResultsIOData inputData, int baseline)
 		{
 			ProgressScreen.Instance.SetState (true, ProgressType.CloudSave, "Saving local and cloud data");
 
 			inputData.suite = suiteName;
 			inputData.testType = testType;
+            int uploaded = -1;
 
-			fileType ft;
-			if (baseline == 1) {
-				ft = fileType.Baseline;
-				//Cloud upload for baseline
-				string sheetName = suiteName + "_" + testType + "_Baseline";
-				StartCoroutine (SQL.SQLIO.Instance.AddEntry (inputData, sheetName, 1));
-			} else {
-				ft = fileType.Result;
-				//cloud upload for results
-				string sheetName = suiteName + "_" + testType + "_Results";
-				StartCoroutine (SQL.SQLIO.Instance.AddEntry (inputData, sheetName, 0));
-			}
+			if(writeCloud)
+			{
+                string sheetName = "Temp";
+                if (baseline == 1) //Cloud upload for baseline
+					sheetName = suiteName + "_" + testType + "_Baseline";
+				else //cloud upload for results
+					sheetName = suiteName + "_" + testType + "_Results";
+				StartCoroutine(SQL.SQLIO.Instance.AddEntry(inputData, sheetName, baseline, (value) => { uploaded = value; }));
+			}else{
+                uploaded = 1;
+            }
 
-			if (inputData.resultsRow [0] != null) {
-				StartCoroutine (LocalIO.Instance.WriteDataFiles (inputData, ft));
-			} else {
-				Console.Instance.Write (DebugLevel.Critical, MessageLevel.LogWarning, "Results are empty for Suite: " + suiteName + " Type: " + testType + ". Nothing to write"); // Write to console
-				BroadcastEndResultsSave ();
+			while(uploaded == -1){
+                yield return null;
+            }
+
+			if(writeLocal)
+			{
+				fileType ft = baseline == 1 ? fileType.Baseline : fileType.Result;
+				if (uploaded == 1) {//if the entry uploaded fine
+					StartCoroutine (LocalIO.Instance.WriteDataFiles (inputData, ft));
+				}
 			}
 
 			BroadcastEndResultsSave ();

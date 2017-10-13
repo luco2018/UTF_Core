@@ -229,7 +229,7 @@ namespace GraphicsTestFramework
             ProgressScreen.Instance.SetState(true, ProgressType.LocalSave, "Submitting results"); // Enable ProgressScreen
             ResultsIOData output = SerializeResults(); // Serialize activeResultsData
             Console.Instance.Write(DebugLevel.Logic, MessageLevel.Log, this.GetType().Name + " sending data to ResultsIO for " + activeTestEntry.testName); // Write to console
-            ResultsIO.Instance.ProcessResults(activeTestEntry.suiteName, activeTestEntry.typeName/*testTypeName*/, output, baseline); // Send data to ResultsIO
+            StartCoroutine(ResultsIO.Instance.ProcessResults(activeTestEntry.suiteName, activeTestEntry.typeName/*testTypeName*/, output, baseline)); // Send data to ResultsIO
         }
 
         // Called from ConfirmResultsSave delegate when ResultsIO is done saving files
