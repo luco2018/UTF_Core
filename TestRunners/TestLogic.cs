@@ -232,7 +232,7 @@ namespace GraphicsTestFramework
             ProgressScreen.Instance.SetState(true, ProgressType.LocalSave, "Submitting results"); // Enable ProgressScreen
             ResultsIOData output = SerializeResults(); // Serialize activeResultsData
             Console.Instance.Write(DebugLevel.Logic, MessageLevel.Log, this.GetType().Name + " sending data to ResultsIO for " + activeTestEntry.testName); // Write to console
-            ResultsIO.Instance.ProcessResults(activeTestEntry.suiteName, activeTestEntry.typeName/*testTypeName*/, output, baseline); // Send data to ResultsIO
+            StartCoroutine(ResultsIO.Instance.ProcessResults(activeTestEntry.suiteName, activeTestEntry.typeName/*testTypeName*/, output, baseline)); // Send data to ResultsIO
         }
 
         // Called from ConfirmResultsSave delegate when ResultsIO is done saving files
@@ -339,21 +339,18 @@ namespace GraphicsTestFramework
         public ResultsIOData SerializeResults()
         {
             ResultsIOData output = new ResultsIOData();
-            for (int r = 0; r < 2; r++)
-                output.resultsRow.Add(new ResultsIORow());
+            output.resultsRow.Add(new ResultsIORow());
             BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static;
             FieldInfo[] commonFields = typeof(ResultsDataCommon).GetFields(bindingFlags);
             FieldInfo[] customFields = results.GetFields(bindingFlags);
 
+			//Store field names into the ResultsIOData
             for (int f = 0; f < commonFields.Length; f++)
-                output.resultsRow[0].resultsColumn.Add(commonFields[f].Name);
+				output.fieldNames.Add(commonFields[f].Name);
             for (int f = 0; f < customFields.Length-1; f++)
-                output.resultsRow[0].resultsColumn.Add(customFields[f].Name);
-            
-            FieldInfo commonField = activeResultData.GetType().GetField("common");
-            var commonFieldValue = commonField.GetValue(activeResultData);
-            output.resultsRow[1].commonResultsIOData = (ResultsDataCommon)commonFieldValue;
-            output.resultsRow[1].resultsColumn = new List<string>();
+				output.fieldNames.Add (customFields[f].Name);
+
+            output.resultsRow[0].resultsColumn = new List<string>();
             ResultsDataCommon resultsCommonTemplate = new ResultsDataCommon();
             for (int f = 0; f < commonFields.Length; f++)
             {
@@ -361,7 +358,7 @@ namespace GraphicsTestFramework
                 FieldInfo typedCommonField = typedResult.GetType().GetField("common"); // TODO - Why does this work...
                 var typedCommonValue = Convert.ChangeType(typedCommonField.GetValue(typedResult), resultsCommonTemplate.GetType()); // TODO - Why does this work...
                 var commonResult = typedCommonValue.GetType().GetField(commonFields[f].Name).GetValue(typedCommonValue);
-                output.resultsRow[1].resultsColumn.Add(commonResult.ToString());
+                output.resultsRow[0].resultsColumn.Add(commonResult.ToString());
             }
             for (int f = 0; f < customFields.Length-1; f++)
             {
@@ -375,15 +372,15 @@ namespace GraphicsTestFramework
                         for (int i = 0; i < a.Length; i++)
                             stringArray[i] = a.GetValue(i).ToString();
                         customResult = Common.ConvertStringArrayToString(stringArray);
-                        output.resultsRow[1].resultsColumn.Add(customResult.ToString());
+                        output.resultsRow[0].resultsColumn.Add(customResult.ToString());
                     }
                     else // Write blank when custom results werent set on an array
                         customResult = "";
                 }
                 else if (customResult != null) //If its a non-array type that has had values set
-                    output.resultsRow[1].resultsColumn.Add(customResult.ToString());
+                    output.resultsRow[0].resultsColumn.Add(customResult.ToString());
                 else //If its a non-array type that has not had values set
-                    output.resultsRow[1].resultsColumn.Add("");
+                    output.resultsRow[0].resultsColumn.Add("");
             }
             Console.Instance.Write(DebugLevel.Full, MessageLevel.Log, GetType().Name + " generated resultsIO data"); // Write to console
             return output;
@@ -668,8 +665,8 @@ namespace GraphicsTestFramework
             FieldInfo[] commonFields = typeof(ResultsDataCommon).GetFields(bindingFlags);
             FieldInfo[] customFields = results.GetFields(bindingFlags);
 
-            List<string> commonDataRaw = resultsIOData.resultsRow[0].resultsColumn.GetRange(0, commonFields.Length * 2);
-            List<string> resultsDataRaw = resultsIOData.resultsRow[0].resultsColumn.GetRange(commonFields.Length * 2, resultsIOData.resultsRow[0].resultsColumn.Count - (commonFields.Length * 2));
+            List<string> commonDataRaw = resultsIOData.resultsRow[0].resultsColumn.GetRange(0, commonFields.Length);
+            List<string> resultsDataRaw = resultsIOData.resultsRow[0].resultsColumn.GetRange(commonFields.Length, resultsIOData.resultsRow[0].resultsColumn.Count - (commonFields.Length));
 
             for (int f = 0; f < customFields.Length; f++)
             {
@@ -678,14 +675,14 @@ namespace GraphicsTestFramework
                     //do the common class
                     for (int cf = 0; cf < commonFields.Length; cf++)
                     {
-                        string value = commonDataRaw[(cf * 2) + 1];
+                        string value = commonDataRaw[cf];
                         FieldInfo fieldInfo = common.GetType().GetField(commonFields[cf].Name);
                         fieldInfo.SetValue(common, Convert.ChangeType(value, fieldInfo.FieldType));
                     }
                 }
                 else
                 {
-                    var value = resultsDataRaw[(f * 2) - 1];
+                    var value = resultsDataRaw[(f) - 1];
                     FieldInfo fieldInfo = resultData.GetType().GetField(customFields[0].Name); // TODO - Why did this become 0?
                     if (fieldInfo.FieldType.IsArray) // This handles arrays
                     {

@@ -34,13 +34,6 @@ namespace GraphicsTestFramework
 					output [rows] = "{";
 					for (int columns = 0; columns < inputData.resultsRow [rows].resultsColumn.Count; columns++) {
 						string value = inputData.resultsRow [rows].resultsColumn [columns];
-						//strip out large strings
-						if (value.Length > 256) {
-							string key = inputData.resultsRow [rows].resultsColumn [0] + inputData.resultsRow [rows].resultsColumn [8] + inputData.resultsRow [rows].resultsColumn [9];
-							string UID = CloudIO.Instance.ConvertLargeEntry (value, key);
-							LocalIO.Instance.LargeFileWrite (value, UID);
-							value = UID;
-						}
 						string s = "\"" + inputData.resultsRow [0].resultsColumn [columns] + "\":\"" + value + "\"";
 						if (columns < inputData.resultsRow [0].resultsColumn.Count - 1)
 							s += ",";
@@ -64,13 +57,6 @@ namespace GraphicsTestFramework
 			int i = 0;
 			foreach (string key in inputData.Keys) {
 				string value = inputData [key];
-				//strip out large strings
-				if (value.Length > 256) {
-					string keyCode = inputData ["DateTime"] + inputData ["GroupName"] + inputData ["TestName"];
-					string UID = CloudIO.Instance.ConvertLargeEntry (value, keyCode);
-					LocalIO.Instance.LargeFileWrite (value, UID);
-					value = UID;
-				}
 				string s = "\"" + key + "\":\"" + value + "\"";
 				if (i < inputData.Count - 1)
 					s += ",";
@@ -97,10 +83,6 @@ namespace GraphicsTestFramework
 			Dictionary<string, string> convertedJSON = new Dictionary<string, string> ();
 
 			for (int i = 0; i < splitData.Length / 2; i++) {
-				//if entry has been replaced by file ID then fetch it
-				if (splitData [i].Contains ("REPLACEMENT_")) {
-					CloudIO.Instance.FetchLargeEntry (splitData [i]);
-				}
 				convertedJSON.Add (splitData [i * 2], splitData [(i * 2) + 1]);
 			}
 			return convertedJSON;
@@ -117,17 +99,11 @@ namespace GraphicsTestFramework
 				string[] splitData = JSONToStringArray (inputData);
 				ResultsIOData data = new ResultsIOData ();//new ResultsIOData
 				ResultsIORow row = new ResultsIORow ();
-				row.commonResultsIOData = ArrayToResultsDataCommon (splitData);
 				data.resultsRow.Add (row);
 
 				for (int i = 0; i < splitData.Length; i++) {
 					int cur = i;
 					string entry = splitData [cur];
-					//if entry has been replaced by file ID then fetch it
-					if (splitData [cur].Contains ("REPLACEMENT_")) {
-						//CloudIO.Instance.FetchLargeEntry (splitData [cur]); // TODO - might need to do cloud sometimes?
-						entry = LocalIO.Instance.LargeFileRead (entry);
-					}
 					data.resultsRow [0].resultsColumn.Add (entry);
 				}
 				return data;
@@ -147,22 +123,12 @@ namespace GraphicsTestFramework
 
 				for (int a = 0; a < inputData.Length; a++) {
 					string[] splitData = JSONToStringArray (inputData [a]);
-					ResultsDataCommon RDC = ArrayToResultsDataCommon (splitData);
 					for (int i = 0; i < splitData.Length; i++) {
 						data.resultsRow.Add (new ResultsIORow ());
 						int cur = i;
 						string entry = splitData [cur];
 						data.resultsRow [a].resultsColumn.Add (entry);
-
-						//if entry has been replaced by file ID then fetch it
-						if (splitData [cur].Contains ("REPLACEMENT_")) {
-							entry = LocalIO.Instance.LargeFileRead (entry);
-							if (entry == null) {
-								CloudIO.Instance.FetchLargeEntry (splitData [cur]);
-							}
-						}
 					}
-					data.resultsRow [a].commonResultsIOData = RDC;
 				}
 				return data;
 			} else

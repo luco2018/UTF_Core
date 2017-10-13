@@ -44,7 +44,15 @@ namespace GraphicsTestFramework
 
             int passFail = 2; // Set default state (no results)
             if (resultsEntryData.resultsData != null) // If results data exists
-                passFail = resultsEntryData.resultsData.resultsRow[0].resultsColumn[21] == "True" ? 1 : 0; // Set pass fail state
+            {
+                int passFailIndex = -1;
+                for (int f = 0; f < resultsEntryData.resultsData.fieldNames.Count; f++)
+                {
+                    if (resultsEntryData.resultsData.fieldNames[f] == "PassFail")
+                        passFailIndex = f;
+                }
+                passFail = resultsEntryData.resultsData.resultsRow[0].resultsColumn[passFailIndex] == "True" ? 1 : 0; // Set pass fail state
+            }
 
             switch (passFail) // Switch on pass fail
             {

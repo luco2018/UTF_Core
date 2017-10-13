@@ -117,10 +117,17 @@ namespace GraphicsTestFramework
                         Debug.LogError("No suites found on Settings object. Aborting.");
                         return;
                     }
+<<<<<<< HEAD
+                    else if (settings.suiteList.Count > 1)
+                        productName = "UTFVarious";
+                    else
+                        productName = "UTF" + settings.suiteList[0].suiteName;
+=======
                     else if (projectSettings.suiteList.Count > 1)
                         productName = "UTF_Various";
                     else
                         productName = "UTF_" + projectSettings.suiteList[0].suiteName;
+>>>>>>> master
                 }
             }
             else

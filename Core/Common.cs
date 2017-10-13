@@ -65,6 +65,9 @@ namespace GraphicsTestFramework
             {FrameResolution.FullHD , new Vector2(1920, 1080) },
         };
 
+		// Date time format string
+		public static string dateTimeFormat = "yyyy-MM-dd\\THH:mm:ss\\Z";
+
         // Unity Versions
         public static string[] unityVersionList = new string[4]
         {
@@ -82,7 +85,7 @@ namespace GraphicsTestFramework
         {
             Console.Instance.Write(DebugLevel.Full, MessageLevel.Log, "Getting common results data"); // Write to console
             ResultsDataCommon output = new ResultsDataCommon(); // Create new class instance
-			output.DateTime = Master.Instance.GetSystemTime ().ToString (); // Get SystemTime from Master
+			output.DateTime = Master.Instance.GetSystemTime ().ToString (dateTimeFormat); // Get SystemTime from Master
             SystemData systemData = Master.Instance.GetSystemData(); // Get SystemData from Master
             output.UnityVersion = systemData.UnityVersion; // Extract from SystemData
             output.AppVersion = systemData.AppVersion; // Extract from SystemData
@@ -126,10 +129,24 @@ namespace GraphicsTestFramework
             Console.Instance.Write(DebugLevel.Full, MessageLevel.Log, "Converting String to Texture2D"); // Write to console
             Texture2D output = new Texture2D(2, 2); // Create output Texture2D
             output.name = textureName; // Set texture name
-            byte[] decodedBytes = Convert.FromBase64String(input); // Convert input string from Base64 to byte array
+			byte[] decodedBytes = new byte[input.Length / 2]; // Create byte array to hold data
+            for(int i = 0; i < input.Length; i +=2){ // Convert input string from Hex to byte array
+				decodedBytes [i / 2] = Convert.ToByte (input.Substring (i, 2), 16);
+			}
             output.LoadImage(decodedBytes); // Load image (PNG)
             return output; // Return
         }
+
+		// Convert a Texture2D to a HEX string
+		public static string ConvertTextureToString(Texture2D texture)
+		{
+			Console.Instance.Write(DebugLevel.Full, MessageLevel.Log, "Converting Texture2D to String"); // Write to console
+			byte[] bytes = texture.EncodeToPNG (); // Create Byte array
+			StringBuilder sb = new StringBuilder();
+			foreach (byte b in bytes)
+				sb.Append(b.ToString("X2"));//Add bytes as Hex values
+			return sb.ToString (); // Return
+		}
 
         // Convert a RenderTexture to a Texture2D
         public static Texture2D ConvertRenderTextureToTexture2D(string textureName, RenderTexture input, Vector2 resolution, TextureFormat format, FilterMode filterMode)

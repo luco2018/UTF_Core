@@ -161,7 +161,13 @@ namespace GraphicsTestFramework
                 {
                     resultsFound = true;
                     localTestCount++;
-                    if (data.resultsRow[0].resultsColumn[21] == "False")
+					//search for PassFail field to avoid hardcoding
+					int passFailIndex = -1;
+					for(int f = 0; f < data.fieldNames.Count; f++){
+						if (data.fieldNames [f] == "PassFail")
+							passFailIndex = f;
+					}
+					if (data.resultsRow[0].resultsColumn[passFailIndex] == "False")
                     {
                         localFailCount++;
                         attachment.passFail = false;

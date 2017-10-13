@@ -60,7 +60,7 @@ namespace GraphicsTestFramework
             typedSettings.captureCamera.targetTexture = temporaryRt; // Set capture cameras target texture to temporary RT (logic specific)
             doCapture = true; // Perform OnRenderImage logic (logic specific)
             do { yield return null; } while (resultsTexture == null); // Wait for OnRenderImage logic to complete (logic specific)
-            m_TempData.resultFrame = System.Convert.ToBase64String(resultsTexture.EncodeToPNG()); // Convert results texture to Base64 String and save to results data
+			m_TempData.resultFrame = Common.ConvertTextureToString (resultsTexture); // Convert results texture to Base64 String and save to results data
             if (baselineExists) // Comparison (mandatory)
             {
                 FrameComparisonResults referenceData = (FrameComparisonResults)DeserializeResults(ResultsIO.Instance.RetrieveBaseline(suiteName, testTypeName, m_TempData.common)); // Deserialize baseline data (mandatory)

@@ -315,7 +315,15 @@ namespace GraphicsTestFramework
             {
                 int passFail = 2; // Set default state (no results)
                 if (filteredResultsEntries[i].resultsData != null) // If results data exists
-                    passFail = filteredResultsEntries[i].resultsData.resultsRow[0].resultsColumn[21] == "True" ? 0 : 1; // Set pass fail state
+                {
+                    int passFailIndex = -1;
+                    for (int f = 0; f < filteredResultsEntries[i].resultsData.fieldNames.Count; f++)
+                    {
+                        if (filteredResultsEntries[i].resultsData.fieldNames[f] == "PassFail")
+                            passFailIndex = f;
+                    }
+                    passFail = filteredResultsEntries[i].resultsData.resultsRow[0].resultsColumn[passFailIndex] == "True" ? 0 : 1; // Set pass fail state
+                }
                 switch (passFail)
                 {
                     case 0: // Pass
