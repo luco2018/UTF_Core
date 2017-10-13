@@ -267,18 +267,6 @@ namespace GraphicsTestFramework
 			return data;
 		}
 
-		/// <summary>
-		/// Retrieves a result file.
-		/// </summary>
-		/// <returns>The result.</returns>
-		/// <param name="suiteName">Suite name.</param>
-		/// <param name="testType">Test type.</param>
-		/// <param name="inputData">Input data.</param>
-		public void RetrieveResults (string suiteName, string testType)
-		{
-			CloudIO.Instance.FetchCloudResults (suiteName, testType);
-		}
-
 		/// ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		/// In memory suite list
 		/// ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
