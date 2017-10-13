@@ -42,8 +42,8 @@ namespace GraphicsTestFramework
 		{
             Console.Instance.Write(DebugLevel.Full, MessageLevel.Log, "Getting system data"); // Write to console
             SystemData output = new SystemData(); // Create new class instance
-            Settings settings = SuiteManager.GetSettings(); // Get settings
-			output.UnityVersion = settings.unityVersion+"|"+settings.unityBranch; // Get Unity version
+            ProjectSettings projectSettings = SuiteManager.GetProjectSettings(); // Get settings
+			output.UnityVersion = projectSettings.unityVersion+"|"+projectSettings.unityBranch; // Get Unity version
 			output.AppVersion = Common.applicationVersion.ToString(); // Get application version
             output.OS = SystemInfo.operatingSystem; // Get OS
             output.Device = SystemInfo.deviceModel + "|" + SystemInfo.graphicsDeviceName + "|" + SystemInfo.processorType;

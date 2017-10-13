@@ -38,6 +38,7 @@ namespace GraphicsTestFramework
             SetApplicationSettings(); // Set application settings
             SetScriptingDefines(); // Set defines
             SetPlayerSettings(); // Set player settings
+            SetQualitySettings(); // Set quality settings
             PlayerSettings.bundleVersion = Common.applicationVersion; // Set application version
         }
 
@@ -54,23 +55,23 @@ namespace GraphicsTestFramework
 
         public static void GetUnityVersionInfo()
         {
-            Settings settings = SuiteManager.GetSettings(); // Get settings
-            settings.unityVersion = UnityEditorInternal.InternalEditorUtility.GetFullUnityVersion(); // Set unity version
-            settings.unityBranch = UnityEditorInternal.InternalEditorUtility.GetUnityBuildBranch(); // Set unity branch
-            SuiteManager.SetSettings(settings);
+            ProjectSettings projectSettings = SuiteManager.GetProjectSettings(); // Get settings
+            projectSettings.unityVersion = UnityEditorInternal.InternalEditorUtility.GetFullUnityVersion(); // Set unity version
+            projectSettings.unityBranch = UnityEditorInternal.InternalEditorUtility.GetUnityBuildBranch(); // Set unity branch
+            SuiteManager.SetProjectSettings(projectSettings);
         }
 
         // Set scripting define symbols
         public static void SetScriptingDefines()
         {
-            Settings settings = SuiteManager.GetSettings(); // Get settings
+            ProjectSettings projectSettings = SuiteManager.GetProjectSettings(); // Get settings
             string output = ""; // Create output string
             for (int i = 0; i < coreScriptingDefines.Length; i++) // Iterate core defines
                 output += coreScriptingDefines[i] + ";"; // Add
-            if (settings.scriptingDefines != null) // Check for null
+            if (projectSettings.scriptingDefines != null) // Check for null
             {
-                for (int i = 0; i < settings.scriptingDefines.Length; i++) // Iterate settings defines
-                    output += settings.scriptingDefines[i] + ";"; // Add
+                for (int i = 0; i < projectSettings.scriptingDefines.Length; i++) // Iterate settings defines
+                    output += projectSettings.scriptingDefines[i] + ";"; // Add
             }
             int platformCount = Enum.GetNames(typeof(BuildTargetGroup)).Length; // Get platform count
             for (int i = 0; i < platformCount; i++) // Iterate all platforms
@@ -84,30 +85,49 @@ namespace GraphicsTestFramework
         {
             PlayerSettings.gpuSkinning = true;
             PlayerSettings.colorSpace = ColorSpace.Linear;
-            QualitySettings.vSyncCount = 0;
+            //QualitySettings.vSyncCount = 0;
+        }
+
+        // Set quality settings
+        public static void SetQualitySettings()
+        {
+            TestSettings testSettings = Resources.Load<TestSettings>("DefaultTestSettings"); // Get default
+            if (testSettings == null) // If still none found
+                return; // Fail, return
+            Common.SetTestSettings(testSettings); // Set settings
         }
 
         // Set various application specific settings
         public static void SetApplicationSettings()
         {
             PlayerSettings.companyName = "Unity Technologies";
-            string productName;
-            Settings settings = SuiteManager.GetSettings();
-            if(settings)
+            string productName = "";
+            ProjectSettings projectSettings = SuiteManager.GetProjectSettings();
+            if(projectSettings)
             {
-                if (settings.buildNameOverride.Length > 0)
-                    productName = settings.buildNameOverride;
+                if(projectSettings.buildNameOverride != null)
+                {
+                    if (projectSettings.buildNameOverride.Length > 0)
+                        productName = projectSettings.buildNameOverride;
+                }
                 else
                 {
-                    if (settings.suiteList.Count == 0)
+                    if (projectSettings.suiteList.Count == 0)
                     {
                         Debug.LogError("No suites found on Settings object. Aborting.");
                         return;
                     }
+<<<<<<< HEAD
                     else if (settings.suiteList.Count > 1)
                         productName = "UTFVarious";
                     else
                         productName = "UTF" + settings.suiteList[0].suiteName;
+=======
+                    else if (projectSettings.suiteList.Count > 1)
+                        productName = "UTF_Various";
+                    else
+                        productName = "UTF_" + projectSettings.suiteList[0].suiteName;
+>>>>>>> master
                 }
             }
             else

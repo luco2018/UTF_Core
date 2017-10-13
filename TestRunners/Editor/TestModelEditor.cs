@@ -1,7 +1,7 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEditor;
+using UnityEngine.Rendering;
+using UnityEngine.Experimental.Rendering;
 
 namespace GraphicsTestFramework
 {
@@ -9,11 +9,18 @@ namespace GraphicsTestFramework
 	public class TestModelEditor : Editor
     {
         // Serialized Properties
+        SerializedProperty m_TestSettings;
+        SerializedProperty m_RenderPipeline;
         SerializedProperty m_Platforms;
         SerializedProperty m_WaitType;
         SerializedProperty m_WaitFrames;
         SerializedProperty m_WaitSeconds;
 
+        // Data
+        [HideInInspector]
+        public bool showAdvanced;
+
+        // Draw common data parameters
         public virtual void DrawCommon(SerializedObject inputObject)
         {
             // Get properties
@@ -21,6 +28,8 @@ namespace GraphicsTestFramework
             m_WaitType = inputObject.FindProperty("m_Settings.waitType");
             m_WaitFrames = inputObject.FindProperty("m_Settings.waitFrames");
             m_WaitSeconds = inputObject.FindProperty("m_Settings.waitSeconds");
+            m_TestSettings = inputObject.FindProperty("m_Settings.testSettings");
+            m_RenderPipeline = inputObject.FindProperty("m_Settings.renderPipeline");
 
             EditorGUILayout.LabelField ("Common Settings", EditorStyles.boldLabel); // Draw label
             m_Platforms.intValue = EditorGUILayout.MaskField(new GUIContent("Platforms"), m_Platforms.intValue, System.Enum.GetNames(typeof(RuntimePlatform))); // Draw type
@@ -38,5 +47,27 @@ namespace GraphicsTestFramework
                     break;
             }
         }
-	}
+
+        // Draw advanced foldout
+        public void DrawAdvanced(SerializedObject inputObject)
+        {
+            EditorGUILayout.Space(); // Some space before advanced settings
+            EditorGUILayout.LabelField("Advanced Settings", EditorStyles.boldLabel); // Draw label
+            showAdvanced = EditorGUILayout.Foldout(showAdvanced, "Expand"); // Get advanced state
+            if (showAdvanced) // If enabled
+            {
+                EditorGUI.indentLevel++; // Indent
+                m_TestSettings.objectReferenceValue = EditorGUILayout.ObjectField("Test Settings", m_TestSettings.objectReferenceValue, typeof(TestSettings), false); // Draw test settings
+                m_RenderPipeline.objectReferenceValue = EditorGUILayout.ObjectField("Render Pipeline", m_RenderPipeline.objectReferenceValue, typeof(RenderPipelineAsset), false); // Draw render pipeline
+                DrawAdvancedContent(); // Call for draw custom advanced content
+                EditorGUI.indentLevel--; // Indent
+            }
+        }
+
+        // Draw custom advanced foldout properties
+        public virtual void DrawAdvancedContent()
+        {
+            // Draw custom advanced properties on override
+        }
+    }
 }

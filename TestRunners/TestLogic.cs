@@ -3,6 +3,8 @@ using System.Reflection;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering;
+using UnityEngine.Experimental.Rendering;
 
 namespace GraphicsTestFramework
 {
@@ -99,13 +101,14 @@ namespace GraphicsTestFramework
         // Test Execution
 
         // Set initial information for test at beginning of test run
-        public void SetupTest(TestEntry inputEntry, RunnerType runType)
+        public IEnumerator SetupTest(TestEntry inputEntry, RunnerType runType)
         {
             ProgressScreen.Instance.SetState(true, ProgressType.LocalSave, "Preparing test"); // Enable ProgressScreen
             testWasRan = false; // Reset
             activeTestEntry = inputEntry; // Store active TestEntry
             activeRunType = runType; // Store active RunnerType
             SetSettings(); // Set settings to internal
+            yield return new WaitForEndOfFrame(); // Wait for settings
             SetupResultsStructs(); // Setup the results structs to be filled
             CheckForBaseline(); // Check for baselines
             Console.Instance.Write(DebugLevel.Full, MessageLevel.Log, this.GetType().Name + " set up test " + activeTestEntry.testName); // Write to console
@@ -444,6 +447,50 @@ namespace GraphicsTestFramework
         public override void SetSettings()
         {
             model.SetSettings();
+            SetTestSettings();
+            SetRenderPipeline();
+        }
+
+        // Set project settings for this test from TestSettings object
+        public void SetTestSettings()
+        {
+            TestSettings testSettings = model.settings.testSettings; // Get the models test settings
+            if(testSettings == null) // If none found
+            {
+                Suite suite = SuiteManager.GetSuiteByName(suiteName); // Get current suite
+                if (suite != null) // If suite was returned
+                {
+                    testSettings = suite.defaultTestSettings; // Apply suite default
+                    if (testSettings == null) // If still none found
+                        testSettings = Resources.Load<TestSettings>("DefaultTestSettings"); // Apply default
+                }
+            }
+            if (testSettings == null) // If still none found
+                return; // Fail, return
+            Common.SetTestSettings(testSettings); // Set settings
+        }
+
+        // Check if Render Pipeline needs to be changed and change if necessary
+        public void SetRenderPipeline()
+        {
+            RenderPipelineAsset renderPipeline = model.settings.renderPipeline; // Get the models render pipeline
+            if (renderPipeline == null) // If none found
+            {
+                Suite suite = SuiteManager.GetSuiteByName(suiteName); // Get current suite
+                if (suite != null) // If suite was returned
+                {
+                    renderPipeline = suite.defaultRenderPipeline; // Apply suite default
+                }
+            }
+            RenderPipelineAsset currentRenderPipeline = Common.GetRenderPipeline();
+            if(renderPipeline != currentRenderPipeline)
+            {
+#if UNITY_5_6
+                GraphicsSettings.renderPipelineAsset = renderPipeline;
+#elif UNITY_2017_1_OR_NEWER
+                RenderPipelineManager.currentPipeline = renderPipeline;
+#endif
+            }
         }
 
         // ------------------------------------------------------------------------------------

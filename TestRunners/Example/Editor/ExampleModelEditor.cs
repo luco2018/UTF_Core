@@ -24,8 +24,11 @@ namespace GraphicsTestFramework
             // Get properties
             m_PassFailThreshold = m_Object.FindProperty("m_Settings.passFailThreshold");
 
-            DrawCommon(m_Object); // Draw the SettingsBase settings
+            DrawCommon(m_Object); // Draw the SettingsBase settings (mandatory)
+
             EditorGUILayout.PropertyField(m_PassFailThreshold, new GUIContent("Pass/Fail Threshold (ms Difference)")); // Draw Pass fail
+
+            DrawAdvanced(m_Object); // Draw the advanced foldout (mandatory)
 
             m_Object.ApplyModifiedProperties(); // Apply modified
         }
