@@ -45,7 +45,7 @@ namespace GraphicsTestFramework
         public void RunBuildPipeline()
         {
             GetUnityVersionInfo(); // Get unity version info
-            SetApplicationSettings(); // Set application settings
+            SetApplicationSettings(null, ""); // Set application settings
             SetScriptingDefines(); // Set defines
             SetPlayerSettings(); // Set player settings
             SetQualitySettings(); // Set quality settings
@@ -58,7 +58,7 @@ namespace GraphicsTestFramework
         {
             GetUnityVersionInfo(); // Get unity version info
             SuiteManager.GenerateSceneList(false); // Create suite structure
-            SetApplicationSettings(); // Set application settings
+            SetApplicationSettings(null, ""); // Set application settings
             SetScriptingDefines(); // Set defines
             SetPlayerSettings(); // Set player settings
             SetQualitySettings(); // Set quality settings
@@ -70,7 +70,7 @@ namespace GraphicsTestFramework
         {
             GetUnityVersionInfo(); // Get unity version info
             SuiteManager.GenerateSceneList(true); // Create suite structure
-            SetApplicationSettings(); // Set application settings
+            SetApplicationSettings(null, ""); // Set application settings
             SetScriptingDefines(); // Set defines
             SetPlayerSettings(); // Set player settings
             SetQualitySettings(); // Set quality settings
@@ -122,7 +122,7 @@ namespace GraphicsTestFramework
         }
 
         // Set various application specific settings
-        public static void SetApplicationSettings()
+        public static void SetApplicationSettings(BuildTarget target, string append)
         {
             PlayerSettings.companyName = "Unity Technologies";
             string productName = "";
@@ -150,8 +150,14 @@ namespace GraphicsTestFramework
             {
                 Debug.LogError("No Settings object found. Aborting.");
                 return;
-            } 
+            }
+            productName += append;
             PlayerSettings.productName = productName;
+            if(target != null)
+            {
+                if (target.platform == UnityEditor.BuildTarget.iOS)
+                    productName = productName.Replace("_", "-");
+            }
             int platformCount = Enum.GetNames(typeof(BuildTargetGroup)).Length; // Get platform count
             for (int i = 0; i < platformCount; i++) // Iterate all platforms
                 PlayerSettings.SetApplicationIdentifier((BuildTargetGroup)i, "com.UnityTechnologies."+productName); // Set bundle identifiers
