@@ -365,30 +365,17 @@ namespace GraphicsTestFramework
         // Get the active Render Pipeline asset
         public static RenderPipelineAsset GetRenderPipeline()
         {
-#if UNITY_5_6
             return GraphicsSettings.renderPipelineAsset;
-#elif UNITY_2017_1_OR_NEWER
-			return RenderPipelineManager.currentPipeline;
-#endif
-            return null;
         }
 
         // Get the active Render Pipeline name
         public static string GetRenderPipelineName()
         {
             string defaultPipeline = "Standard Legacy"; // If no pipeline is loaded then will be set to this
-#if UNITY_5_6
             if (GraphicsSettings.renderPipelineAsset == null)
                 return defaultPipeline; // return the default pipeline string
             else
                 return GraphicsSettings.renderPipelineAsset.GetType().ToString() + "|" + GraphicsSettings.renderPipelineAsset.name; // Gets the currently active pieplines name in 5.6
-#elif UNITY_2017_1_OR_NEWER
-			if(RenderPipelineManager.currentPipeline == null)
-				return defaultPipeline; // return the default pipeline string
-			else
-				return RenderPipelineManager.currentPipeline.GetType().ToString() + "|" + RenderPipelineManager.currentPipeline.name; // Gets the currently active pieplines name in 2017.1 // TODO - not tested
-#endif
-            return defaultPipeline;
 		}
     }
 
