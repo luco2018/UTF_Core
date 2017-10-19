@@ -24,6 +24,8 @@ namespace GraphicsTestFramework
 
                     string applicationName = GetApplicationName(target, projectSettings, config.nameOverride); // Get application name
 
+                    PlayerSettings.productName += AppendProductName(target); // Apend to product name
+
                     if (SetGraphicsAPI(target) == false) // Check if Graphics API can be set to the specified target
                     {
                         Debug.LogError("Failed to build Player, Directory: " + directory + "/" + applicationName); // Log error
@@ -45,6 +47,20 @@ namespace GraphicsTestFramework
             }
             else // Null build configuartion
                 Debug.LogError("No Build Configuration file assigned. Please assign a Build Configuration file i nthe Build Pipeline window"); // Log error 
+        }
+
+        // On certain platforms append target data to product name
+        public static string AppendProductName(BuildTarget target)
+        {
+            switch (target.platform) // Append target data based on target platform
+            {
+                case UnityEditor.BuildTarget.iOS:
+                    return "_" + target.graphicsApi.ToString();
+                case UnityEditor.BuildTarget.Android:
+                    return "_"+ target.graphicsApi.ToString();
+                default:
+                    return "";
+            }
         }
 
         // Try to set Graphics API for the target
@@ -103,7 +119,6 @@ namespace GraphicsTestFramework
                     applicationName += ".app";
                     break;
                 case UnityEditor.BuildTarget.iOS:
-                    applicationName += ".app";
                     break;
                 case UnityEditor.BuildTarget.Android:
                     applicationName += ".apk";

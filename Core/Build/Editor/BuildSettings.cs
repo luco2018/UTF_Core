@@ -166,8 +166,8 @@ namespace GraphicsTestFramework
         public void OnPreprocessBuild(UnityEditor.BuildTarget target, string path)
         {
 #if UNITY_EDITOR
-            BuildSettings.GetUnityVersionInfo(); // Get unity version info
-            BuildSettings.SetApplicationSettings(); // Set application settings
+            //BuildSettings.GetUnityVersionInfo(); // Get unity version info
+            //BuildSettings.SetApplicationSettings(); // Set application settings
             //BuildSettings.SetScriptingDefines(); // Set defines
             //BuildSettings.SetPlayerSettings(); // Set player settings
 #endif
