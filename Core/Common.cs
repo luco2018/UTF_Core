@@ -198,7 +198,7 @@ namespace GraphicsTestFramework
             UnityEditor.BuildTarget.StandaloneLinuxUniversal,
             UnityEditor.BuildTarget.StandaloneOSXIntel,
             UnityEditor.BuildTarget.StandaloneOSXIntel64,
-            UnityEditor.BuildTarget.StandaloneOSX,
+            UnityEditor.BuildTarget.StandaloneOSXUniversal,
             UnityEditor.BuildTarget.StandaloneWindows,
             UnityEditor.BuildTarget.StandaloneWindows64
         };
