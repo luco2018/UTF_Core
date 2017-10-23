@@ -178,6 +178,18 @@ namespace GraphicsTestFramework
             return output; // Return
         }
 
+#if UNITY_2018_1_OR_NEWER
+        // Editor target list (editor targets that are not emulated)
+        public static UnityEditor.BuildTarget[] editorTargets = new UnityEditor.BuildTarget[6]
+        {
+            UnityEditor.BuildTarget.StandaloneLinux,
+            UnityEditor.BuildTarget.StandaloneLinux64,
+            UnityEditor.BuildTarget.StandaloneLinuxUniversal,
+            UnityEditor.BuildTarget.StandaloneOSX,
+            UnityEditor.BuildTarget.StandaloneWindows,
+            UnityEditor.BuildTarget.StandaloneWindows64
+        };
+#else
         // Editor target list (editor targets that are not emulated)
         public static UnityEditor.BuildTarget[] editorTargets = new UnityEditor.BuildTarget[8]
         {
@@ -186,10 +198,12 @@ namespace GraphicsTestFramework
             UnityEditor.BuildTarget.StandaloneLinuxUniversal,
             UnityEditor.BuildTarget.StandaloneOSXIntel,
             UnityEditor.BuildTarget.StandaloneOSXIntel64,
-            UnityEditor.BuildTarget.StandaloneOSXUniversal,
+            UnityEditor.BuildTarget.StandaloneOSX,
             UnityEditor.BuildTarget.StandaloneWindows,
             UnityEditor.BuildTarget.StandaloneWindows64
         };
+#endif
+
 #endif
 
         // Check if a test is applicable
