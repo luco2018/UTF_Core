@@ -191,14 +191,12 @@ namespace GraphicsTestFramework
         };
 #else
         // Editor target list (editor targets that are not emulated)
-        public static UnityEditor.BuildTarget[] editorTargets = new UnityEditor.BuildTarget[8]
+        public static UnityEditor.BuildTarget[] editorTargets = new UnityEditor.BuildTarget[6]
         {
             UnityEditor.BuildTarget.StandaloneLinux,
             UnityEditor.BuildTarget.StandaloneLinux64,
             UnityEditor.BuildTarget.StandaloneLinuxUniversal,
-            UnityEditor.BuildTarget.StandaloneOSXIntel,
-            UnityEditor.BuildTarget.StandaloneOSXIntel64,
-            UnityEditor.BuildTarget.StandaloneOSX,
+            UnityEditor.BuildTarget.StandaloneOSXUniversal,
             UnityEditor.BuildTarget.StandaloneWindows,
             UnityEditor.BuildTarget.StandaloneWindows64
         };
