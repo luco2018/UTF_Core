@@ -104,15 +104,15 @@ namespace GraphicsTestFramework
                 case UnityEditor.BuildTarget.StandaloneWindows64:
                     applicationName += ".exe";
                     break;
-                case UnityEditor.BuildTarget.StandaloneOSXIntel:
+                #if UNITY_2018_1_OR_NEWER
+                case UnityEditor.BuildTarget.StandaloneOSX:
                     applicationName += ".app";
                     break;
-                case UnityEditor.BuildTarget.StandaloneOSXIntel64:
-                    applicationName += ".app";
-                    break;
+                #else
                 case UnityEditor.BuildTarget.StandaloneOSXUniversal:
                     applicationName += ".app";
                     break;
+                #endif
                 case UnityEditor.BuildTarget.StandaloneLinux:
                     applicationName += ".app";
                     break;

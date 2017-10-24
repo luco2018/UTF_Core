@@ -485,11 +485,10 @@ namespace GraphicsTestFramework
             RenderPipelineAsset currentRenderPipeline = Common.GetRenderPipeline();
             if(renderPipeline != currentRenderPipeline)
             {
-#if UNITY_5_6
+
                 GraphicsSettings.renderPipelineAsset = renderPipeline;
-#elif UNITY_2017_1_OR_NEWER
-                RenderPipelineManager.currentPipeline = renderPipeline;
-#endif
+
+
             }
         }
 

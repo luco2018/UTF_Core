@@ -52,7 +52,16 @@ namespace GraphicsTestFramework.SQL
 			form.Add(new MultipartFormDataSection("pass", _pass));
             form.Add(new MultipartFormDataSection("query", _input));
             UnityWebRequest www = UnityWebRequest.Post(_webservice, form); //POST data is sent via the URL
+
+#if !UNITY_2018_1_OR_NEWER
             yield return www.Send();
+			#else
+            UnityWebRequestAsyncOperation wwwData = www.SendWebRequest();
+			while(!wwwData.isDone){
+                yield return null;
+            }
+            www = wwwData.webRequest;
+			#endif
 
             if (string.IsNullOrEmpty(www.error))
             {
@@ -73,7 +82,17 @@ namespace GraphicsTestFramework.SQL
 			form.Add(new MultipartFormDataSection("pass", _pass));
             form.Add(new MultipartFormDataSection("query", _query));
             UnityWebRequest www = UnityWebRequest.Post(_webservice, form); //POST data is sent via the URL
+
+#if !UNITY_2018_1_OR_NEWER
             yield return www.Send();
+#else
+            UnityWebRequestAsyncOperation wwwData = www.SendWebRequest();
+            while (!wwwData.isDone)
+            {
+                yield return null;
+            }
+            www = wwwData.webRequest;
+#endif
 
             if (string.IsNullOrEmpty(www.error))
             {
@@ -176,7 +195,7 @@ namespace GraphicsTestFramework.SQL
 			StringBuilder outputString = new StringBuilder ();
             outputString.Append ("SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;\n");//using isolation to avoid double write issues
             outputString.Append ("START TRANSACTION;\n");//using transaction to do the query in one chunk
-			outputString.Append (TableCheck (tableName, inputData.fieldNames.ToArray ()));//adds a table check/creation
+			outputString.Append (TableCheck (tableName));//adds a table check/creation
 
 			int rowNum = 0;//Row counter
 			if (baseline == 1) {//baseline sorting
@@ -252,8 +271,7 @@ namespace GraphicsTestFramework.SQL
 		}
 
 		//Check to see if table exists
-		public string TableCheck(string tableName, string[] columns){
-			string _columns = CreateColumns (columns);//gets a string formatted with data types
+		public string TableCheck(string tableName){
             string _template = tableName.Substring(tableName.IndexOf('_') + 1, tableName.Length - (tableName.IndexOf('_') + 1));//shave off the suite name to get the template table
 			return string.Format ("CREATE TABLE IF NOT EXISTS {0} LIKE {1};\n", tableName, _template);//query to check for table, otherwise create one
 		}
