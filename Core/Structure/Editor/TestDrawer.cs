@@ -10,7 +10,7 @@ namespace GraphicsTestFramework
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
             // Init
-            position = new Rect(position.x - 40, position.y, position.width, position.height); // Set initial position
+            position = new Rect(position.x, position.y, position.width, position.height); // Set initial position
             EditorGUI.BeginProperty(position, label, property); // Begin the property
 
             // Label
@@ -19,14 +19,14 @@ namespace GraphicsTestFramework
             position = EditorGUI.PrefixLabel(position, GUIUtility.GetControlID(FocusType.Passive), label); // Draw label
             position = new Rect(position.x - 60, position.y, position.width, position.height); // Override next position
 
-            var indent = EditorGUI.indentLevel; // Store indent
-            EditorGUI.indentLevel = 0; // Set indent
+            //var indent = EditorGUI.indentLevel; // Store indent
+            //EditorGUI.indentLevel = 0; // Set indent
 
             // Calculate rects
             Rect typeRect = new Rect(position.x, position.y, 80, position.height); // Type rect
             Rect platformRect = new Rect(position.x + 80, position.y, 80, position.height); // Platform rect
             Rect versionRect = new Rect(position.x + 160, position.y, 80, position.height); // Version rect
-            Rect sceneRect = new Rect(position.x + 240, position.y, position.width - 160, position.height); // Scene rect
+            Rect sceneRect = new Rect(position.x + 240, position.y, position.width, position.height); // Scene rect
             Rect runRect = new Rect(position.xMax + 85, position.y, 20, position.height); // Run rect
 
             // Draw fields
@@ -37,7 +37,7 @@ namespace GraphicsTestFramework
             EditorGUI.PropertyField(runRect, property.FindPropertyRelative("run"), GUIContent.none); // Draw run
 
             // Finish
-            EditorGUI.indentLevel = indent; // Reset indent
+            //EditorGUI.indentLevel = indent; // Reset indent
             EditorGUI.EndProperty(); // End property
         }
     }
