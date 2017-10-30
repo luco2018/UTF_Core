@@ -14,7 +14,7 @@ namespace GraphicsTestFramework
         {
             //{#, typeof(ExampleModel) }, // We dont include ExampleModel here as it is only for reference
             {0, typeof(AverageFrameTimeModel) },
-            {1, typeof(FrameComparisonModel) },
+            {1, typeof(FrameComparisonModel) }
         };
 
         public static Dictionary<int, Type> typeList { get { return m_TypeList; } }
