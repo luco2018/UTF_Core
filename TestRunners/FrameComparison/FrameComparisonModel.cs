@@ -25,6 +25,7 @@ namespace GraphicsTestFramework
         [SerializeField] public FrameResolution frameResolution; //Resolution of the frame capture
         [SerializeField] public TextureFormat textureFormat; //Format of the frame capture
         [SerializeField] public FilterMode filterMode; //Filter mode of the frame capture
+        [SerializeField] public bool useBackBuffer; //Uses the backbuffer for cases where you need multi cam support
 
         public static FrameComparisonSettings defaultSettings
         {
@@ -38,7 +39,8 @@ namespace GraphicsTestFramework
                     captureCamera = null, //Reference to the camera used to capture
                     frameResolution = FrameResolution.qHD, //Resolution of the frame capture
                     textureFormat = TextureFormat.RGB24, //Format of the frame capture
-                    filterMode = FilterMode.Bilinear //Filter mode of the frame capture
+                    filterMode = FilterMode.Bilinear, //Filter mode of the frame capture
+                    useBackBuffer = false, // Use alternatice capture method(multicam)
                 };
             }
         }
