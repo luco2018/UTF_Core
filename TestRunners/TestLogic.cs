@@ -502,6 +502,7 @@ namespace GraphicsTestFramework
             newResultsData.common = Common.GetCommonResultsData(); // Initialize common
             newResultsData.common.GroupName = activeTestEntry.groupName; // Set scene name
             newResultsData.common.TestName = activeTestEntry.testName; // Set test name
+            newResultsData.common.Custom += Common.CustomEntry("runID", TestRunner.runUUID);
             activeResultData = newResultsData; // Set as active
         }
 
