@@ -33,15 +33,15 @@ namespace GraphicsTestFramework.SQL
 		private List<QueryBackup> SQLNonQueryBackup = new List<QueryBackup>();
 
 		//TEMPORARY
-		public ResultsIOData[] _tempData;
-		public ResultsIOData _tempDataFull;
+		// public ResultsIOData[] _tempData;
+		// public ResultsIOData _tempDataFull;
 		
-		IEnumerator Start()
-		{
-			yield return new WaitForSeconds(2f);
-			yield return StartCoroutine(GetaData(false, (value => { _tempData = value; })));
-			StartCoroutine(FetchSpecificEntry(_tempData[0], (value => { _tempDataFull = value; })));
-		}
+		// IEnumerator Start()
+		// {
+		// 	yield return new WaitForSeconds(2f);
+		// 	yield return StartCoroutine(GetaData(false, (value => { _tempData = value; })));
+		// 	StartCoroutine(FetchSpecificEntry(_tempData[0], (value => { _tempDataFull = value; })));
+		// }
 
 		// ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		//INFORMATION
@@ -208,15 +208,16 @@ namespace GraphicsTestFramework.SQL
 			while(_rawData.fields.Count == 0){
 				yield return null;
 			}
-			ResultsIOData data = new ResultsIOData();
-			data.fieldNames.AddRange(_rawData.fields);//Grab the fields from the RawData
+			inputData.fieldNames.Clear();
+			inputData.resultsRow.Clear();
+			inputData.fieldNames.AddRange(_rawData.fields);//Grab the fields from the RawData
 			for (int i = 0; i < _rawData.data.Count; i++)
 			{
 				ResultsIORow row = new ResultsIORow();//create a new row
 				row.resultsColumn.AddRange(_rawData.data[i]);//store the current row of values
-				data.resultsRow.Add(row);//add it to the data to send back to resultsIO
+				inputData.resultsRow.Add(row);//add it to the data to send back to resultsIO
 			}
-			outdata(data);
+			outdata(inputData);
 		}
 
 		public IEnumerator RunUUID(Action<string> uuid)
