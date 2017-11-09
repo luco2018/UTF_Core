@@ -157,7 +157,7 @@ namespace GraphicsTestFramework.SQL
 			foreach(string suite in suiteNames){
                 RawData rawData = new RawData();//RawData to be filled by the wwwRequest
                 StartCoroutine(SQLRequest(String.Format("SHOW TABLES LIKE '{0}%Baseline'", suite), (value => { rawData = value; })));//Get all tables with the suite and ending with baseline
-				while(rawData.data.Count == 0){
+				while(rawData.fields.Count == 0){
                     yield return null;
                 }
                 for (int t = 0; t < rawData.data.Count; t++){
@@ -175,7 +175,7 @@ namespace GraphicsTestFramework.SQL
                 string query = String.Format("SELECT * FROM {0} WHERE platform='{1}' AND api='{2}'", table, platform, api);
                 RawData _rawData = new RawData();
                 StartCoroutine(SQLRequest(query, (value => { _rawData = value; })));
-				while(_rawData.data.Count == 0){
+				while(_rawData.fields.Count == 0){
                     yield return null;
                 }
                 data[n].fieldNames.AddRange(_rawData.fields);//Grab the fields from the RawData
@@ -190,6 +190,31 @@ namespace GraphicsTestFramework.SQL
 				n++;
 			}
 			outdata(data.ToArray ());
+		}
+
+		public IEnumerator FetchSpecificEntry(ResultsIOData inputData, Action<ResultsIOData[]> outdata)
+		{
+			//make request based off common
+			string baseline = inputData.baseline == true ? "Baseline" : "Results";
+			string table = inputData.suite + "_" + inputData.testType + "_" + baseline;
+
+			string values = ConvertToCondition(inputData.data, inputData.fields);
+
+			string query = String.Format("SELECT * FROM {0} WHERE {1}", table, values);
+			RawData _rawData = new RawData();
+			StartCoroutine(SQLRequest(query, (value => { _rawData = value; })));
+			while(_rawData.fields.Count == 0){
+				yield return null;
+			}
+			ResultsIOData data = new ResultsIOData();
+			data.fieldNames.AddRange(_rawData.fields);//Grab the fields from the RawData
+			for (int i = 0; i < _rawData.data.Count; i++)
+			{
+				ResultsIORow row = new ResultsIORow();//create a new row
+				row.resultsColumn.AddRange(_rawData.data[i]);//store the current row of values
+				data.resultsRow.Add(row);//add it to the data to send back to resultsIO
+			}
+			outdata(data);
 		}
 
 		public IEnumerator RunUUID(Action<string> uuid)
@@ -353,6 +378,17 @@ namespace GraphicsTestFramework.SQL
 			return sb.ToString ();
 		}
 
+		//create column list for named values for condition use
+		string ConvertToCondition(List<string> values, string[] fields){
+			StringBuilder sb = new StringBuilder ();
+			for (int i = 0; i < values.Count; i++) {
+				sb.Append (fields[i] + "='" + values[i] + "' ");
+				if (i != values.Count - 1)
+					sb.Append (' AND ');
+			}
+			return sb.ToString ();
+		}
+
 		//Convert raw data form the webserver to table data
 		RawData ConvertRawData(string data)
         {
@@ -380,14 +416,12 @@ namespace GraphicsTestFramework.SQL
 				while(rawData.fields.Count == 0){
                     yield return null;
                 }
-				Debug.LogError(rawData.fields.Count);
                 for (int t = 0; t < rawData.data.Count; t++){
 					tables.Add(rawData.data[t][0]);//add the table name to the list of tables to pull
 				}
             }
 			int n = 0;
 			foreach(string table in tables){
-				Debug.LogError("getting " + table);
 				string suite = table.Substring (0, table.IndexOf ("_"));//grab the suite from the table name
 				string testType = table.Substring (table.IndexOf ("_") + 1, table.LastIndexOf ("_") - (suite.Length + 1));//grab the test type from the table name
 				bool _baseline = table.Substring (table.LastIndexOf ("_") + 1) == "Baseline" ? true : false;//grab the test type from the table name
