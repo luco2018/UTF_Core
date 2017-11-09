@@ -426,7 +426,7 @@ namespace GraphicsTestFramework
         //Addcustom entry
         public static string CustomEntry(string key, string input)
         {
-            string output = key + "|" + input + "<<|>>";
+            string output = key + "|" + input + "<>|<>";
             return output;
         }
 
