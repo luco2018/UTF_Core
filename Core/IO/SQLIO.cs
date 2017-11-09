@@ -140,11 +140,7 @@ namespace GraphicsTestFramework.SQL
 			DateTime timestamp = DateTime.MinValue;//make date time min, we check this on the other end since it is not nullable
             RawData _rawData = null;//RawData to be filled by the request
             string query = String.Format("SELECT suiteTimestamp FROM SuiteBaselineTimestamps WHERE api='{0}' AND suiteName='{1}' AND platform='{2}';", sysData.API, suiteName, sysData.Platform);//This line sends a query to get timestamps for matching API/platform/suite
-            StartCoroutine(SQLRequest(query, (value => { _rawData = value; })));//send the request
-
-			while(_rawData == null){//we wait until the data is fill from the wwwrequest
-                yield return null;
-            }
+            yield return StartCoroutine(SQLRequest(query, (value => { _rawData = value; })));//send the request
 			if(_rawData.data.Count != 0)
             	timestamp = System.DateTime.Parse(_rawData.data[0][0]);//convert the string to a timestamp
 
@@ -158,10 +154,7 @@ namespace GraphicsTestFramework.SQL
 			//Get the table names to pull baselines from
 			foreach(string suite in suiteNames){
                 RawData rawData = new RawData();//RawData to be filled by the wwwRequest
-                StartCoroutine(SQLRequest(String.Format("SHOW TABLES LIKE '{0}%Baseline'", suite), (value => { rawData = value; })));//Get all tables with the suite and ending with baseline
-				while(rawData.fields.Count == 0){
-                    yield return null;
-                }
+                yield return StartCoroutine(SQLRequest(String.Format("SHOW TABLES LIKE '{0}%Baseline'", suite), (value => { rawData = value; })));//Get all tables with the suite and ending with baseline
                 for (int t = 0; t < rawData.data.Count; t++){
 					tables.Add(rawData.data[t][0]);//add the table name to the list of tables to pull
 				}
@@ -176,10 +169,7 @@ namespace GraphicsTestFramework.SQL
                 //This line controls how baselines are selected, right now only Platform and API are unique
                 string query = String.Format("SELECT * FROM {0} WHERE platform='{1}' AND api='{2}'", table, platform, api);
                 RawData _rawData = new RawData();
-                StartCoroutine(SQLRequest(query, (value => { _rawData = value; })));
-				while(_rawData.fields.Count == 0){
-                    yield return null;
-                }
+                yield return StartCoroutine(SQLRequest(query, (value => { _rawData = value; })));
                 data[n].fieldNames.AddRange(_rawData.fields);//Grab the fields from the RawData
 				for (int i = 0; i < _rawData.data.Count; i++)
                 {
@@ -204,10 +194,7 @@ namespace GraphicsTestFramework.SQL
 
 			string query = String.Format("SELECT * FROM {0} WHERE {1}", table, values);
 			RawData _rawData = new RawData();
-			StartCoroutine(SQLRequest(query, (value => { _rawData = value; })));
-			while(_rawData.fields.Count == 0){
-				yield return null;
-			}
+			yield return StartCoroutine(SQLRequest(query, (value => { _rawData = value; })));
 			inputData.fieldNames.Clear();
 			inputData.resultsRow.Clear();
 			inputData.fieldNames.AddRange(_rawData.fields);//Grab the fields from the RawData
@@ -228,8 +215,7 @@ namespace GraphicsTestFramework.SQL
 			do
 			{
 				_uuid = Common.RandomUUID();
-				StartCoroutine(SQLRequest(string.Format("SELECT COUNT(*) FROM RunUUIDs WHERE runID='{0}'", _uuid), (value) => { rawData = value; }));//send the query, this will return a number if successful or -1 for a failure
-				while(rawData.data.Count == 0) { yield return null; }
+				yield return StartCoroutine(SQLRequest(string.Format("SELECT COUNT(*) FROM RunUUIDs WHERE runID='{0}'", _uuid), (value) => { rawData = value; }));//send the query, this will return a number if successful or -1 for a failure
 				if(rawData.data[0][0] == "0")
 					exists = false;
 			}while(exists);
