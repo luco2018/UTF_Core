@@ -38,7 +38,7 @@ namespace GraphicsTestFramework
 			m_TempData.avgFrameTime = Timestamp(true); // Perform a timestamp (logic specific)
             if (baselineExists) // Comparison (mandatory)
             {
-                AverageFrameTimeResults referenceData = (AverageFrameTimeResults)DeserializeResults(ResultsIO.Instance.RetrieveBaseline(suiteName, testTypeName, m_TempData.common)); // Deserialize baseline data (mandatory)
+                AverageFrameTimeResults referenceData = (AverageFrameTimeResults)DeserializeResults(ResultsIO.Instance.RetrieveEntry(suiteName, testTypeName, m_TempData.common, true, true)); // Deserialize baseline data (mandatory)
                 ComparisonData comparisonData = (ComparisonData)ProcessComparison(referenceData, m_TempData);  // Process comparison (mandatory)
                 if (comparisonData.delta < model.settings.passFailThreshold)  // Pass/fail decision logic (logic specific)
                     m_TempData.common.PassFail = true;

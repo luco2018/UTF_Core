@@ -250,12 +250,12 @@ namespace GraphicsTestFramework
 		/// <param name="suiteName">Suite name.</param>
 		/// <param name="testType">Test type.</param>
 		/// <param name="inputData">Input data.</param>
-		public ResultsIOData RetrieveResult (string suiteName, string testType, ResultsDataCommon inputData)
-		{
-			//string rawJSONdata = LocalIO.Instance.FetchDataFile (suiteName, testType, inputData, false);//fetch string from file
-			ResultsIOData data = LocalIO.Instance.FetchDataFile (suiteName, testType, inputData, false); //JSONHelper.FromJSON (rawJSONdata);//take JSON convert to ResultsIOData //REORG
-			return data;
-		}
+		/// <param name="full">The whole result or only the common.</param>
+		// public ResultsIOData RetrieveResult (string suiteName, string testType, ResultsDataCommon inputData, bool full)
+		// {
+		// 	ResultsIOData data = LocalIO.Instance.FetchDataFile (suiteName, testType, inputData, false, full); //REORG
+		// 	return data;
+		// }
 
 		/// <summary>
 		/// Retrieves a baseline file.
@@ -264,10 +264,10 @@ namespace GraphicsTestFramework
 		/// <param name="suiteName">Suite name.</param>
 		/// <param name="testType">Test type.</param>
 		/// <param name="inputData">Input data.</param>
-		public ResultsIOData RetrieveBaseline (string suiteName, string testType, ResultsDataCommon inputData)
+		public ResultsIOData RetrieveEntry (string suiteName, string testType, ResultsDataCommon inputData, bool baseline, bool full)
 		{
 			//string rawJSONdata = LocalIO.Instance.FetchDataFile (suiteName, testType, inputData, true);//fetch string from file
-			ResultsIOData data = LocalIO.Instance.FetchDataFile (suiteName, testType, inputData, true);//JSONHelper.FromJSON (rawJSONdata);//take JSON convert to ResultsIOData //REORG
+			ResultsIOData data = LocalIO.Instance.FetchDataFile (suiteName, testType, inputData, baseline, full);//JSONHelper.FromJSON (rawJSONdata);//take JSON convert to ResultsIOData //REORG
 			return data;
 		}
 

@@ -78,7 +78,7 @@ namespace GraphicsTestFramework
 			m_TempData.resultFrame = Common.ConvertTextureToString (resultsTexture); // Convert results texture to Base64 String and save to results data
             if (baselineExists) // Comparison (mandatory)
             {
-                FrameComparisonResults referenceData = (FrameComparisonResults)DeserializeResults(ResultsIO.Instance.RetrieveBaseline(suiteName, testTypeName, m_TempData.common)); // Deserialize baseline data (mandatory)
+                FrameComparisonResults referenceData = (FrameComparisonResults)DeserializeResults(ResultsIO.Instance.RetrieveEntry(suiteName, testTypeName, m_TempData.common, true, true)); // Deserialize baseline data (mandatory)
                 ComparisonData comparisonData = (ComparisonData)ProcessComparison(referenceData, m_TempData);  // Prrocess comparison (mandatory)
                 if (comparisonData.DiffPercentage < model.settings.passFailThreshold)  // Pass/fail decision logic (logic specific)
                     m_TempData.common.PassFail = true;

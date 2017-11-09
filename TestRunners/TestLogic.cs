@@ -122,14 +122,14 @@ namespace GraphicsTestFramework
                     TestPreProcess(); // Start pre-process
                     break;
                 case RunnerType.Manual:
-                    localResult = ResultsIO.Instance.RetrieveResult(suiteName, GetType().ToString().Replace("GraphicsTestFramework.", "").Replace("Logic", ""), activeResultData.common); // Try get local result
+                    localResult = ResultsIO.Instance.RetrieveEntry(suiteName, GetType().ToString().Replace("GraphicsTestFramework.", "").Replace("Logic", ""), activeResultData.common, false, true); // Try get local result
                     if (localResult == null) // If not found
                         TestPreProcess(); // Start pre-process
                     else // If found
                         UseLocalResult(localResult); // Use local
                     break;
                 case RunnerType.Results:
-                    localResult = ResultsIO.Instance.RetrieveResult(suiteName, GetType().ToString().Replace("GraphicsTestFramework.", "").Replace("Logic", ""), activeResultData.common); // Try get local result
+                    localResult = ResultsIO.Instance.RetrieveEntry(suiteName, GetType().ToString().Replace("GraphicsTestFramework.", "").Replace("Logic", ""), activeResultData.common, false, true); // Try get local result
                     UseLocalResult(localResult); // Use local
                     break;
                 case RunnerType.Resolve:
@@ -277,7 +277,7 @@ namespace GraphicsTestFramework
         // Get comparison data
         public object GetComparisonData(ResultsBase resultsData)
         {
-            ResultsIOData baselineFetch = ResultsIO.Instance.RetrieveBaseline(suiteName, testTypeName, resultsData.common); // Get baseline data
+            ResultsIOData baselineFetch = ResultsIO.Instance.RetrieveEntry(suiteName, testTypeName, resultsData.common, true, true); // Get baseline data
             if (baselineFetch != null) // If successful
             {
                 ResultsBase baselineData = (ResultsBase)DeserializeResults(baselineFetch); // Convert to results class

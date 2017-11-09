@@ -53,7 +53,7 @@ namespace GraphicsTestFramework
             m_TempData = GetDummyData(m_TempData.common); // Just get some dummy data for the example (logic specific)
             if (baselineExists) // Comparison (mandatory)
             {
-                ExampleResults referenceData = (ExampleResults)DeserializeResults(ResultsIO.Instance.RetrieveBaseline(suiteName, testTypeName, m_TempData.common)); // Deserialize baseline data (mandatory)
+                ExampleResults referenceData = (ExampleResults)DeserializeResults(ResultsIO.Instance.RetrieveEntry(suiteName, testTypeName, m_TempData.common, true, true)); // Deserialize baseline data (mandatory)
                 ComparisonData comparisonData = (ComparisonData)ProcessComparison(referenceData, m_TempData);  // Prrocess comparison (mandatory)
                 if (comparisonData.SomeFloatDiff < model.settings.passFailThreshold)  // Pass/fail decision logic (logic specific)
                     m_TempData.common.PassFail = true;
