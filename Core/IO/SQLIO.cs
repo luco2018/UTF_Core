@@ -39,6 +39,8 @@ namespace GraphicsTestFramework.SQL
 		public void Init(SystemData _sysData)
         {
             sysData = _sysData;
+
+			//setup staging
         }
 
 		// ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
