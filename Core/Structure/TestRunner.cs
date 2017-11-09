@@ -15,7 +15,9 @@ namespace GraphicsTestFramework
         Automation,
         Manual,
         Results,
-        Resolve
+        Resolve,
+        Analytic,
+        AnalyticComparison
     };
 
     // ------------------------------------------------------------------------------------
@@ -58,6 +60,11 @@ namespace GraphicsTestFramework
             levelWasLoaded = true;
         }
 
+        public bool isAnalytic
+        {
+            get { return (runnerType == RunnerType.Analytic || runnerType == RunnerType.AnalyticComparison) ? true : false; }
+        }
+
         // ------------------------------------------------------------------------------------
         // Broadcast
 
@@ -82,8 +89,10 @@ namespace GraphicsTestFramework
             Console.Instance.Write(DebugLevel.Full, MessageLevel.Log, "Setting up runner"); // Write to console
             ProgressScreen.Instance.SetState(true, ProgressType.LocalLoad, "Generating and processing new Test Runner"); // Enable ProgressScreen
             runnerType = runType; // Set runner type
-            if(runnerType != RunnerType.Results) // If not results
+            if (runnerType != RunnerType.Results || runnerType != RunnerType.Analytic) // If not results or analytic
                 GenerateTestRunner(TestStructure.Instance.GetStructure()); // Generate test runner
+            else if (runnerType == RunnerType.Analytic) // If analytic
+                ResultsViewer.Instance.SetState(5); // Enable results viewer
         }
 
         // Convert the test structure into a runner based on current selection and runner type
@@ -149,6 +158,9 @@ namespace GraphicsTestFramework
                     currentTestIndex = 0; // Current index is always 0
                     StartCoroutine(LoadTest()); // Load tests manually from 0
                     break;
+                case RunnerType.AnalyticComparison: // Analytic Comparison (runs comparisons on recreated results data)
+                    StartCoroutine(IterateTests()); // Iterate the runner
+                    break;
             }
         }
 
@@ -169,7 +181,10 @@ namespace GraphicsTestFramework
             do { yield return null; } while (runnerIsWaiting == true); // Wait for previous test to finish before enabling menus
             Console.Instance.Write(DebugLevel.Logic, MessageLevel.Log, "Ended automation run"); // Write to console
             ProgressScreen.Instance.SetState(false, ProgressType.LocalLoad, ""); // Disable ProgressScreen
-            yield return Slack.Instance.SendSlackResults(); // Send results to slack
+            if(Master.Instance._sqlMode == SQLmode.Live)
+            {
+                yield return Slack.Instance.SendSlackResults(); // Send results to slack
+            }
             if(Common.GetArg("automation") == "true") // Check for automation arg
                 Common.QuitApplication(); // Quick application
             else

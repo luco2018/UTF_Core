@@ -103,15 +103,18 @@ namespace GraphicsTestFramework
         // Set initial information for test at beginning of test run
         public IEnumerator SetupTest(TestEntry inputEntry, RunnerType runType)
         {
-            ProgressScreen.Instance.SetState(true, ProgressType.LocalSave, "Preparing test"); // Enable ProgressScreen
-            testWasRan = false; // Reset
             activeTestEntry = inputEntry; // Store active TestEntry
             activeRunType = runType; // Store active RunnerType
-            SetSettings(); // Set settings to internal
-            yield return new WaitForEndOfFrame(); // Wait for settings
-            SetupResultsStructs(); // Setup the results structs to be filled
-            CheckForBaseline(); // Check for baselines
-            Console.Instance.Write(DebugLevel.Full, MessageLevel.Log, this.GetType().Name + " set up test " + activeTestEntry.testName); // Write to console
+            if(!TestRunner.Instance.isAnalytic) // If not analytic
+            {
+                ProgressScreen.Instance.SetState(true, ProgressType.LocalSave, "Preparing test"); // Enable ProgressScreen
+                testWasRan = false; // Reset
+                SetSettings(); // Set settings to internal
+                yield return new WaitForEndOfFrame(); // Wait for settings
+                SetupResultsStructs(); // Setup the results structs to be filled
+                CheckForBaseline(); // Check for baselines
+                Console.Instance.Write(DebugLevel.Full, MessageLevel.Log, this.GetType().Name + " set up test " + activeTestEntry.testName); // Write to console
+            }
             ResultsIOData localResult; // Used for certain active run types
             switch (activeRunType)
             {
@@ -131,6 +134,10 @@ namespace GraphicsTestFramework
                     break;
                 case RunnerType.Resolve:
                     TestPreProcess(); // Start pre-process
+                    break;
+                case RunnerType.Analytic:
+                    break;
+                case RunnerType.AnalyticComparison:
                     break;
             }
         }

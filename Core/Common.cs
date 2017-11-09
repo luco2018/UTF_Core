@@ -460,6 +460,16 @@ namespace GraphicsTestFramework
             return _color;
         }
 
+        // Return an ResultsCommon index from a Field Name input
+        public static int FindResultsDataIOFieldIdByName(ResultsIOData results, string name)
+        {
+            for (int i = 0; i < results.fieldNames.Count; i++) // Iterate field names
+            {
+                if (results.fieldNames[i] == name) // If matches query
+                    return i; // Return
+            }
+            return -1; // Fail
+        }
     }    
 	
 	// ------------------------------------------------------------------------------------

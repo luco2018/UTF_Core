@@ -138,6 +138,17 @@ namespace GraphicsTestFramework
                     overviewButton.gameObject.SetActive(false);
                     Menu.Instance.SetMenuState(false);
                     break;
+                case 5: // Analytic mode
+                    Setup();
+                    overviewParent.SetActive(true);
+                    detailedResultsParent.SetActive(false);
+                    resultsViewerParent.SetActive(true);
+                    homeButton.gameObject.SetActive(true);
+                    overviewButton.gameObject.SetActive(false);
+                    viewerState = 1; // Set back for content generation
+                    GenerateContent(true); // Main call for generation of viewer content
+                    Menu.Instance.SetMenuState(false);
+                    break;
             }
         }
 
@@ -159,9 +170,8 @@ namespace GraphicsTestFramework
             Console.Instance.Write(DebugLevel.Full, MessageLevel.Log, "Generating suites dropdown"); // Write to console
             List<Dropdown.OptionData> options = new List<Dropdown.OptionData>(); // Create new options list
             options.Add(Common.ConvertStringToDropdownOptionData("All Suites"));
-            string[] suites = SuiteManager.GetSuiteNames(); // Get suite names
-            for (int i = 0; i < suites.Length; i++) // Iterate suites
-                options.Add(Common.ConvertStringToDropdownOptionData(suites[i])); // Convert string to option data and add
+            for (int i = 0; i < TestStructure.Instance.testStructure.suites.Count; i++) // Iterate suites
+                options.Add(Common.ConvertStringToDropdownOptionData(TestStructure.Instance.testStructure.suites[i].suiteName)); // Convert string to option data and add
             suitesDropdown.options = options; // Add options
         }
 
@@ -269,8 +279,9 @@ namespace GraphicsTestFramework
                                     if (resultsDropdown.value != 0) // If filtering based on results
                                     {
                                         int passFail = 2; // Set default state (no results)
+                                        int passFailColumn = Common.FindResultsDataIOFieldIdByName(data, "PassFail"); // Find pass fail column index
                                         if (data != null) // If results data exists
-                                            passFail = data.resultsRow[0].resultsColumn[21] == "True" ? 0 : 1; // Set pass fail state
+                                            passFail = data.resultsRow[0].resultsColumn[passFailColumn] == "True" ? 0 : 1; // Set pass fail state
                                         switch (resultsDropdown.value)
                                         {
                                             case 1: // Pass

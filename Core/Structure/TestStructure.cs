@@ -136,10 +136,10 @@ namespace GraphicsTestFramework
             testStructure = new Structure(); // Create new test structure instance
             List<TestType> typeList = GenerateTypeListAndInstances(); // Generate type list and create instances
 
-            int groupColumn = FindFieldIdByName(resultsA[0], "GroupName"); // Get group column ID
+            int groupColumn = Common.FindResultsDataIOFieldIdByName(resultsA[0], "GroupName"); // Get group column ID
             if (groupColumn == -1) // If error return
                 Console.Instance.Write(DebugLevel.Critical, MessageLevel.LogError, "GroupName ID not found"); // Debug
-            int testColumn = FindFieldIdByName(resultsA[0], "TestName"); // Get test column ID
+            int testColumn = Common.FindResultsDataIOFieldIdByName(resultsA[0], "TestName"); // Get test column ID
             if (testColumn == -1) // If error return
                 Console.Instance.Write(DebugLevel.Critical, MessageLevel.LogError, "TestName ID not found"); // Debug
 
@@ -168,10 +168,13 @@ namespace GraphicsTestFramework
                 }
 
                 string testName = resultsA[i].resultsRow[0].resultsColumn[testColumn]; // Get test name
-                TestResults test = new TestResults();
-                test.testName = testName;
-                test.dataA = resultsA[i];
-                test.dataB = resultsB[i];
+                TestResults test = new TestResults(); // Create new TestResults
+                test.testName = testName; // Set test name
+                test.dataA = resultsA[i]; // Set results data A
+                if (resultsB != null) // If analytic comparison
+                    test.dataB = resultsB[i]; // Set results data B
+                else
+                    test.dataB = null; // Set null
             }
             // Reiterate suites to remove empty type entries
             for (int i = 0; i < testStructure.suites.Count; i++) 
@@ -185,17 +188,11 @@ namespace GraphicsTestFramework
             }
             m_IsGenerated = true; // Set generated
             Console.Instance.Write(DebugLevel.Logic, MessageLevel.Log, "AnalyticTestStructure finished generating"); // Write to console
-        }
 
-        // Return an ResultsCommon index from a Field Name input
-        int FindFieldIdByName(ResultsIOData results, string name)
-        {
-            for (int i = 0; i < results.fieldNames.Count; i++) // Iterate field names
-            {
-                if (results.fieldNames[i] == name) // If matches query
-                    return i; // Return
-            }
-            return -1; // Fail
+            if (resultsB == null) // If analytic
+                Menu.Instance.GenerateTestRunner(RunnerType.Analytic); // Generate anyaltic test runner
+            else // If analytic comparison
+                Menu.Instance.GenerateTestRunner(RunnerType.AnalyticComparison);
         }
 
         List<TestType> GenerateTypeListAndInstances()
