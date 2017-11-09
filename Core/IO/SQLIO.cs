@@ -21,7 +21,7 @@ namespace GraphicsTestFramework.SQL
 
         // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         //CONNECTION VARIABLES
-        private string _webservice = "http://ec2-35-176-162-233.eu-west-2.compute.amazonaws.com/UTFFunctions.php";//web srvice
+        private string _webservice = "http://ec2-35-176-162-233.eu-west-2.compute.amazonaws.com/UTFFunctions.php";//web service
         private string _pass = "f23-95j-vCt";
 
         // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -41,6 +41,7 @@ namespace GraphicsTestFramework.SQL
             sysData = _sysData;
 
 			//setup staging
+			_webservice = "http://ec2-35-176-162-233.eu-west-2.compute.amazonaws.com/UTFFunctions_Staging.php";//web srvice
         }
 
 		// ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
