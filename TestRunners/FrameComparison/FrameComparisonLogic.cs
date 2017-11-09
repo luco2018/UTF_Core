@@ -70,9 +70,10 @@ namespace GraphicsTestFramework
             }
             var m_TempData = (FrameComparisonResults)GetResultsStruct(); // Get a results struct (mandatory)
             yield return WaitForTimer(); // Wait for timer
-            doCapture = true; // Perform OnRenderImage logic (logic specific)
             if(typedSettings.useBackBuffer)
                 BackBufferCapture();
+	    else
+	    	doCapture = true; // Perform OnRenderImage logic (logic specific)
             do { yield return null; } while (resultsTexture == null); // Wait for OnRenderImage logic to complete (logic specific)
 			m_TempData.resultFrame = Common.ConvertTextureToString (resultsTexture); // Convert results texture to Base64 String and save to results data
             if (baselineExists) // Comparison (mandatory)
