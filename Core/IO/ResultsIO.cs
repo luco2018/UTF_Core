@@ -12,7 +12,6 @@ namespace GraphicsTestFramework
 		private List<string> suiteBaselinesPullList = new List<string> ();
 		private SystemData sysData;
 		public bool isWaiting = false;
-		public bool companionMode = false;
 		[HideInInspector]
 		public bool writeLocal = true;
 		[HideInInspector]
@@ -47,7 +46,7 @@ namespace GraphicsTestFramework
 				gameObject.AddComponent<SQL.SQLIO> ();
 			SQL.SQLIO.Instance.Init (sysData);
 
-			if (!companionMode)
+			if (Master.Instance.appMode == AppMode.TestRunner)
 				StartCoroutine (Init ());
 		}
 

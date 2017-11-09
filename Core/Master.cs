@@ -13,6 +13,7 @@ namespace GraphicsTestFramework
         // ------------------------------------------------------------------------------------
         // Variables
 
+        public AppMode appMode;
         public SQLmode _sqlMode;
 
         // Singleton
@@ -102,4 +103,10 @@ namespace GraphicsTestFramework
         Disabled
     }
 
+    // Enum for App mode
+    public enum AppMode
+    {
+        TestRunner,
+        Analytic
+    }
 }
