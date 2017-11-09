@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.Networking;
 using System;
 using System.Text;
+using GraphicsTestFramework;
 
 namespace GraphicsTestFramework.SQL
 {	
@@ -41,7 +42,8 @@ namespace GraphicsTestFramework.SQL
             sysData = _sysData;
 
 			//setup staging
-			_webservice = "http://ec2-35-176-162-233.eu-west-2.compute.amazonaws.com/UTFFunctions_Staging.php";//web srvice
+			if(Master.Instance._sqlMode == SQLmode.Staging)
+				_webservice = "http://ec2-35-176-162-233.eu-west-2.compute.amazonaws.com/UTFFunctions_staging.php";//web srvice
         }
 
 		// ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
