@@ -178,7 +178,7 @@ namespace GraphicsTestFramework
             return output; // Return
         }
 
-#if UNITY_2018_1_OR_NEWER
+#if UNITY_2017_3_OR_NEWER
         // Editor target list (editor targets that are not emulated)
         public static UnityEditor.BuildTarget[] editorTargets = new UnityEditor.BuildTarget[6]
         {
