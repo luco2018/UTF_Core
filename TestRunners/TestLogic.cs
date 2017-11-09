@@ -143,10 +143,8 @@ namespace GraphicsTestFramework
             }
         }
 
-        public virtual void ProcessAnalyticComparison()
-        {
-            //ComparisonBase results = ProcessComparison();
-        }
+        // Analytic comparson Logic
+        public abstract void ProcessAnalyticComparison();
 
         // First injection point for custom code. Runs before any test logic.
         public virtual void TestPreProcess()
@@ -411,7 +409,7 @@ namespace GraphicsTestFramework
     // - Next level TestLogic class that all user facing logics derive from
     // - Adds an abstraction layer for defining model type
 
-    public abstract class TestLogic<M, D, R, S> : TestLogicBase where M : TestModelBase where D : TestDisplayBase where R : ResultsBase where S : SettingsBase
+    public abstract class TestLogic<M, D, R, S, C> : TestLogicBase where M : TestModelBase where D : TestDisplayBase where R : ResultsBase where S : SettingsBase where C : ComparisonBase
     {
         // ------------------------------------------------------------------------------------
         // Variables
@@ -603,6 +601,19 @@ namespace GraphicsTestFramework
 				break;
 			}
 		}
+
+        // Analytic comparson logic
+        public override void ProcessAnalyticComparison()
+        {
+            ResultsIOData resultsA = new ResultsIOData(); // Create results A
+            StartCoroutine(SQL.SQLIO.Instance.FetchSpecificEntry(TestStructure.Instance.RequestAnalyticData(1, activeTestEntry), (value => { resultsA = value; }))); // Get full results A
+            var rawResultsA = (R)DeserializeResults(resultsA);
+            ResultsIOData resultsB = new ResultsIOData(); // Create results A
+            StartCoroutine(SQL.SQLIO.Instance.FetchSpecificEntry(TestStructure.Instance.RequestAnalyticData(1, activeTestEntry), (value => { resultsA = value; }))); // Get full results A
+            var rawResultsB = (R)DeserializeResults(resultsA);
+            var results = (C)ProcessComparison(rawResultsA, rawResultsB);
+            // TODO - How to get the comparison done?!
+        }
 
         // ------------------------------------------------------------------------------------
         // Stable Framerate

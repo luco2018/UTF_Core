@@ -9,7 +9,7 @@ namespace GraphicsTestFramework
     // - Results: Captures a screenshot from models test camera
     // - Comparison: Gets average value of pixel differences between results screenshot and baseline
 
-    public class FrameComparisonLogic : TestLogic<FrameComparisonModel, FrameComparisonDisplay, FrameComparisonResults, FrameComparisonSettings>
+    public class FrameComparisonLogic : TestLogic<FrameComparisonModel, FrameComparisonDisplay, FrameComparisonResults, FrameComparisonSettings, FrameComparisonComparison>
     {
         // ------------------------------------------------------------------------------------
         // Variables

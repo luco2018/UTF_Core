@@ -644,6 +644,13 @@ namespace GraphicsTestFramework
             return output;
         }
 
+        // Get analytic data from a specific test structure entry
+        public ResultsIOData RequestAnalyticData(int dataSet, TestEntry testEntry)
+        {
+            TestResults testResults = (TestResults)testStructure.suites[testEntry.suiteIndex].types[testEntry.typeIndex].groups[testEntry.groupIndex].tests[testEntry.testIndex]; // Get entry and cast
+            return dataSet == 0 ? testResults.dataA : testResults.dataB; // Return data set
+        }
+
         // ------------------------------------------------------------------------------------
         // Local Data Structures
 
