@@ -275,13 +275,20 @@ namespace GraphicsTestFramework
                                     string testName = structure.suites[su].types[ty].groups[gr].tests[te].testName; // Get test name
                                     string scenePath = structure.suites[su].types[ty].groups[gr].tests[te].scenePath; // Get scene path
                                     ResultsDataCommon common = BuildResultsDataCommon(groupName, testName); // Build results data common to retrieve results
-                                    ResultsIOData data;
-                                    if (!TestRunner.Instance.isAnalytic)
-                                        data = ResultsIO.Instance.RetrieveEntry(suiteName, typeName, common, false, true); // Retrieve results data
+                                    ResultsIOData data = new ResultsIOData();
+                                    if(TestRunner.Instance)
+                                    {
+                                        if (!TestRunner.Instance.isAnalytic)
+                                            data = ResultsIO.Instance.RetrieveEntry(suiteName, typeName, common, false, false); // Retrieve results data
+                                        else
+                                        {
+                                            TestStructure.TestResults testResults = (TestStructure.TestResults)structure.suites[su].types[ty].groups[gr].tests[te];
+                                            data = testResults.dataA;
+                                        }  
+                                    }
                                     else
                                     {
-                                        TestStructure.TestResults testResults = (TestStructure.TestResults)structure.suites[su].types[ty].groups[gr].tests[te];
-                                        data = testResults.dataA;
+                                        data = ResultsIO.Instance.RetrieveEntry(suiteName, typeName, common, false, false); // Retrieve results data
                                     }
                                     if (resultsDropdown.value != 0) // If filtering based on results
                                     {
@@ -528,7 +535,7 @@ namespace GraphicsTestFramework
         {
             Console.Instance.Write(DebugLevel.Full, MessageLevel.Log, "Toggling context object for " + inputEntry); // Write to console
             if (activeContextObject == null) // If context object is null
-                ExpandContextObject(inputEntry, display); // Create and expand
+                StartCoroutine(ExpandContextObject(inputEntry, display)); // Create and expand
             else
             {
                 if (activeContextEntry == inputEntry) // If selected entry matches current context
@@ -536,14 +543,14 @@ namespace GraphicsTestFramework
                 else
                 {
                     HideContextObject(activeContextEntry); // Hide the current
-                    ExpandContextObject(inputEntry, display); // Create and expand
+                    StartCoroutine(ExpandContextObject(inputEntry, display)); // Create and expand
                 }
             }
             RefreshMenu(); // Refresh menu - WORKAROUND   
         }
 
         // Create and expand context object
-        void ExpandContextObject(ResultsEntry inputEntry, TestDisplayBase display)
+        IEnumerator ExpandContextObject(ResultsEntry inputEntry, TestDisplayBase display)
         {
             Console.Instance.Write(DebugLevel.Full, MessageLevel.Log, "Expanding context object"); // Write to console
             int entryIndex = FindEntryInDetailedResultsList(inputEntry); // Get index of selected entry
@@ -555,7 +562,9 @@ namespace GraphicsTestFramework
             NudgeDetailedResultsListEntries(entryIndex, -contextObjectRect.sizeDelta.y); // Nudge entries
             ResultsContext resultsContext = activeContextObject.GetComponent<ResultsContext>(); // Get results context reference
             resultsContext.Setup(activeContextEntry); // Setup base of results context
-            display.SetupResultsContext(resultsContext, inputEntry.resultsEntryData.resultsData); // Tell Display how to setup the results context
+            ResultsIOData resultsDataFull = new ResultsIOData(); // Create output data
+            yield return StartCoroutine(SQL.SQLIO.Instance.FetchSpecificEntry(inputEntry.resultsEntryData.resultsData, (value => { resultsDataFull = value; }))); // Get full results data
+            display.SetupResultsContext(resultsContext, resultsDataFull); // Tell Display how to setup the results context
         }
 
         // Hide and destroy context object

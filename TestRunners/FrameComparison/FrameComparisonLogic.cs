@@ -18,16 +18,7 @@ namespace GraphicsTestFramework
         Camera menuCamera;
         RenderTexture temporaryRt;
         Texture2D resultsTexture;
-        bool doCapture;        
-
-        // Structure for comparison
-        [System.Serializable]
-        public class ComparisonData
-        {
-            public float DiffPercentage;
-            public Texture2D baselineTex;
-            public Texture2D resultsTex;
-        }
+        bool doCapture;     
 
         // ------------------------------------------------------------------------------------
         // Execution Overrides
@@ -72,14 +63,14 @@ namespace GraphicsTestFramework
             yield return WaitForTimer(); // Wait for timer
             if(typedSettings.useBackBuffer)
                 BackBufferCapture();
-	    else
-	    	doCapture = true; // Perform OnRenderImage logic (logic specific)
+	        else
+	    	    doCapture = true; // Perform OnRenderImage logic (logic specific)
             do { yield return null; } while (resultsTexture == null); // Wait for OnRenderImage logic to complete (logic specific)
 			m_TempData.resultFrame = Common.ConvertTextureToString (resultsTexture); // Convert results texture to Base64 String and save to results data
             if (baselineExists) // Comparison (mandatory)
             {
                 FrameComparisonResults referenceData = (FrameComparisonResults)DeserializeResults(ResultsIO.Instance.RetrieveEntry(suiteName, testTypeName, m_TempData.common, true, true)); // Deserialize baseline data (mandatory)
-                ComparisonData comparisonData = (ComparisonData)ProcessComparison(referenceData, m_TempData);  // Prrocess comparison (mandatory)
+                FrameComparisonComparison comparisonData = (FrameComparisonComparison)ProcessComparison(referenceData, m_TempData);  // Prrocess comparison (mandatory)
                 if (comparisonData.DiffPercentage < model.settings.passFailThreshold)  // Pass/fail decision logic (logic specific)
                     m_TempData.common.PassFail = true;
                 else
@@ -111,7 +102,7 @@ namespace GraphicsTestFramework
         // TODO - Will use last run test model, need to get this for every call from Viewers?
         public override object ProcessComparison(ResultsBase baselineData, ResultsBase resultsData)
         {
-            ComparisonData newComparison = new ComparisonData(); // Create new ComparisonData instance (mandatory)
+            FrameComparisonComparison newComparison = new FrameComparisonComparison(); // Create new ComparisonData instance (mandatory)
             FrameComparisonResults baselineDataTyped = (FrameComparisonResults)baselineData; // Set baseline data to local type
             FrameComparisonResults resultsDataTyped = (FrameComparisonResults)resultsData; // Set results data to local type
             newComparison.baselineTex = Common.ConvertStringToTexture(resultsDataTyped.common.TestName + "_Reference", baselineDataTyped.resultFrame); // Convert baseline frame to Texture2D (logic specific)

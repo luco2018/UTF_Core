@@ -16,13 +16,6 @@ namespace GraphicsTestFramework
         float time;
 		int samples;
 
-        // Structure for comparison
-        [System.Serializable]
-        public class ComparisonData
-        {
-            public float delta;
-        }
-
         // ------------------------------------------------------------------------------------
         // Execution Overrides
 
@@ -39,7 +32,7 @@ namespace GraphicsTestFramework
             if (baselineExists) // Comparison (mandatory)
             {
                 AverageFrameTimeResults referenceData = (AverageFrameTimeResults)DeserializeResults(ResultsIO.Instance.RetrieveEntry(suiteName, testTypeName, m_TempData.common, true, true)); // Deserialize baseline data (mandatory)
-                ComparisonData comparisonData = (ComparisonData)ProcessComparison(referenceData, m_TempData);  // Process comparison (mandatory)
+                AverageFrameTimeComparison comparisonData = (AverageFrameTimeComparison)ProcessComparison(referenceData, m_TempData);  // Process comparison (mandatory)
                 if (comparisonData.delta < model.settings.passFailThreshold)  // Pass/fail decision logic (logic specific)
                     m_TempData.common.PassFail = true;
                 else
@@ -53,7 +46,7 @@ namespace GraphicsTestFramework
         // TODO - Will use last run test model, need to get this for every call from Viewers?
         public override object ProcessComparison(ResultsBase baselineData, ResultsBase resultsData)
         {
-            ComparisonData newComparison = new ComparisonData(); // Create new ComparisonData instance (mandatory)
+            AverageFrameTimeComparison newComparison = new AverageFrameTimeComparison(); // Create new ComparisonData instance (mandatory)
             AverageFrameTimeResults baselineDataTyped = (AverageFrameTimeResults)baselineData; // Set baseline data to local type
             AverageFrameTimeResults resultsDataTyped = (AverageFrameTimeResults)resultsData; // Set results data to local type
             newComparison.delta = resultsDataTyped.avgFrameTime - baselineDataTyped.avgFrameTime; // Perform comparison logic (logic specific)

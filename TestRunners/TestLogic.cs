@@ -138,8 +138,14 @@ namespace GraphicsTestFramework
                 case RunnerType.Analytic:
                     break;
                 case RunnerType.AnalyticComparison:
+                    ProcessAnalyticComparison();
                     break;
             }
+        }
+
+        public virtual void ProcessAnalyticComparison()
+        {
+            //ComparisonBase results = ProcessComparison();
         }
 
         // First injection point for custom code. Runs before any test logic.
@@ -275,7 +281,7 @@ namespace GraphicsTestFramework
         // Comparison Methods
 
         // Get comparison data
-        public object GetComparisonData(ResultsBase resultsData)
+        public object ProcessComparison(ResultsBase resultsData)
         {
             ResultsIOData baselineFetch = ResultsIO.Instance.RetrieveEntry(suiteName, testTypeName, resultsData.common, true, true); // Get baseline data
             if (baselineFetch != null) // If successful

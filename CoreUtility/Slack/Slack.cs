@@ -156,7 +156,7 @@ namespace GraphicsTestFramework
                     attachment = new Attachment(currentEntry.suiteName + ": ", true);
                 }
                 ResultsDataCommon common = BuildResultsDataCommon(currentEntry.groupName, currentEntry.testName); // Build results data common to retrieve results
-                ResultsIOData data = ResultsIO.Instance.RetrieveEntry(currentEntry.suiteName, currentEntry.typeName, common, false, true); // Retrieve results data
+                ResultsIOData data = ResultsIO.Instance.RetrieveEntry(currentEntry.suiteName, currentEntry.typeName, common, false, false); // Retrieve results data
                 if (data != null)
                 {
                     resultsFound = true;

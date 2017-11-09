@@ -194,12 +194,15 @@ namespace GraphicsTestFramework
         // Load Test of currentTestIndex
         IEnumerator LoadTest()
         {
-            if (SceneManager.GetActiveScene().name != runner.tests[currentTestIndex].scenePath) // If current scene name does not match requested
+            if(!isAnalytic) // If not analytic
             {
-                SceneManager.LoadScene(runner.tests[currentTestIndex].scenePath); // Load requested scene
-                while (!levelWasLoaded) // Wait for load
-                    yield return null;
-                levelWasLoaded = false; // Reset
+                if (SceneManager.GetActiveScene().name != runner.tests[currentTestIndex].scenePath) // If current scene name does not match requested
+                {
+                    SceneManager.LoadScene(runner.tests[currentTestIndex].scenePath); // Load requested scene
+                    while (!levelWasLoaded) // Wait for load
+                        yield return null;
+                    levelWasLoaded = false; // Reset
+                }
             }
             Console.Instance.Write(DebugLevel.Logic, MessageLevel.Log, "Loading test "+ runner.tests[currentTestIndex].testName); // Write to console
             StartTest(runner.tests[currentTestIndex], runnerType); // Start the test

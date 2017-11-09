@@ -59,17 +59,25 @@ namespace GraphicsTestFramework
 
         private ResultsIOData[] _tempData;
 
-        IEnumerator GetData()
+        IEnumerator GetData(bool isComparison)
         {
             yield return StartCoroutine(GraphicsTestFramework.SQL.SQLIO.Instance.GetaData(false, (value => { _tempData = value; })));
-            StartCoroutine(GenerateAnalyticStructure(_tempData));
+            if(!isComparison)
+                StartCoroutine(GenerateAnalyticStructure(_tempData));
+            else
+                StartCoroutine(GenerateAnalyticStructure(_tempData, _tempData));
         }
 
         void Update()
         {
             if(Input.GetKeyUp(KeyCode.Return))
             {
-                StartCoroutine(GetData());
+                StartCoroutine(GetData(false));
+            }
+
+            if (Input.GetKeyUp(KeyCode.Backspace))
+            {
+                StartCoroutine(GetData(true));
             }
         }
 

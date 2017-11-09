@@ -14,13 +14,6 @@ namespace GraphicsTestFramework
 
         float timeWaited; // Used for example
 
-        // Structure for comparison results (Do not rename class. Class contents can be anything)
-        [System.Serializable]
-        public class ComparisonData
-        {
-            public float SomeFloatDiff; // Just some example data. Well use this for comparison.
-        }
-
         // ------------------------------------------------------------------------------------
         // Execution Overrides
         // 
@@ -54,7 +47,7 @@ namespace GraphicsTestFramework
             if (baselineExists) // Comparison (mandatory)
             {
                 ExampleResults referenceData = (ExampleResults)DeserializeResults(ResultsIO.Instance.RetrieveEntry(suiteName, testTypeName, m_TempData.common, true, true)); // Deserialize baseline data (mandatory)
-                ComparisonData comparisonData = (ComparisonData)ProcessComparison(referenceData, m_TempData);  // Prrocess comparison (mandatory)
+                ExampleComparison comparisonData = (ExampleComparison)ProcessComparison(referenceData, m_TempData);  // Prrocess comparison (mandatory)
                 if (comparisonData.SomeFloatDiff < model.settings.passFailThreshold)  // Pass/fail decision logic (logic specific)
                     m_TempData.common.PassFail = true;
                 else
@@ -68,7 +61,7 @@ namespace GraphicsTestFramework
         // TODO - Will use last run test model, need to get this for every call from Viewers?
         public override object ProcessComparison(ResultsBase baselineData, ResultsBase resultsData)
         {
-            ComparisonData newComparison = new ComparisonData(); // Create new ComparisonData instance (mandatory)
+            ExampleComparison newComparison = new ExampleComparison(); // Create new ComparisonData instance (mandatory)
             ExampleResults baselineDataTyped = (ExampleResults)baselineData;
             ExampleResults resultsDataTyped = (ExampleResults)resultsData;
             newComparison.SomeFloatDiff = resultsDataTyped.SomeFloat - baselineDataTyped.SomeFloat; // Perform comparison logic (logic specific)

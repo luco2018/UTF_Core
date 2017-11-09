@@ -46,7 +46,7 @@ namespace GraphicsTestFramework
                     };
                     break;
                 case true:
-                    var comparisonData = (FrameComparisonLogic.ComparisonData)logic.GetComparisonData(resultsObject); // Get the comparison data for this test in this types class (mandatory)
+                    var comparisonData = (FrameComparisonComparison)logic.ProcessComparison(resultsObject); // Get the comparison data for this test in this types class (mandatory)
                     SetupMaterial(comparisonData.baselineTex, comparisonData.resultsTex); // Setup the material
                     output = new TestViewerTabData[3] // Want three tabs
                     {
@@ -68,14 +68,14 @@ namespace GraphicsTestFramework
         // ------------------------------------------------------------------------------------
         // ResultsViewer
 
-        FrameComparisonLogic.ComparisonData comparisonData;
+        FrameComparisonComparison comparisonData;
 
         // Setup the results context object
         public override void SetupResultsContext(ResultsContext context, ResultsIOData inputData)
         {
             CleanupResultsContext();
             FrameComparisonResults inputResults = (FrameComparisonResults)logic.DeserializeResults(inputData); // Deserialize input and cast to typed results
-            comparisonData = (FrameComparisonLogic.ComparisonData)logic.GetComparisonData(inputResults); // Get comparison data
+            comparisonData = (FrameComparisonComparison)logic.ProcessComparison(inputResults); // Get comparison data
             buttons = new Button[3]; // Create button array
             for(int i = 0; i < buttons.Length; i++) // Iterate
             { 
@@ -89,7 +89,7 @@ namespace GraphicsTestFramework
         }
 
         // Set context for textures
-        public void SetTextureContext(FrameComparisonLogic.ComparisonData comparisonData, int context)
+        public void SetTextureContext(FrameComparisonComparison comparisonData, int context)
         {
             foreach (Button b in buttons) // Iterate buttons
                 b.interactable = true; // Enable

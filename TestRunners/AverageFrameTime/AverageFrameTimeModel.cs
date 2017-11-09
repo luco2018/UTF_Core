@@ -13,6 +13,13 @@ namespace GraphicsTestFramework
         public float avgFrameTime;
     }
 
+    // Structure for comparison
+    [Serializable]
+    public class AverageFrameTimeComparison : ComparisonBase
+    {
+        public float delta;
+    }
+
     // ------------------------------------------------------------------------------------
     // Settings Data Structures
 
