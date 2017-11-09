@@ -89,7 +89,7 @@ namespace GraphicsTestFramework
             Console.Instance.Write(DebugLevel.Full, MessageLevel.Log, "Setting up runner"); // Write to console
             ProgressScreen.Instance.SetState(true, ProgressType.LocalLoad, "Generating and processing new Test Runner"); // Enable ProgressScreen
             runnerType = runType; // Set runner type
-            if (runnerType != RunnerType.Results || runnerType != RunnerType.Analytic) // If not results or analytic
+            if (runnerType != RunnerType.Results && runnerType != RunnerType.Analytic) // If not results or analytic
                 GenerateTestRunner(TestStructure.Instance.GetStructure()); // Generate test runner
             else if (runnerType == RunnerType.Analytic) // If analytic
                 ResultsViewer.Instance.SetState(5); // Enable results viewer

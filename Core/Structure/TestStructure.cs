@@ -55,6 +55,25 @@ namespace GraphicsTestFramework
         }
 
         // ------------------------------------------------------------------------------------
+        // DELETE ME!
+
+        private ResultsIOData[] _tempData;
+
+        IEnumerator GetData()
+        {
+            yield return StartCoroutine(GraphicsTestFramework.SQL.SQLIO.Instance.GetaData(false, (value => { _tempData = value; })));
+            StartCoroutine(GenerateAnalyticStructure(_tempData));
+        }
+
+        void Update()
+        {
+            if(Input.GetKeyUp(KeyCode.Return))
+            {
+                StartCoroutine(GetData());
+            }
+        }
+
+        // ------------------------------------------------------------------------------------
         // Initialization
 
         // Start generation process
@@ -145,6 +164,7 @@ namespace GraphicsTestFramework
 
             for (int i = 0; i < resultsA.Length; i++)
             {
+                Debug.LogWarning(resultsA[i].testType);
                 string suiteName = resultsA[i].suite;
                 Suite suite = FindDuplicateSuiteInStructure(suiteName);
                 if (suite == null)
@@ -156,7 +176,7 @@ namespace GraphicsTestFramework
                 }
                 
                 string groupName = resultsA[i].resultsRow[0].resultsColumn[groupColumn]; // Get group name
-                int typeIndex = TestTypeManager.Instance.GetTestTypeIndexFromName(resultsA[0].testType); // Get type index
+                int typeIndex = TestTypeManager.Instance.GetTestTypeIndexFromName(resultsA[i].testType); // Get type index
                 if(typeIndex == -1) // If error return
                     Console.Instance.Write(DebugLevel.Critical, MessageLevel.LogError, "TestType ID not found"); // Debug
                 Group group = FindDuplicateGroupInType(suite, typeIndex, groupName);
@@ -175,6 +195,7 @@ namespace GraphicsTestFramework
                     test.dataB = resultsB[i]; // Set results data B
                 else
                     test.dataB = null; // Set null
+                group.tests.Add(test); // Add to group
             }
             // Reiterate suites to remove empty type entries
             for (int i = 0; i < testStructure.suites.Count; i++) 
@@ -186,7 +207,6 @@ namespace GraphicsTestFramework
                 }
                 testStructure.suites[i].types.TrimExcess(); // Trim the types list
             }
-            m_IsGenerated = true; // Set generated
             Console.Instance.Write(DebugLevel.Logic, MessageLevel.Log, "AnalyticTestStructure finished generating"); // Write to console
 
             if (resultsB == null) // If analytic

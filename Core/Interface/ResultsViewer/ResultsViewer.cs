@@ -275,7 +275,14 @@ namespace GraphicsTestFramework
                                     string testName = structure.suites[su].types[ty].groups[gr].tests[te].testName; // Get test name
                                     string scenePath = structure.suites[su].types[ty].groups[gr].tests[te].scenePath; // Get scene path
                                     ResultsDataCommon common = BuildResultsDataCommon(groupName, testName); // Build results data common to retrieve results
-                                    ResultsIOData data = ResultsIO.Instance.RetrieveEntry(suiteName, typeName, common, false, true); // Retrieve results data
+                                    ResultsIOData data;
+                                    if (!TestRunner.Instance.isAnalytic)
+                                        data = ResultsIO.Instance.RetrieveEntry(suiteName, typeName, common, false, true); // Retrieve results data
+                                    else
+                                    {
+                                        TestStructure.TestResults testResults = (TestStructure.TestResults)structure.suites[su].types[ty].groups[gr].tests[te];
+                                        data = testResults.dataA;
+                                    }
                                     if (resultsDropdown.value != 0) // If filtering based on results
                                     {
                                         int passFail = 2; // Set default state (no results)

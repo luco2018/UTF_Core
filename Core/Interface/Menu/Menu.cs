@@ -128,7 +128,6 @@ namespace GraphicsTestFramework
         // First time initialize
         void Initialize()
         {
-            //ResultsViewer.Instance.Setup(); // Setup results viewer
             UpdateMenu(); // Update menu
         }
 
