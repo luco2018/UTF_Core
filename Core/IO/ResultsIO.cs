@@ -423,6 +423,7 @@ namespace GraphicsTestFramework
 	{
 		public string suite;
 		public string testType;
+		public bool baseline;
 		public List<string> fieldNames = new List<string> ();//string list of fields
 		public List<ResultsIORow> resultsRow = new List<ResultsIORow> ();//list of row data
 	}

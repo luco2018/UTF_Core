@@ -11,7 +11,6 @@ namespace GraphicsTestFramework.SQL
 	public class SQLIO : MonoBehaviour {
 
 		public static SQLIO _Instance = null;//Instance
-
 		public static SQLIO Instance {
 			get {
 				if (_Instance == null)
@@ -32,6 +31,15 @@ namespace GraphicsTestFramework.SQL
 
 		//Query retry list - TODO - not hooked up or solved yet
 		private List<QueryBackup> SQLNonQueryBackup = new List<QueryBackup>();
+
+		//TEMPORARY
+		// public ResultsIOData[] _tempData;
+		
+		// IEnumerator Start()
+		// {
+		// 	yield return new WaitForSeconds(2f);
+		// 	StartCoroutine(GetaData(false, (value => { _tempData = value; })));
+		// }
 
 		// ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		//INFORMATION
@@ -109,7 +117,9 @@ namespace GraphicsTestFramework.SQL
 				else
 				{
                     Console.Instance.Write(DebugLevel.File, MessageLevel.LogWarning, "SQL response:" + www.downloadHandler.text); // Write to console
-                    data(new RawData());
+					RawData _data = new RawData();
+					_data.fields.Add("Null");
+                    data(_data);
 				}
             }
             else
@@ -356,6 +366,59 @@ namespace GraphicsTestFramework.SQL
             }
             return _output;
         }
+
+		//Temporary function for companion app testing
+		public IEnumerator GetaData(bool baseline, Action<ResultsIOData[]> outdata){
+			List<ResultsIOData> data = new List<ResultsIOData> ();//ResultsIOData to send back to resultsIO for local processing
+			List<string> tables = new List<string>();
+			//two suites
+			string[] suiteNames = new string[]{"Meshes", "Shaders"};
+			//Get the table names to pull baselines from
+			foreach(string suite in suiteNames){
+                RawData rawData = new RawData();//RawData to be filled by the wwwRequest
+                StartCoroutine(SQLRequest(String.Format("SHOW TABLES LIKE '{0}%{1}'", suite, baseline == true ? "Baseline" : "Results"), (value => { rawData = value; })));//Get all tables with the suite and ending with baseline
+				while(rawData.fields.Count == 0){
+                    yield return null;
+                }
+				Debug.LogError(rawData.fields.Count);
+                for (int t = 0; t < rawData.data.Count; t++){
+					tables.Add(rawData.data[t][0]);//add the table name to the list of tables to pull
+				}
+            }
+			int n = 0;
+			foreach(string table in tables){
+				Debug.LogError("getting " + table);
+				string suite = table.Substring (0, table.IndexOf ("_"));//grab the suite from the table name
+				string testType = table.Substring (table.IndexOf ("_") + 1, table.LastIndexOf ("_") - (suite.Length + 1));//grab the test type from the table name
+				bool _baseline = table.Substring (table.LastIndexOf ("_") + 1) == "Baseline" ? true : false;//grab the test type from the table name
+				// data.Add (new ResultsIOData());
+				// data [n].suite = suite;
+				// data [n].testType = testType;
+                //This line controls how baselines are selected, right now only Platform and API are unique
+                string query = String.Format("SELECT DateTime, UnityVersion, AppVersion, OS, Device, Platform, API, RenderPipe, GroupName, TestName, PassFail, Custom FROM {0} WHERE platform='{1}' AND api='{2}' GROUP BY TestName, GroupName", table, "WindowsEditor", "Direct3D11" );
+                RawData _rawData = new RawData();
+                StartCoroutine(SQLRequest(query, (value => { _rawData = value; })));
+				while(_rawData.fields.Count == 0){
+                    yield return null;
+                }
+				if(_rawData.fields[0] != "Null")
+				{
+					for (int i = 0; i < _rawData.data.Count; i++)
+					{
+						data.Add (new ResultsIOData());
+						data [n].suite = suite;
+						data [n].testType = testType;
+						data[n].fieldNames.AddRange(_rawData.fields);//Grab the fields from the RawData
+
+						ResultsIORow row = new ResultsIORow();//create a new row
+						row.resultsColumn.AddRange(_rawData.data[i]);//store the current row of values
+						data[n].resultsRow.Add(row);//add it to the data to send back to resultsIO
+						n++;
+					}
+				}
+			}
+			outdata(data.ToArray ());
+		}
 
 		class QueryBackup{
 			public QueryType type;
