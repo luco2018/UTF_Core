@@ -33,13 +33,15 @@ namespace GraphicsTestFramework.SQL
 		private List<QueryBackup> SQLNonQueryBackup = new List<QueryBackup>();
 
 		//TEMPORARY
-		// public ResultsIOData[] _tempData;
+		public ResultsIOData[] _tempData;
+		public ResultsIOData _tempDataFull;
 		
-		// IEnumerator Start()
-		// {
-		// 	yield return new WaitForSeconds(2f);
-		// 	StartCoroutine(GetaData(false, (value => { _tempData = value; })));
-		// }
+		IEnumerator Start()
+		{
+			yield return new WaitForSeconds(2f);
+			yield return StartCoroutine(GetaData(false, (value => { _tempData = value; })));
+			StartCoroutine(FetchSpecificEntry(_tempData[0], (value => { _tempDataFull = value; })));
+		}
 
 		// ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		//INFORMATION
@@ -192,13 +194,13 @@ namespace GraphicsTestFramework.SQL
 			outdata(data.ToArray ());
 		}
 
-		public IEnumerator FetchSpecificEntry(ResultsIOData inputData, Action<ResultsIOData[]> outdata)
+		public IEnumerator FetchSpecificEntry(ResultsIOData inputData, Action<ResultsIOData> outdata)
 		{
 			//make request based off common
 			string baseline = inputData.baseline == true ? "Baseline" : "Results";
 			string table = inputData.suite + "_" + inputData.testType + "_" + baseline;
 
-			string values = ConvertToCondition(inputData.data, inputData.fields);
+			string values = ConvertToCondition(inputData.resultsRow[0].resultsColumn, inputData.fieldNames);
 
 			string query = String.Format("SELECT * FROM {0} WHERE {1}", table, values);
 			RawData _rawData = new RawData();
@@ -379,12 +381,12 @@ namespace GraphicsTestFramework.SQL
 		}
 
 		//create column list for named values for condition use
-		string ConvertToCondition(List<string> values, string[] fields){
+		string ConvertToCondition(List<string> values, List<string> fields){
 			StringBuilder sb = new StringBuilder ();
 			for (int i = 0; i < values.Count; i++) {
 				sb.Append (fields[i] + "='" + values[i] + "' ");
 				if (i != values.Count - 1)
-					sb.Append (' AND ');
+					sb.Append (" AND ");
 			}
 			return sb.ToString ();
 		}
