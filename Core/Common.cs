@@ -390,7 +390,7 @@ namespace GraphicsTestFramework
                 return GraphicsSettings.renderPipelineAsset.GetType().ToString() + "|" + GraphicsSettings.renderPipelineAsset.name; // Gets the currently active pieplines name in 5.6
 		}
 
-        // Generate random UUID
+		// Generate random UUID
         public static string RandomUUID()
         {
             //Semi-random UUID
@@ -422,6 +422,7 @@ namespace GraphicsTestFramework
             return converted;
         }
 
+
         //Addcustom entry
         public static string CustomEntry(string key, string input)
         {
@@ -429,9 +430,39 @@ namespace GraphicsTestFramework
             return output;
         }
 
-    }
+		public static Texture2D ResizeInto(Texture2D source, int width, int height)
+        {
+            Texture2D resize = new Texture2D(width, height, source.format, false);
+            resize.wrapMode = TextureWrapMode.Clamp;
+            Color[] destPix = new Color[width * height];
+            int y = 0;
+            while (y < height) {
+                int x = 0;
+                while (x < width) {
+                    float xFrac = x * 1.0F / (width);
+                    float yFrac = y * 1.0F / (height);
+                    destPix[y * width + x] = source.GetPixelBilinear(xFrac, yFrac);
+                    x++;
+                }
+                y++;
+            }
+            resize.SetPixels(destPix);
+            resize.Apply();
+            return resize;
+        }
 
-    // ------------------------------------------------------------------------------------
+		//Linear to gamma colorspace
+        public static Color ConvertToGamma(Color _color)
+        {
+            _color.r = Mathf.GammaToLinearSpace(_color.r);
+            _color.g = Mathf.GammaToLinearSpace(_color.g);
+            _color.b = Mathf.GammaToLinearSpace(_color.b);
+            return _color;
+        }
+
+    }    
+	
+	// ------------------------------------------------------------------------------------
     // Global Data Structures
 
     [System.Serializable]

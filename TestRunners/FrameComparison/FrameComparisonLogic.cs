@@ -15,6 +15,7 @@ namespace GraphicsTestFramework
         // Variables
 
         Camera dummyCamera;
+        Camera menuCamera;
         RenderTexture temporaryRt;
         Texture2D resultsTexture;
         bool doCapture;        
@@ -37,6 +38,8 @@ namespace GraphicsTestFramework
             if (dummyCamera == null) // Dummy camera isnt initialized
                 dummyCamera = this.gameObject.AddComponent<Camera>(); // Create camera component
             dummyCamera.enabled = false; // Disable dummy camera
+            if (menuCamera == null)
+                menuCamera = GameObject.FindWithTag("Player").GetComponent<Camera>(); // Get the main menu camera
         }
 
         // First injection point for custom code. Runs before any test logic (optional override)
@@ -54,11 +57,23 @@ namespace GraphicsTestFramework
         // Logic for creating results data (mandatory override)
         public override IEnumerator ProcessResult()
         {
+            var typedSettings = (FrameComparisonSettings)model.settings; // Set settings to local type
+            if(!typedSettings.useBackBuffer)
+            {
+                typedSettings.captureCamera.targetTexture = temporaryRt; // Set capture cameras target texture to temporary RT (logic specific)
+                dummyCamera.enabled = true;
+            }
+            else
+            {
+                ProgressScreen.Instance.progressObject.SetActive(false); // Hide the UI breifly to do the capture
+                menuCamera.enabled = false;
+            }
             var m_TempData = (FrameComparisonResults)GetResultsStruct(); // Get a results struct (mandatory)
             yield return WaitForTimer(); // Wait for timer
-            var typedSettings = (FrameComparisonSettings)model.settings; // Set settings to local type
-            typedSettings.captureCamera.targetTexture = temporaryRt; // Set capture cameras target texture to temporary RT (logic specific)
-            doCapture = true; // Perform OnRenderImage logic (logic specific)
+            if(typedSettings.useBackBuffer)
+                BackBufferCapture();
+	    else
+	    	doCapture = true; // Perform OnRenderImage logic (logic specific)
             do { yield return null; } while (resultsTexture == null); // Wait for OnRenderImage logic to complete (logic specific)
 			m_TempData.resultFrame = Common.ConvertTextureToString (resultsTexture); // Convert results texture to Base64 String and save to results data
             if (baselineExists) // Comparison (mandatory)
@@ -70,6 +85,15 @@ namespace GraphicsTestFramework
                 else
                     m_TempData.common.PassFail = false;
                 comparisonData = null;  // Null comparison (mandatory)
+            }
+            if(typedSettings.useBackBuffer)
+            {
+                ProgressScreen.Instance.progressObject.SetActive(true); // Show progress screen again
+                menuCamera.enabled = true;
+            }
+            else
+            {
+                dummyCamera.enabled = false;
             }
             Cleanup(); // Cleanup (logic specific)
             BuildResultsStruct(m_TempData); // Submit (mandatory)
@@ -119,6 +143,22 @@ namespace GraphicsTestFramework
             }
         }
 
+        // Backbuffer capture
+        private void BackBufferCapture()
+        {
+            doCapture = false; // Reset
+            var typedSettings = (FrameComparisonSettings)model.settings; // Set settings to local type
+            Vector2 resolution = Vector2.zero; // Create vector2
+            model.resolutionList.TryGetValue(typedSettings.frameResolution, out resolution); // Get resolution
+
+            Vector2 screenRes = new Vector2(Screen.width, Screen.height); // Grab the resolution of the screen
+            Texture2D tex = new Texture2D((int)screenRes.x, (int)screenRes.y, typedSettings.textureFormat, false); // new texture to fill sized to the screen
+            tex.ReadPixels(new Rect(0, 0, (int)screenRes.x, (int)screenRes.y), 0, 0, false); // grab screen pixels
+            tex = Common.ResizeInto(tex, (int)resolution.x, (int)resolution.y);
+            resultsTexture = tex; // Set the results texture
+            Console.Instance.Write(DebugLevel.Logic, MessageLevel.Log, this.GetType().Name + " completed screen read operation for test " + activeTestEntry.testName); // Write to console
+        }
+
         // Prepare cameras for capture
         void SetupCameras()
         {
@@ -126,7 +166,6 @@ namespace GraphicsTestFramework
             var typedSettings = (FrameComparisonSettings)model.settings; // Set settings to local type
             if (dummyCamera == null) // Dummy camera isnt initialized
                 dummyCamera = this.gameObject.AddComponent<Camera>(); // Create camera component
-            dummyCamera.enabled = true; // Enable dummy camera
             if (typedSettings.captureCamera == null) // If no capture camera
             {
                 FrameComparisonSettings settings = typedSettings; // Clone the settings
@@ -138,12 +177,15 @@ namespace GraphicsTestFramework
                 }
                 if(settings.captureCamera == null) // If still not found
                 {
+                    dummyCamera.enabled = true; // Enable dummy camera
                     settings.captureCamera = dummyCamera; // Set to dummy camera as fallback
                     Console.Instance.Write(DebugLevel.Critical, MessageLevel.LogWarning, "Frame Comparison test found no camera inside test "+activeTestEntry.testName); // Write to console
                 }
                 model.settings = settings; // Set settings back
             }
-                
+
+            if (menuCamera == null)
+                menuCamera = GameObject.FindWithTag("Player").GetComponent<Camera>(); // Get the main menu camera if not already 
         }
 
         // Cleanup cameras after test finishes
