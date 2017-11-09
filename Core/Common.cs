@@ -389,6 +389,46 @@ namespace GraphicsTestFramework
             else
                 return GraphicsSettings.renderPipelineAsset.GetType().ToString() + "|" + GraphicsSettings.renderPipelineAsset.name; // Gets the currently active pieplines name in 5.6
 		}
+
+        // Generate random UUID
+        public static string RandomUUID()
+        {
+            //Semi-random UUID
+            string uuid = String.Format( "{0:ssmmffffyyyyMMddHH}" , DateTime.Now) + UnityEngine.Random.Range(1000, 9999);
+            string converted = "";
+            //Turns the second half into a char string
+            for (int i = (uuid.Length / 2) - 1; i < uuid.Length; i += 2)
+            {
+                int num;
+                int.TryParse(uuid.Substring(i, 2), out num);
+                num += 32;
+                if(num < 48)
+                    num += 48;
+                if(num > 57 && num < 65)
+                    num += 20;
+                if(num > 90 && num < 97)
+                    num += 15;
+                if(num > 122)
+                    num = 122;
+                converted += (char)num;
+            }
+            //Turns the first half into a summed interger
+            int count = 0;
+            for (int i = 0; i < (uuid.Length / 2); i += 2)
+            {
+                count += Mathf.Abs(uuid[i] - uuid[i + 1]);
+            }
+            converted = count.ToString() + converted;
+            return converted;
+        }
+
+        //Addcustom entry
+        public static string CustomEntry(string key, string input)
+        {
+            string output = key + "|" + input + "<<|>>";
+            return output;
+        }
+
     }
 
     // ------------------------------------------------------------------------------------

@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.Networking;
 using System;
 using System.Text;
+using GraphicsTestFramework;
 
 namespace GraphicsTestFramework.SQL
 {	
@@ -45,12 +46,12 @@ namespace GraphicsTestFramework.SQL
 		// Query methods - TODO wip
 		// ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		
-		public IEnumerator SQLNonQuery(string _input, Action<int> callback)
+		public IEnumerator SQLNonQuery(string _query, Action<int> callback)
         {
             List<IMultipartFormSection> form = new List<IMultipartFormSection>();
             form.Add(new MultipartFormDataSection("type", "nonQuery"));
 			form.Add(new MultipartFormDataSection("pass", _pass));
-            form.Add(new MultipartFormDataSection("query", _input));
+            form.Add(new MultipartFormDataSection("query", _query));
             UnityWebRequest www = UnityWebRequest.Post(_webservice, form); //POST data is sent via the URL
 
 #if !UNITY_2018_1_OR_NEWER
@@ -175,6 +176,29 @@ namespace GraphicsTestFramework.SQL
 				n++;
 			}
 			outdata(data.ToArray ());
+		}
+
+		public IEnumerator RunUUID(Action<string> uuid)
+		{
+			string _uuid = "";
+			bool exists = true;
+			RawData rawData = new RawData();//RawData to be filled by the wwwRequest
+			do
+			{
+				_uuid = Common.RandomUUID();
+				StartCoroutine(SQLRequest(string.Format("SELECT COUNT(*) FROM RunUUIDs WHERE runID='{0}'", _uuid), (value) => { rawData = value; }));//send the query, this will return a number if successful or -1 for a failure
+				while(rawData.data.Count == 0) { yield return null; }
+				if(rawData.data[0][0] == "0")
+					exists = false;
+			}while(exists);
+            //Add uuid
+			int num = -2;
+			StartCoroutine(SQLNonQuery(string.Format ("INSERT INTO RunUUIDs (runID) VALUES ('{0}')", _uuid), (value) => { num = value; }));//send the query, this will return a number if successful or -1 for a failure
+			while(num == -2)//while the request hasnt returned
+			{
+				yield return null;
+			}
+			uuid(_uuid);
 		}
 
 		// ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
