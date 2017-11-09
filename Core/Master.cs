@@ -13,6 +13,8 @@ namespace GraphicsTestFramework
         // ------------------------------------------------------------------------------------
         // Variables
 
+        public SQLmode _sqlMode;
+
         // Singleton
         private static Master _Instance = null;
         public static Master Instance
@@ -91,4 +93,13 @@ namespace GraphicsTestFramework
 		public string Platform;
 		public string API;
 	}
+
+    //Enum for SQL path
+    public enum SQLmode
+    {
+        Live,
+        Staging,
+        Disabled
+    }
+
 }
