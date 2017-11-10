@@ -185,8 +185,10 @@ namespace GraphicsTestFramework
             {
                 yield return Slack.Instance.SendSlackResults(); // Send results to slack
             }
-            if(Common.GetArg("automation") == "true") // Check for automation arg
+            if (Common.GetArg("automation") == "true") // Check for automation arg
                 Common.QuitApplication(); // Quick application
+            else if (isAnalytic) // IF analytic
+                ResultsViewer.Instance.SetState(5); // Enable ResultViewer
             else
                 Menu.Instance.SetMenuState(true); // Enable menu
         }
@@ -272,15 +274,24 @@ namespace GraphicsTestFramework
         public void StartTest(TestEntry inputTest, RunnerType runnerType)
         {
             Console.Instance.Write(DebugLevel.Logic, MessageLevel.Log, "Starting test " + inputTest.testName); // Write to console
-            activeTest = SuiteManager.GetTest(inputTest); // Get the active test
-            TestLogicBase activeTestLogic = GetLogicInstance(SuiteManager.GetSuiteName(inputTest.suiteIndex), activeTest, inputTest); // Get active test logic instance
+            TestLogicBase activeTestLogic = null;
+            if (!isAnalytic) // If not analytic mode
+            {
+                activeTest = SuiteManager.GetTest(inputTest); // Get the active test from suite manager
+                activeTestLogic = GetLogicInstance(SuiteManager.GetSuiteName(inputTest.suiteIndex), inputTest); // Get active test logic instance
+            }   
+            else
+            {
+                activeTest = Common.GenerateTestFromTestEntry(inputTest); // Get the active test from structure
+                activeTestLogic = GetLogicInstance(TestStructure.Instance.GetSuiteNameFromIndex(inputTest.suiteIndex), inputTest); // Get active test logic instance
+            }
             StartCoroutine(activeTestLogic.SetupTest(inputTest, runnerType)); // Setup test
         }
 
         TestModelBase activeModelInstance;
 
         // Get a logic instance and set model instance on it
-        TestLogicBase GetLogicInstance(string suiteName, Test activeTest, TestEntry activeEntry)
+        TestLogicBase GetLogicInstance(string suiteName, TestEntry activeEntry)
         {
             Console.Instance.Write(DebugLevel.Full, MessageLevel.Log, "Getting logic instance"); // Write to console
             TestLogicBase output; // Create logic instance
@@ -324,7 +335,7 @@ namespace GraphicsTestFramework
         // End the current Test (called by TestLogic.EndTestAction)
         public void EndTest()
         {
-            Console.Instance.Write(DebugLevel.Logic, MessageLevel.Log, "Ended test " + activeTest.scenePath.ToString()); // Write to console
+            Console.Instance.Write(DebugLevel.Logic, MessageLevel.Log, "Ended test " + activeTest.name.ToString()); // Write to console
             if(runnerType == RunnerType.Manual) // If manual run
                 ProgressScreen.Instance.SetState(false, ProgressType.LocalLoad, ""); // Disable ProgressScreen
             FinalizeTest(); // Finalize test on TestRunner

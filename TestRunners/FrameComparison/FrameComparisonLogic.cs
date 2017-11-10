@@ -70,12 +70,7 @@ namespace GraphicsTestFramework
             if (baselineExists) // Comparison (mandatory)
             {
                 FrameComparisonResults referenceData = (FrameComparisonResults)DeserializeResults(ResultsIO.Instance.RetrieveEntry(suiteName, testTypeName, m_TempData.common, true, true)); // Deserialize baseline data (mandatory)
-                FrameComparisonComparison comparisonData = (FrameComparisonComparison)ProcessComparison(referenceData, m_TempData);  // Prrocess comparison (mandatory)
-                if (comparisonData.DiffPercentage < model.settings.passFailThreshold)  // Pass/fail decision logic (logic specific)
-                    m_TempData.common.PassFail = true;
-                else
-                    m_TempData.common.PassFail = false;
-                comparisonData = null;  // Null comparison (mandatory)
+                m_TempData.common.PassFail = GetComparisonResult(m_TempData, referenceData); // Get comparison results
             }
             if(typedSettings.useBackBuffer)
             {
@@ -96,6 +91,19 @@ namespace GraphicsTestFramework
         {
             dummyCamera.enabled = false; // Disable dummy camera
             EndTest(); // End test
+        }
+
+        // Get a comparison result from any given result and baseline
+        public override bool GetComparisonResult(ResultsBase results, ResultsBase baseline)
+        {
+            FrameComparisonComparison comparisonData = (FrameComparisonComparison)ProcessComparison(baseline, results);  // Prrocess comparison (mandatory)
+            bool output = false;
+            if (comparisonData.DiffPercentage < model.settings.passFailThreshold)  // Pass/fail decision logic (logic specific)
+                output = true;
+            else
+                output = false;
+            comparisonData = null;  // Null comparison (mandatory)
+            return output;
         }
 
         // Logic for comparison process (mandatory)

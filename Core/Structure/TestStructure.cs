@@ -58,6 +58,7 @@ namespace GraphicsTestFramework
         // DELETE ME!
 
         private ResultsIOData[] _tempData;
+        private ResultsIOData[] _tempData2;
 
         IEnumerator GetData(bool isComparison)
         {
@@ -65,7 +66,10 @@ namespace GraphicsTestFramework
             if(!isComparison)
                 StartCoroutine(GenerateAnalyticStructure(_tempData));
             else
-                StartCoroutine(GenerateAnalyticStructure(_tempData, _tempData));
+            {
+                yield return StartCoroutine(GraphicsTestFramework.SQL.SQLIO.Instance.GetaData(false, (value => { _tempData2 = value; })));
+                StartCoroutine(GenerateAnalyticStructure(_tempData, _tempData2));
+            } 
         }
 
         void Update()
@@ -649,6 +653,12 @@ namespace GraphicsTestFramework
         {
             TestResults testResults = (TestResults)testStructure.suites[testEntry.suiteIndex].types[testEntry.typeIndex].groups[testEntry.groupIndex].tests[testEntry.testIndex]; // Get entry and cast
             return dataSet == 0 ? testResults.dataA : testResults.dataB; // Return data set
+        }
+
+        // Get a suite name from index
+        public string GetSuiteNameFromIndex(int index)
+        {
+            return testStructure.suites[index].suiteName; // Return suite name
         }
 
         // ------------------------------------------------------------------------------------

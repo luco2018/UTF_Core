@@ -47,14 +47,22 @@ namespace GraphicsTestFramework
             if (baselineExists) // Comparison (mandatory)
             {
                 ExampleResults referenceData = (ExampleResults)DeserializeResults(ResultsIO.Instance.RetrieveEntry(suiteName, testTypeName, m_TempData.common, true, true)); // Deserialize baseline data (mandatory)
-                ExampleComparison comparisonData = (ExampleComparison)ProcessComparison(referenceData, m_TempData);  // Prrocess comparison (mandatory)
-                if (comparisonData.SomeFloatDiff < model.settings.passFailThreshold)  // Pass/fail decision logic (logic specific)
-                    m_TempData.common.PassFail = true;
-                else
-                    m_TempData.common.PassFail = false;
-                comparisonData = null;  // Null comparison (mandatory)
+                m_TempData.common.PassFail = GetComparisonResult(m_TempData, referenceData); // Get comparison results
             }
             BuildResultsStruct(m_TempData); // Submit (mandatory)
+        }
+
+        // Get a comparison result from any given result and baseline
+        public override bool GetComparisonResult(ResultsBase results, ResultsBase baseline)
+        {
+            ExampleComparison comparisonData = (ExampleComparison)ProcessComparison(baseline, results);  // Prrocess comparison (mandatory)
+            bool output = false;
+            if (comparisonData.SomeFloatDiff < model.settings.passFailThreshold)  // Pass/fail decision logic (logic specific)
+                output = true;
+            else
+                output = false;
+            comparisonData = null;  // Null comparison (mandatory)
+            return output;
         }
 
         // Logic for comparison process (mandatory)

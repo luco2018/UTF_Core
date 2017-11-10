@@ -470,6 +470,14 @@ namespace GraphicsTestFramework
             }
             return -1; // Fail
         }
+
+        // Generates a dummy Test instance from a TestEntry
+        public static Test GenerateTestFromTestEntry(TestEntry input)
+        {
+            Test output = new Test(); // Create output
+            output.name = input.testName; // Set name as thats all we need
+            return output; // Return
+        }
     }    
 	
 	// ------------------------------------------------------------------------------------

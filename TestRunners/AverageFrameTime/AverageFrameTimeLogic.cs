@@ -32,14 +32,22 @@ namespace GraphicsTestFramework
             if (baselineExists) // Comparison (mandatory)
             {
                 AverageFrameTimeResults referenceData = (AverageFrameTimeResults)DeserializeResults(ResultsIO.Instance.RetrieveEntry(suiteName, testTypeName, m_TempData.common, true, true)); // Deserialize baseline data (mandatory)
-                AverageFrameTimeComparison comparisonData = (AverageFrameTimeComparison)ProcessComparison(referenceData, m_TempData);  // Process comparison (mandatory)
-                if (comparisonData.delta < model.settings.passFailThreshold)  // Pass/fail decision logic (logic specific)
-                    m_TempData.common.PassFail = true;
-                else
-                    m_TempData.common.PassFail = false;
-                comparisonData = null;  // Null comparison (mandatory)
+                m_TempData.common.PassFail = GetComparisonResult(m_TempData, referenceData); // Get comparison result
             }
             BuildResultsStruct(m_TempData); // Submit (mandatory)
+        }
+
+        // Get a comparison result from any given result and baseline
+        public override bool GetComparisonResult(ResultsBase results, ResultsBase baseline)
+        {
+            AverageFrameTimeComparison comparisonData = (AverageFrameTimeComparison)ProcessComparison(baseline, results);  // Process comparison (mandatory)
+            bool output = false;
+            if (comparisonData.delta < model.settings.passFailThreshold)  // Pass/fail decision logic (logic specific)
+                output = true;
+            else
+                output = false;
+            comparisonData = null;  // Null comparison (mandatory)
+            return output;
         }
 
         // Logic for comparison process (mandatory)

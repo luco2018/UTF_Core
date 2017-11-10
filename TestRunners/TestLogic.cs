@@ -115,6 +115,10 @@ namespace GraphicsTestFramework
                 CheckForBaseline(); // Check for baselines
                 Console.Instance.Write(DebugLevel.Full, MessageLevel.Log, this.GetType().Name + " set up test " + activeTestEntry.testName); // Write to console
             }
+            else
+            {
+                SetSettings(); // Set settings to internal
+            }
             ResultsIOData localResult; // Used for certain active run types
             switch (activeRunType)
             {
@@ -138,13 +142,13 @@ namespace GraphicsTestFramework
                 case RunnerType.Analytic:
                     break;
                 case RunnerType.AnalyticComparison:
-                    ProcessAnalyticComparison();
+                    StartCoroutine(ProcessAnalyticComparison());
                     break;
             }
         }
 
         // Analytic comparson Logic
-        public abstract void ProcessAnalyticComparison();
+        public abstract IEnumerator ProcessAnalyticComparison();
 
         // First injection point for custom code. Runs before any test logic.
         public virtual void TestPreProcess()
@@ -211,6 +215,9 @@ namespace GraphicsTestFramework
                     break;
                 case RunnerType.Resolve:
                     GetComponent<TestDisplayBase>().EnableTestViewer(activeResultData, new TestViewerToolbar.State(false, false, false, true, true)); // Enable test viewer with active results data
+                    break;
+                case RunnerType.AnalyticComparison:
+                    BroadcastEndTestAction(); // Broadcast to TestList that rest is completed
                     break;
             }
         }
@@ -603,17 +610,20 @@ namespace GraphicsTestFramework
 		}
 
         // Analytic comparson logic
-        public override void ProcessAnalyticComparison()
+        public override IEnumerator ProcessAnalyticComparison()
         {
             ResultsIOData resultsA = new ResultsIOData(); // Create results A
-            StartCoroutine(SQL.SQLIO.Instance.FetchSpecificEntry(TestStructure.Instance.RequestAnalyticData(1, activeTestEntry), (value => { resultsA = value; }))); // Get full results A
-            var rawResultsA = (R)DeserializeResults(resultsA);
+            yield return StartCoroutine(SQL.SQLIO.Instance.FetchSpecificEntry(TestStructure.Instance.RequestAnalyticData(1, activeTestEntry), (value => { resultsA = value; }))); // Get full results A
+            var rawResultsA = (R)DeserializeResults(resultsA); // Deserialize
             ResultsIOData resultsB = new ResultsIOData(); // Create results A
-            StartCoroutine(SQL.SQLIO.Instance.FetchSpecificEntry(TestStructure.Instance.RequestAnalyticData(1, activeTestEntry), (value => { resultsA = value; }))); // Get full results A
-            var rawResultsB = (R)DeserializeResults(resultsA);
-            var results = (C)ProcessComparison(rawResultsA, rawResultsB);
-            // TODO - How to get the comparison done?!
+            yield return StartCoroutine(SQL.SQLIO.Instance.FetchSpecificEntry(TestStructure.Instance.RequestAnalyticData(1, activeTestEntry), (value => { resultsA = value; }))); // Get full results A
+            var rawResultsB = (R)DeserializeResults(resultsA); // Deserialize
+            bool passFail = GetComparisonResult(rawResultsA, rawResultsB); // Get Comparison result
+            resultsA.resultsRow[0].resultsColumn[Common.FindResultsDataIOFieldIdByName(resultsA, "PassFail")] = passFail.ToString(); // Set pass fail
+            EndTest(); // End test
         }
+
+        public abstract bool GetComparisonResult(ResultsBase results, ResultsBase baseline);
 
         // ------------------------------------------------------------------------------------
         // Stable Framerate
