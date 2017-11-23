@@ -264,7 +264,7 @@ namespace GraphicsTestFramework
                                 {
                                     string testName = structure.suites[su].types[ty].groups[gr].tests[te].testName; // Get test name
                                     string scenePath = structure.suites[su].types[ty].groups[gr].tests[te].scenePath; // Get scene path
-                                    ResultsDataCommon common = BuildResultsDataCommon(groupName, testName); // Build results data common to retrieve results
+                                    ResultsDataCommon common = Common.BuildResultsDataCommon(groupName, testName); // Build results data common to retrieve results
                                     ResultsIOData data = ResultsIO.Instance.RetrieveResult(suiteName, typeName, common); // Retrieve results data
                                     if (resultsDropdown.value != 0) // If filtering based on results
                                     {
@@ -560,22 +560,6 @@ namespace GraphicsTestFramework
                 Destroy(activeContextObject); // Destroy object
                 activeContextObject = null; // Set null
             }
-        }
-
-        // ------------------------------------------------------------------------------------
-        // Helper Functions
-
-        // TODO - Should this be global?
-        ResultsDataCommon BuildResultsDataCommon(string sceneName, string testName)
-        {
-            ResultsDataCommon common = new ResultsDataCommon();
-            SystemData systemData = Master.Instance.GetSystemData();
-            common.Platform = systemData.Platform;
-            common.API = systemData.API;
-            common.RenderPipe = "Standard Legacy"; // TODO - Implement SRP support
-            common.GroupName = sceneName;
-            common.TestName = testName;
-            return common;
         }
 
         // ------------------------------------------------------------------------------------

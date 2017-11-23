@@ -349,6 +349,18 @@ namespace GraphicsTestFramework
             return (value / i) * 100; // Divide total value by pixel count and multiply by 100 to return average percent
         }
 
+        public static ResultsDataCommon BuildResultsDataCommon(string sceneName, string testName)
+        {
+            ResultsDataCommon common = new ResultsDataCommon();
+            SystemData systemData = Master.Instance.GetSystemData();
+            common.Platform = systemData.Platform;
+            common.API = systemData.API;
+            common.RenderPipe = "Standard Legacy"; // TODO - Implement SRP support
+            common.GroupName = sceneName;
+            common.TestName = testName;
+            return common;
+        }
+
         public static void SetTestSettings(TestSettings testSettings)
         {
             QualitySettings.pixelLightCount = testSettings.pixelLightCount;
