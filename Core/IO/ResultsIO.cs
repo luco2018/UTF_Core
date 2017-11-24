@@ -13,7 +13,9 @@ namespace GraphicsTestFramework
 		private SystemData sysData;
 		public bool isWaiting = false;
 		public bool companionMode = false;
+		[HideInInspector]
 		public bool writeLocal = true;
+		[HideInInspector]
 		public bool writeCloud = true;
 
 		//List of suiteBaselineData for suites
@@ -32,6 +34,9 @@ namespace GraphicsTestFramework
 		{
 			//Grab the system data to share around
 			sysData = Master.Instance.GetSystemData ();
+
+			if(Master.Instance._sqlMode == SQLmode.Disabled)
+				writeCloud = false;
 
 			//setup local IO
 			if (LocalIO.Instance == null)

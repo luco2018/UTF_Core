@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using GraphicsTestFramework.SQL;
 
 namespace GraphicsTestFramework
 {
@@ -46,6 +47,9 @@ namespace GraphicsTestFramework
         bool runnerIsWaiting;
         int currentTestIndex;
         public Test activeTest;
+
+        // UUID for automated run
+        public static string runUUID = "null";
 
         // Level load (TODO - Update API)
         private bool levelWasLoaded = false;
@@ -152,6 +156,9 @@ namespace GraphicsTestFramework
         IEnumerator IterateTests()
         {
             Console.Instance.Write(DebugLevel.Logic, MessageLevel.Log, "Starting automation run"); // Write to console
+            runUUID = "";
+            StartCoroutine(SQL.SQLIO.Instance.RunUUID((value => { runUUID = value; })));
+            while(runUUID == "") { yield return null; }
             for (int i = 0; i < runner.tests.Count; i++) // Iterate tests
             {
                 do { yield return null; } while (runnerIsWaiting == true); // Wait for previous test to finish before next test

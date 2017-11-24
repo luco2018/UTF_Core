@@ -349,6 +349,9 @@ namespace GraphicsTestFramework
             overviewResultsWindow.failPercentage.text = failPercentage.ToString("0.##") + "%"; // Set to UI
             overviewResultsWindow.ranPercentage.text = ranPercentage.ToString("0.##") + "%"; // Set to UI
             overviewResultsWindow.notRanPercentage.text = notRanPercentage.ToString("0.##") + "%"; // Set to UI
+            string runID = TestRunner.runUUID == "null" ? "No Run ID" : TestRunner.runUUID;
+            overviewResultsWindow.lastRunID.interactable = runID == "No Run ID" ? false : true;
+            overviewResultsWindow.lastRunID.text = runID; // Set the last run ID if exists
             piePass.fillAmount = passPercentage / 100; // Set pie value
             pieFail.fillAmount = (passPercentage / 100) + (failPercentage / 100); // Set pie value
         }
@@ -590,6 +593,7 @@ namespace GraphicsTestFramework
             public Text failPercentage;
             public Text ranPercentage;
             public Text notRanPercentage;
+            public InputField lastRunID;
         }
     }
 }

@@ -178,7 +178,7 @@ namespace GraphicsTestFramework
             return output; // Return
         }
 
-#if UNITY_2018_1_OR_NEWER
+#if UNITY_2017_3_OR_NEWER
         // Editor target list (editor targets that are not emulated)
         public static UnityEditor.BuildTarget[] editorTargets = new UnityEditor.BuildTarget[6]
         {
@@ -389,9 +389,80 @@ namespace GraphicsTestFramework
             else
                 return GraphicsSettings.renderPipelineAsset.GetType().ToString() + "|" + GraphicsSettings.renderPipelineAsset.name; // Gets the currently active pieplines name in 5.6
 		}
-    }
 
-    // ------------------------------------------------------------------------------------
+		// Generate random UUID
+        public static string RandomUUID()
+        {
+            //Semi-random UUID
+            string uuid = String.Format( "{0:ssmmffffyyyyMMddHH}" , DateTime.Now) + UnityEngine.Random.Range(1000, 9999);
+            string converted = "";
+            //Turns the second half into a char string
+            for (int i = (uuid.Length / 2) - 1; i < uuid.Length; i += 2)
+            {
+                int num;
+                int.TryParse(uuid.Substring(i, 2), out num);
+                num += 32;
+                if(num < 48)
+                    num += 48;
+                if(num > 57 && num < 65)
+                    num += 20;
+                if(num > 90 && num < 97)
+                    num += 15;
+                if(num > 122)
+                    num = 122;
+                converted += (char)num;
+            }
+            //Turns the first half into a summed interger
+            int count = 0;
+            for (int i = 0; i < (uuid.Length / 2); i += 2)
+            {
+                count += Mathf.Abs(uuid[i] - uuid[i + 1]);
+            }
+            converted = count.ToString() + converted;
+            return converted;
+        }
+
+
+        //Addcustom entry
+        public static string CustomEntry(string key, string input)
+        {
+            string output = key + "|" + input + "<>|<>";
+            return output;
+        }
+
+		public static Texture2D ResizeInto(Texture2D source, int width, int height)
+        {
+            Texture2D resize = new Texture2D(width, height, source.format, false);
+            resize.wrapMode = TextureWrapMode.Clamp;
+            Color[] destPix = new Color[width * height];
+            int y = 0;
+            while (y < height) {
+                int x = 0;
+                while (x < width) {
+                    float xFrac = x * 1.0F / (width);
+                    float yFrac = y * 1.0F / (height);
+                    destPix[y * width + x] = source.GetPixelBilinear(xFrac, yFrac);
+                    x++;
+                }
+                y++;
+            }
+            resize.SetPixels(destPix);
+            resize.Apply();
+            return resize;
+        }
+
+		//Linear to gamma colorspace
+        public static Color ConvertToGamma(Color _color)
+        {
+            _color.r = Mathf.GammaToLinearSpace(_color.r);
+            _color.g = Mathf.GammaToLinearSpace(_color.g);
+            _color.b = Mathf.GammaToLinearSpace(_color.b);
+            return _color;
+        }
+
+    }    
+	
+	// ------------------------------------------------------------------------------------
     // Global Data Structures
 
     [System.Serializable]
