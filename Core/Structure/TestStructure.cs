@@ -569,6 +569,7 @@ namespace GraphicsTestFramework
             public string scenePath;
             public int selectionState;
             public bool baseline;
+            public string caseID;
         }
     }
 }
