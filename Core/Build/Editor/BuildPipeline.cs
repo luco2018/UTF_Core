@@ -13,6 +13,7 @@ namespace GraphicsTestFramework
         {
             if (config) // If the build configuration is not null
             {
+                string outputPath = "";
                 for (int t = 0; t < config.buildTargets.Count; t++) // Iterate build targets
                 {
                     BuildTarget target = config.buildTargets[t]; // Get current target
@@ -26,13 +27,24 @@ namespace GraphicsTestFramework
 
                     BuildSettings.SetApplicationSettings(target, AppendProductName(target));
 
+                    //Set Script logging settings
+                    if (config.enableScriptLogging)
+                    {
+                        SetScriptLoggingParams(StackTraceLogType.Full);
+                    }
+                    else
+                    {
+                        SetScriptLoggingParams(StackTraceLogType.None);
+                    }
+
                     if (SetGraphicsAPI(target) == false) // Check if Graphics API can be set to the specified target
                     {
                         Debug.LogError("Failed to build Player, Directory: " + directory + "/" + applicationName); // Log error
                         continue; // Go to next target
                     }
 
-                    string build = BuildClient(target, directory, applicationName); // Build client
+                    string build = BuildClient(target, directory, applicationName, config); // Build client
+                    outputPath = directory;
 
                     while (UnityEditor.BuildPipeline.isBuildingPlayer == true) // Wait for build to finish
                         yield return null; // Wait
@@ -44,6 +56,8 @@ namespace GraphicsTestFramework
                         Debug.LogError(build); // Return build fail log
                     }
                 }
+                outputPath = outputPath.Replace(@"/", @"\");   // explorer doesn't like front slashes 
+                System.Diagnostics.Process.Start("explorer.exe", outputPath);
             }
             else // Null build configuartion
                 Debug.LogError("No Build Configuration file assigned. Please assign a Build Configuration file in the Build Pipeline window"); // Log error 
@@ -79,6 +93,28 @@ namespace GraphicsTestFramework
                 return true; // Return true
         }
 
+        /// <summary>
+        /// Sets script logging options for standalone build
+        /// </summary>
+        /// <param name="logType"></param>
+        public static void SetScriptLoggingParams(StackTraceLogType logType)
+        {
+            PlayerSettings.SetStackTraceLogType(LogType.Assert, logType);
+            PlayerSettings.SetStackTraceLogType(LogType.Error, logType);
+            PlayerSettings.SetStackTraceLogType(LogType.Exception, logType);
+            PlayerSettings.SetStackTraceLogType(LogType.Log, logType);
+            PlayerSettings.SetStackTraceLogType(LogType.Warning, logType);
+        }
+
+        /// <summary>
+        /// Sets 
+        /// </summary>
+        public static void SetBuildDevelopmentType(BuildOptions T)
+        {
+            //gotta refactor for this.
+
+        }
+
         // Get Application name
         public static string GetApplicationName(BuildTarget target, ProjectSettings projectSettings, string configNameOverride)
         {
@@ -104,15 +140,15 @@ namespace GraphicsTestFramework
                 case UnityEditor.BuildTarget.StandaloneWindows64:
                     applicationName += ".exe";
                     break;
-                #if UNITY_2018_1_OR_NEWER
+#if UNITY_2017_3_OR_NEWER
                 case UnityEditor.BuildTarget.StandaloneOSX:
                     applicationName += ".app";
                     break;
-                #else
+#else
                 case UnityEditor.BuildTarget.StandaloneOSXUniversal:
                     applicationName += ".app";
                     break;
-                #endif
+#endif
                 case UnityEditor.BuildTarget.StandaloneLinux:
                     applicationName += ".app";
                     break;
@@ -150,26 +186,26 @@ namespace GraphicsTestFramework
         }
 
         // Build the client
-        public static string BuildClient(BuildTarget target, string directory, string applicationName)
+        public static string BuildClient(BuildTarget target, string directory, string applicationName, BuildConfiguration config)
         {
             if (!System.IO.Directory.Exists(directory + "/" + "")) // If directory doesnt exist
                 System.IO.Directory.CreateDirectory(directory + "/" + applicationName); // Create it
             Debug.Log("Building Player, Directory: " + directory + "/" + applicationName); // Debug "building"
-            return UnityEditor.BuildPipeline.BuildPlayer(GetBuildSettings(target.platform, directory + "/" + applicationName)); // Build player and return debug result
+            return UnityEditor.BuildPipeline.BuildPlayer(GetBuildSettings(target.platform, directory + "/" + applicationName, config)); // Build player and return debug result           
         }
 
         // Get BuildSettings object
-        static BuildPlayerOptions GetBuildSettings(UnityEditor.BuildTarget target, string path)
+        static BuildPlayerOptions GetBuildSettings(UnityEditor.BuildTarget target, string path, BuildConfiguration config)
         {
-            BuildPlayerOptions buildPlayerOptions = new BuildPlayerOptions(); // Create new BuildPlayerOptions
+            BuildPlayerOptions buildPlayerOptions = new BuildPlayerOptions(); // Create new BuildPlayerOptions          
             List<string> paths = new List<string>(); // Create new list for paths
             foreach (EditorBuildSettingsScene scene in EditorBuildSettings.scenes) // Iterate scenes
                 paths.Add(scene.path); // Add to path list
             string[] scenes = paths.ToArray(); // Convert to array
-            buildPlayerOptions.scenes = scenes; // Set scenes
+            buildPlayerOptions.scenes = scenes; // Set scenes         
             buildPlayerOptions.locationPathName = path; // Set build path
             buildPlayerOptions.target = target; // Set target
-            buildPlayerOptions.options = BuildOptions.Development; // Set options (development build)
+            buildPlayerOptions.options = config.buildOption; // Set options (development build)
             return buildPlayerOptions; // Return BuildPlayerOptions
         }
     }
