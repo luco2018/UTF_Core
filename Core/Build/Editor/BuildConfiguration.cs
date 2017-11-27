@@ -12,8 +12,15 @@ namespace GraphicsTestFramework
     [CreateAssetMenu]
     public class BuildConfiguration : ScriptableObject
     {
+        [Header("Override parameters")]
         public string nameOverride;
         public string pathOverride;
+        [Header("Build Parameters")]
+        public bool enableScriptLogging;
+        [SerializeField]
+        public BuildOptions buildOption = BuildOptions.Development;
+
+        [Header("Build profiles")]
         public List<BuildTarget> buildTargets = new List<BuildTarget>();
     }
 

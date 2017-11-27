@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Experimental.Rendering;
+using Encrypto;
 
 namespace GraphicsTestFramework
 {
@@ -18,14 +19,56 @@ namespace GraphicsTestFramework
         // Framework Information
         public static string applicationVersion = "1.0b1";
 
+
         // ------------------------------------------------------------------------------------
         // System
+
+        /// <summary>
+        /// Encrypts a user's password. This can only be invoked from the common class.
+        /// </summary>
+        /// <param name="password"></param>
+        /// <returns></returns>
+        public static string EncryptPassword(string password)
+        {
+            string T = typeof(Common).Name;
+            string ePassword = "Failed to encrypt";
+            try
+            {
+                ePassword = Encrypto.Tools.EncryptString(password, T);
+            }
+            catch (System.Exception exception)
+            {
+                Debug.LogError(exception.Message);
+            }
+            return ePassword;
+        }
+
+        /// <summary>
+        /// Decrypts a user's password. This can only be invoked from the common class.
+        /// </summary>
+        /// <param name="password"></param>
+        /// <returns></returns>
+        public static string DecryptPassword(string password)
+        {
+            string T = typeof(Common).Name;
+            string ePassword = "Failed to decrypt";
+            try
+            {
+                ePassword = Tools.DecryptString(password, T);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogError(exception.Message);
+            }
+            return ePassword;
+        }
+
 
         // Get command line argument
         public static string GetArg(string name)
         {
             Console.Instance.Write(DebugLevel.Full, MessageLevel.Log, "Getting command line arguments"); // Write to console
-            if(Application.platform != RuntimePlatform.Android) // Fails on these platforms
+            if (Application.platform != RuntimePlatform.Android) // Fails on these platforms
             {
                 var args = System.Environment.GetCommandLineArgs(); // Get all arguments
                 for (int i = 0; i < args.Length; i++) // Iterate
@@ -65,8 +108,8 @@ namespace GraphicsTestFramework
             {FrameResolution.FullHD , new Vector2(1920, 1080) },
         };
 
-		// Date time format string
-		public static string dateTimeFormat = "yyyy-MM-dd\\THH:mm:ss\\Z";
+        // Date time format string
+        public static string dateTimeFormat = "yyyy-MM-dd\\THH:mm:ss\\Z";
 
         // Unity Versions
         public static string[] unityVersionList = new string[4]
@@ -85,7 +128,7 @@ namespace GraphicsTestFramework
         {
             Console.Instance.Write(DebugLevel.Full, MessageLevel.Log, "Getting common results data"); // Write to console
             ResultsDataCommon output = new ResultsDataCommon(); // Create new class instance
-			output.DateTime = Master.Instance.GetSystemTime ().ToString (dateTimeFormat); // Get SystemTime from Master
+            output.DateTime = Master.Instance.GetSystemTime().ToString(dateTimeFormat); // Get SystemTime from Master
             SystemData systemData = Master.Instance.GetSystemData(); // Get SystemData from Master
             output.UnityVersion = systemData.UnityVersion; // Extract from SystemData
             output.AppVersion = systemData.AppVersion; // Extract from SystemData
@@ -96,7 +139,7 @@ namespace GraphicsTestFramework
             output.RenderPipe = GetRenderPipelineName(); // Get the currently assigned pipeline
             output.Custom = ""; // Futureproof
             return output; // Return
-        }        
+        }
 
         // ------------------------------------------------------------------------------------
         // Common Conversions
@@ -129,24 +172,25 @@ namespace GraphicsTestFramework
             Console.Instance.Write(DebugLevel.Full, MessageLevel.Log, "Converting String to Texture2D"); // Write to console
             Texture2D output = new Texture2D(2, 2); // Create output Texture2D
             output.name = textureName; // Set texture name
-			byte[] decodedBytes = new byte[input.Length / 2]; // Create byte array to hold data
-            for(int i = 0; i < input.Length; i +=2){ // Convert input string from Hex to byte array
-				decodedBytes [i / 2] = Convert.ToByte (input.Substring (i, 2), 16);
-			}
+            byte[] decodedBytes = new byte[input.Length / 2]; // Create byte array to hold data
+            for (int i = 0; i < input.Length; i += 2)
+            { // Convert input string from Hex to byte array
+                decodedBytes[i / 2] = Convert.ToByte(input.Substring(i, 2), 16);
+            }
             output.LoadImage(decodedBytes); // Load image (PNG)
             return output; // Return
         }
 
-		// Convert a Texture2D to a HEX string
-		public static string ConvertTextureToString(Texture2D texture)
-		{
-			Console.Instance.Write(DebugLevel.Full, MessageLevel.Log, "Converting Texture2D to String"); // Write to console
-			byte[] bytes = texture.EncodeToPNG (); // Create Byte array
-			StringBuilder sb = new StringBuilder();
-			foreach (byte b in bytes)
-				sb.Append(b.ToString("X2"));//Add bytes as Hex values
-			return sb.ToString (); // Return
-		}
+        // Convert a Texture2D to a HEX string
+        public static string ConvertTextureToString(Texture2D texture)
+        {
+            Console.Instance.Write(DebugLevel.Full, MessageLevel.Log, "Converting Texture2D to String"); // Write to console
+            byte[] bytes = texture.EncodeToPNG(); // Create Byte array
+            StringBuilder sb = new StringBuilder();
+            foreach (byte b in bytes)
+                sb.Append(b.ToString("X2"));//Add bytes as Hex values
+            return sb.ToString(); // Return
+        }
 
         // Convert a RenderTexture to a Texture2D
         public static Texture2D ConvertRenderTextureToTexture2D(string textureName, RenderTexture input, Vector2 resolution, TextureFormat format, FilterMode filterMode)
@@ -170,7 +214,7 @@ namespace GraphicsTestFramework
         public static bool IsStandaloneTarget(UnityEditor.BuildTarget target)
         {
             bool output = false; // Create output
-            foreach(UnityEditor.BuildTarget t in editorTargets) // Iterate editor target list
+            foreach (UnityEditor.BuildTarget t in editorTargets) // Iterate editor target list
             {
                 if (t == target) // If matches input target
                     output = true; // Set output to true
@@ -265,7 +309,7 @@ namespace GraphicsTestFramework
         public static float GetTimeDifference(DateTime start, DateTime end, ref TimePeriod period)
         {
             float output = 0f; // Create output
-            switch(period) // Switch on incoming time period
+            switch (period) // Switch on incoming time period
             {
                 case TimePeriod.Year:
                     output = (float)(end - start).TotalDays / 365; // Return years
@@ -315,7 +359,7 @@ namespace GraphicsTestFramework
                     {
                         output = Mathf.Floor((float)(end - start).TotalSeconds); // Return seconds
                         period = TimePeriod.Second; // Set period
-                    }  
+                    }
                     break;
             }
             return output; // Return
@@ -400,13 +444,13 @@ namespace GraphicsTestFramework
                 return defaultPipeline; // return the default pipeline string
             else
                 return GraphicsSettings.renderPipelineAsset.GetType().ToString() + "|" + GraphicsSettings.renderPipelineAsset.name; // Gets the currently active pieplines name in 5.6
-		}
+        }
 
-		// Generate random UUID
+        // Generate random UUID
         public static string RandomUUID()
         {
             //Semi-random UUID
-            string uuid = String.Format( "{0:ssmmffffyyyyMMddHH}" , DateTime.Now) + UnityEngine.Random.Range(1000, 9999);
+            string uuid = String.Format("{0:ssmmffffyyyyMMddHH}", DateTime.Now) + UnityEngine.Random.Range(1000, 9999);
             string converted = "";
             //Turns the second half into a char string
             for (int i = (uuid.Length / 2) - 1; i < uuid.Length; i += 2)
@@ -414,13 +458,13 @@ namespace GraphicsTestFramework
                 int num;
                 int.TryParse(uuid.Substring(i, 2), out num);
                 num += 32;
-                if(num < 48)
+                if (num < 48)
                     num += 48;
-                if(num > 57 && num < 65)
+                if (num > 57 && num < 65)
                     num += 20;
-                if(num > 90 && num < 97)
+                if (num > 90 && num < 97)
                     num += 15;
-                if(num > 122)
+                if (num > 122)
                     num = 122;
                 converted += (char)num;
             }
@@ -442,15 +486,17 @@ namespace GraphicsTestFramework
             return output;
         }
 
-		public static Texture2D ResizeInto(Texture2D source, int width, int height)
+        public static Texture2D ResizeInto(Texture2D source, int width, int height)
         {
             Texture2D resize = new Texture2D(width, height, source.format, false);
             resize.wrapMode = TextureWrapMode.Clamp;
             Color[] destPix = new Color[width * height];
             int y = 0;
-            while (y < height) {
+            while (y < height)
+            {
                 int x = 0;
-                while (x < width) {
+                while (x < width)
+                {
                     float xFrac = x * 1.0F / (width);
                     float yFrac = y * 1.0F / (height);
                     destPix[y * width + x] = source.GetPixelBilinear(xFrac, yFrac);
@@ -463,7 +509,7 @@ namespace GraphicsTestFramework
             return resize;
         }
 
-		//Linear to gamma colorspace
+        //Linear to gamma colorspace
         public static Color ConvertToGamma(Color _color)
         {
             _color.r = Mathf.GammaToLinearSpace(_color.r);
@@ -472,9 +518,9 @@ namespace GraphicsTestFramework
             return _color;
         }
 
-    }    
-	
-	// ------------------------------------------------------------------------------------
+    }
+
+    // ------------------------------------------------------------------------------------
     // Global Data Structures
 
     [System.Serializable]
@@ -487,7 +533,7 @@ namespace GraphicsTestFramework
         public string Device;
         public string Platform;
         public string API;
-		public string RenderPipe;
+        public string RenderPipe;
         public string GroupName;
         public string TestName;
         public bool PassFail;

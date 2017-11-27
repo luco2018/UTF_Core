@@ -18,7 +18,7 @@ namespace GraphicsTestFramework
         Camera menuCamera;
         RenderTexture temporaryRt;
         Texture2D resultsTexture;
-        bool doCapture;        
+        bool doCapture;
 
         // Structure for comparison
         [System.Serializable]
@@ -58,7 +58,7 @@ namespace GraphicsTestFramework
         public override IEnumerator ProcessResult()
         {
             var typedSettings = (FrameComparisonSettings)model.settings; // Set settings to local type
-            if(!typedSettings.useBackBuffer)
+            if (!typedSettings.useBackBuffer)
             {
                 typedSettings.captureCamera.targetTexture = temporaryRt; // Set capture cameras target texture to temporary RT (logic specific)
                 dummyCamera.enabled = true;
@@ -70,12 +70,18 @@ namespace GraphicsTestFramework
             }
             var m_TempData = (FrameComparisonResults)GetResultsStruct(); // Get a results struct (mandatory)
             yield return WaitForTimer(); // Wait for timer
-            if(typedSettings.useBackBuffer)
+            if (typedSettings.useBackBuffer)
+            {
+                if(Debug.developerConsoleVisible)
+                {
+                    Debug.ClearDeveloperConsole(); // Clear the dev console if it's visible before capturing the backbuffer.
+                }
                 BackBufferCapture();
-	    else
-	    	doCapture = true; // Perform OnRenderImage logic (logic specific)
+            }
+            else
+                doCapture = true; // Perform OnRenderImage logic (logic specific)
             do { yield return null; } while (resultsTexture == null); // Wait for OnRenderImage logic to complete (logic specific)
-			m_TempData.resultFrame = Common.ConvertTextureToString (resultsTexture); // Convert results texture to Base64 String and save to results data
+            m_TempData.resultFrame = Common.ConvertTextureToString(resultsTexture); // Convert results texture to Base64 String and save to results data
             if (baselineExists) // Comparison (mandatory)
             {
                 FrameComparisonResults referenceData = (FrameComparisonResults)DeserializeResults(ResultsIO.Instance.RetrieveBaseline(suiteName, testTypeName, m_TempData.common)); // Deserialize baseline data (mandatory)
@@ -86,7 +92,7 @@ namespace GraphicsTestFramework
                     m_TempData.common.PassFail = false;
                 comparisonData = null;  // Null comparison (mandatory)
             }
-            if(typedSettings.useBackBuffer)
+            if (typedSettings.useBackBuffer)
             {
                 ProgressScreen.Instance.progressObject.SetActive(true); // Show progress screen again
                 menuCamera.enabled = true;
@@ -173,13 +179,13 @@ namespace GraphicsTestFramework
                 if (settings.captureCamera == null) // If no main camera found
                 {
                     Camera[] cams = FindObjectsOfType<Camera>(); // Find all cameras
-                    settings.captureCamera = cams[cams.Length-1]; // Set to last in found array so avoid setting to UI or dummy cameras
+                    settings.captureCamera = cams[cams.Length - 1]; // Set to last in found array so avoid setting to UI or dummy cameras
                 }
-                if(settings.captureCamera == null) // If still not found
+                if (settings.captureCamera == null) // If still not found
                 {
                     dummyCamera.enabled = true; // Enable dummy camera
                     settings.captureCamera = dummyCamera; // Set to dummy camera as fallback
-                    Console.Instance.Write(DebugLevel.Critical, MessageLevel.LogWarning, "Frame Comparison test found no camera inside test "+activeTestEntry.testName); // Write to console
+                    Console.Instance.Write(DebugLevel.Critical, MessageLevel.LogWarning, "Frame Comparison test found no camera inside test " + activeTestEntry.testName); // Write to console
                 }
                 model.settings = settings; // Set settings back
             }
