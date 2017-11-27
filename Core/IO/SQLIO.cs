@@ -327,6 +327,25 @@ namespace GraphicsTestFramework.SQL
             string _template = tableName.Substring(tableName.IndexOf('_') + 1, tableName.Length - (tableName.IndexOf('_') + 1));//shave off the suite name to get the template table
 			return string.Format ("CREATE TABLE IF NOT EXISTS {0} LIKE {1};\n", tableName, _template);//query to check for table, otherwise create one
 		}
+		
+		//convert table string to tableStrings, Takes 'Suite_TestType_Baseline' and splits into a TableStringsClass
+		public static TableStrings TableStringToStrings(string tableString)
+		{
+            TableStrings _tableStrings = new TableStrings();
+            string[] splitName = tableString.Split('_');
+            _tableStrings.suite = splitName[0];
+            _tableStrings.testType = splitName[1];
+            _tableStrings.baseline = splitName[2] == "Baseline" ? true : false;
+            return _tableStrings;
+        }
+
+        //convert tableStrings to table string, Takes a tablestrings class and outputs a string formatted like 'Suite_TestType_Baseline'
+        public static string TableStringToStrings(TableStrings tableString)
+        {
+			string baseline = tableString.baseline ? "Baseline" : "Results";
+            string _tableString = tableString.suite + "_" + tableString.testType + "_" + baseline;
+            return _tableString;
+        }
 
 		//create column list for table creation, inclued data type
 		string CreateColumns(string[] columns){
@@ -378,7 +397,7 @@ namespace GraphicsTestFramework.SQL
 			return sb.ToString ();
 		}
 
-		//Convert raw data form the webserver to table data
+		//Convert raw string data form the webserver to table data
 		RawData ConvertRawData(string data)
         {
             RawData _output = new RawData();
@@ -390,6 +409,23 @@ namespace GraphicsTestFramework.SQL
                 _output.data.Add(rows[i].Split(new string[] { "|||" }, StringSplitOptions.None));
             }
             return _output;
+        }
+
+		//Convert RawData class to ResultsIOData Class
+		public static ResultsIOData ConvertRawDataToResultsIOData(string suite, string testType, RawData data, bool baseline)
+		{
+            ResultsIOData outData = new ResultsIOData();
+            outData.suite = suite;
+            outData.testType = testType;
+            outData.baseline = baseline;
+            outData.fieldNames = data.fields;
+            for (int i = 0; i < data.data.Count; i++)
+			{
+                ResultsIORow row = new ResultsIORow();
+                row.resultsColumn.AddRange(data.data[i]);
+                outData.resultsRow.Add(row);
+            }
+            return outData;
         }
 
 		//Temporary function for companion app testing
@@ -448,10 +484,18 @@ namespace GraphicsTestFramework.SQL
 			public string query;
 		}
 
+		[System.Serializable]
         public class RawData
         {
             public List<string> fields = new List<string>();
             public List<string[]> data = new List<string[]>();
+        }
+
+		public class TableStrings
+		{
+            public string suite;
+            public string testType;
+            public bool baseline;
         }
 
 		enum QueryType{ Query, NonQuery, QueryRequest};

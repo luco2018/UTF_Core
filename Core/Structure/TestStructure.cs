@@ -74,15 +74,15 @@ namespace GraphicsTestFramework
 
         void Update()
         {
-            if(Input.GetKeyUp(KeyCode.Return))
-            {
-                StartCoroutine(GetData(false));
-            }
+            // if(Input.GetKeyUp(KeyCode.Return))
+            // {
+            //     StartCoroutine(GetData(false));
+            // }
 
-            if (Input.GetKeyUp(KeyCode.Backspace))
-            {
-                StartCoroutine(GetData(true));
-            }
+            // if (Input.GetKeyUp(KeyCode.Backspace))
+            // {
+            //     StartCoroutine(GetData(true));
+            // }
         }
 
         // ------------------------------------------------------------------------------------
@@ -155,13 +155,13 @@ namespace GraphicsTestFramework
             ProgressScreen.Instance.SetState(false, ProgressType.LocalLoad, ""); // Disable ProgressScreen
         }
 
-        IEnumerator GenerateAnalyticStructure(ResultsIOData[] results)
+        public IEnumerator GenerateAnalyticStructure(ResultsIOData[] results)
         {
             yield return null;
             StartCoroutine(GenerateAnalyticStructure(results, null));
         }
 
-        IEnumerator GenerateAnalyticStructure(ResultsIOData[] resultsA, ResultsIOData[] resultsB)
+        public IEnumerator GenerateAnalyticStructure(ResultsIOData[] resultsA, ResultsIOData[] resultsB)
         {
             yield return null;
             testStructure = new Structure(); // Create new test structure instance
@@ -186,28 +186,48 @@ namespace GraphicsTestFramework
                     suite.types = CloneTestTypeList(typeList); // Clone the type list
                     testStructure.suites.Add(suite); // Add to suites list
                 }
-                
-                string groupName = resultsA[i].resultsRow[0].resultsColumn[groupColumn]; // Get group name
-                int typeIndex = TestTypeManager.Instance.GetTestTypeIndexFromName(resultsA[i].testType); // Get type index
-                if(typeIndex == -1) // If error return
-                    Console.Instance.Write(DebugLevel.Critical, MessageLevel.LogError, "TestType ID not found"); // Debug
-                Group group = FindDuplicateGroupInType(suite, typeIndex, groupName);
-                if (group == null)
+                //iterate through all the tests in ResultsIOData.Rows
+                for (int row = 0; row < resultsA[i].resultsRow.Count; row++)
                 {
-                    group = new Group(); // Create new group instance
-                    group.groupName = groupName; // Set group name
-                    suite.types[typeIndex].groups.Add(group); // Add to groups list
-                }
+                    string groupName = resultsA[i].resultsRow[row].resultsColumn[groupColumn]; // Get group name
+                    int typeIndex = TestTypeManager.Instance.GetTestTypeIndexFromName(resultsA[i].testType); // Get type index
+                    if (typeIndex == -1) // If error return
+                        Console.Instance.Write(DebugLevel.Critical, MessageLevel.LogError, "TestType ID not found"); // Debug
+                    Group group = FindDuplicateGroupInType(suite, typeIndex, groupName);
+                    if (group == null)
+                    {
+                        group = new Group(); // Create new group instance
+                        group.groupName = groupName; // Set group name
+                        suite.types[typeIndex].groups.Add(group); // Add to groups list
+                    }
 
-                string testName = resultsA[i].resultsRow[0].resultsColumn[testColumn]; // Get test name
-                TestResults test = new TestResults(); // Create new TestResults
-                test.testName = testName; // Set test name
-                test.dataA = resultsA[i]; // Set results data A
-                if (resultsB != null) // If analytic comparison
-                    test.dataB = resultsB[i]; // Set results data B
-                else
-                    test.dataB = null; // Set null
-                group.tests.Add(test); // Add to group
+                    string testName = resultsA[i].resultsRow[row].resultsColumn[testColumn]; // Get test name
+                    TestResults test = new TestResults(); // Create new TestResults
+                    test.testName = testName; // Set test name
+
+                    //create resultsIOdata for this single row
+                    ResultsIOData riodA = new ResultsIOData();
+                    riodA.suite = resultsA[i].suite;
+                    riodA.testType = resultsA[i].testType;
+                    riodA.baseline = resultsA[i].baseline;
+                    riodA.fieldNames = resultsA[i].fieldNames;
+                    riodA.resultsRow.Add(resultsA[i].resultsRow[row]);
+                    test.dataA = riodA; // Set results data A
+
+                    if (resultsB != null) // If analytic comparison
+                    {
+                        ResultsIOData riodB = new ResultsIOData();
+                        riodB.suite = resultsB[i].suite;
+                        riodB.testType = resultsB[i].testType;
+                        riodB.baseline = resultsB[i].baseline;
+                        riodB.fieldNames = resultsB[i].fieldNames;
+                        riodB.resultsRow.Add(resultsB[i].resultsRow[row]);
+                        test.dataB = riodB; // Set results data B
+                    }
+                    else
+                        test.dataB = null; // Set null
+                    group.tests.Add(test); // Add to group
+                }
             }
             // Reiterate suites to remove empty type entries
             for (int i = 0; i < testStructure.suites.Count; i++) 

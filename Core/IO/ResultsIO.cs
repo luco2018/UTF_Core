@@ -244,23 +244,9 @@ namespace GraphicsTestFramework
 		}
 
 		/// <summary>
-		/// Retrieves a result file.
+		/// Retrieves a file.
 		/// </summary>
-		/// <returns>The result.</returns>
-		/// <param name="suiteName">Suite name.</param>
-		/// <param name="testType">Test type.</param>
-		/// <param name="inputData">Input data.</param>
-		/// <param name="full">The whole result or only the common.</param>
-		// public ResultsIOData RetrieveResult (string suiteName, string testType, ResultsDataCommon inputData, bool full)
-		// {
-		// 	ResultsIOData data = LocalIO.Instance.FetchDataFile (suiteName, testType, inputData, false, full); //REORG
-		// 	return data;
-		// }
-
-		/// <summary>
-		/// Retrieves a baseline file.
-		/// </summary>
-		/// <returns>The baseline.</returns>
+		/// <returns>The data.</returns>
 		/// <param name="suiteName">Suite name.</param>
 		/// <param name="testType">Test type.</param>
 		/// <param name="inputData">Input data.</param>
