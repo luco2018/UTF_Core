@@ -28,11 +28,21 @@ public class SubmitResultsToTestRail : MonoBehaviour {
 		return client;
 	}
 
-	// private void AddResultToTestRail(APIClient client, string runID, string caseID, string status_id)
-	// {
-	// 	var resultObject = CreateResultData(status_id);
-	// 	JObject jObj = (JObject)client.SendPost("add_result_for_case/"+runID+"/"+caseID, resultObject);
-	// }
+    public void SendResultsToTestRailOnClick()
+    {
+        try
+        {
+            APIClient client = ConnectToTestrail();
+            
+            //BuildResults(client, runID); //Need to know where runID is coming from
+            // should run be made manually, or suite id recorded and runs made from within utf?
+        }
+        catch
+        {
+            //login failed
+        }
+        
+    }
 
 	private Dictionary<string,object> CreateResultData(string status_id)
 	{
@@ -46,7 +56,7 @@ public class SubmitResultsToTestRail : MonoBehaviour {
 		return resultObject;
 	}
 
-	private IEnumerator BuildResults(string runID)
+	private IEnumerator BuildResults(APIClient client, string runID)
 	{
 		listOfPassFail.Clear();
 		TestStructure.Structure structure = TestStructure.Instance.GetStructure(); // Get structure
@@ -72,18 +82,10 @@ public class SubmitResultsToTestRail : MonoBehaviour {
 						if (data != null) // If results data exists
 						{ 
 							passFail = data.resultsRow[0].resultsColumn[21] == "True" ? 1 : 5; // Set pass fail state
-							//listOfPassFail.Add(passFail);
-							try
-							{
-								APIClient client = ConnectToTestrail();
-								var resultObject = CreateResultData(passFail.ToString());
-								JObject jObj = (JObject)client.SendPost("add_result_for_case/"+runID+"/"+caseID, resultObject);
-							}
-							catch
-							{
-								// login failed
-							}
-						}
+                                                                                               
+                            var resultObject = CreateResultData(passFail.ToString());
+                            JObject jObj = (JObject)client.SendPost("add_result_for_case/" + runID + "/" + caseID, resultObject);
+                        }
 						yield return null;
 					}
 				}
