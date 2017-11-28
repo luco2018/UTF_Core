@@ -55,37 +55,6 @@ namespace GraphicsTestFramework
         }
 
         // ------------------------------------------------------------------------------------
-        // DELETE ME!
-
-        private ResultsIOData[] _tempData;
-        private ResultsIOData[] _tempData2;
-
-        IEnumerator GetData(bool isComparison)
-        {
-            yield return StartCoroutine(GraphicsTestFramework.SQL.SQLIO.Instance.GetaData(false, (value => { _tempData = value; })));
-            if(!isComparison)
-                StartCoroutine(GenerateAnalyticStructure(_tempData));
-            else
-            {
-                yield return StartCoroutine(GraphicsTestFramework.SQL.SQLIO.Instance.GetaData(false, (value => { _tempData2 = value; })));
-                StartCoroutine(GenerateAnalyticStructure(_tempData, _tempData2));
-            } 
-        }
-
-        void Update()
-        {
-            // if(Input.GetKeyUp(KeyCode.Return))
-            // {
-            //     StartCoroutine(GetData(false));
-            // }
-
-            // if (Input.GetKeyUp(KeyCode.Backspace))
-            // {
-            //     StartCoroutine(GetData(true));
-            // }
-        }
-
-        // ------------------------------------------------------------------------------------
         // Initialization
 
         // Start generation process
