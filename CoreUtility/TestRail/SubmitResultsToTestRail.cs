@@ -46,7 +46,7 @@ public class SubmitResultsToTestRail : MonoBehaviour {
 		return resultObject;
 	}
 
-	private IEnumerator BuildResults(APIClient client, string runID)
+	private IEnumerator BuildResults(string runID)
 	{
 		listOfPassFail.Clear();
 		TestStructure.Structure structure = TestStructure.Instance.GetStructure(); // Get structure
@@ -73,8 +73,16 @@ public class SubmitResultsToTestRail : MonoBehaviour {
 						{ 
 							passFail = data.resultsRow[0].resultsColumn[21] == "True" ? 1 : 5; // Set pass fail state
 							//listOfPassFail.Add(passFail);
-							var resultObject = CreateResultData(passFail.ToString());
-							JObject jObj = (JObject)client.SendPost("add_result_for_case/"+runID+"/"+caseID, resultObject);
+							try
+							{
+								APIClient client = ConnectToTestrail();
+								var resultObject = CreateResultData(passFail.ToString());
+								JObject jObj = (JObject)client.SendPost("add_result_for_case/"+runID+"/"+caseID, resultObject);
+							}
+							catch
+							{
+								// login failed
+							}
 						}
 						yield return null;
 					}
