@@ -62,6 +62,7 @@ namespace GraphicsTestFramework.SQL
 		
 		public IEnumerator SQLNonQuery(string _query, Action<int> callback)
         {
+			Debug.LogError(_query);
             List<IMultipartFormSection> form = new List<IMultipartFormSection>();
             form.Add(new MultipartFormDataSection("type", "nonQuery"));
 			form.Add(new MultipartFormDataSection("pass", _pass));
@@ -92,6 +93,7 @@ namespace GraphicsTestFramework.SQL
 		
 		public IEnumerator SQLRequest(string _query, Action<RawData> data)
         {
+            Debug.LogError(_query);
             List<IMultipartFormSection> form = new List<IMultipartFormSection>();
             form.Add(new MultipartFormDataSection("type", "request"));
 			form.Add(new MultipartFormDataSection("pass", _pass));
@@ -183,6 +185,34 @@ namespace GraphicsTestFramework.SQL
 			}
 			outdata(data.ToArray ());
 		}
+
+		//Fetches a single baseline based of deets
+		public IEnumerator FetchBaseline(ResultsIOData inputData, Action<ResultsIOData> outdata)
+        {
+            ResultsIOData data = new ResultsIOData();//ResultsIOData to send back to resultsIO for local processing
+            TableStrings ts = new TableStrings(inputData.suite, inputData.testType, true);
+            string table = TableStringToStrings(ts);
+
+			data.suite = inputData.suite;
+			data.testType = inputData.testType;
+
+            string platform = inputData.resultsRow[0].resultsColumn[inputData.fieldNames.FindIndex(x => x =="Platform")];
+			string api = inputData.resultsRow[0].resultsColumn[inputData.fieldNames.FindIndex(x => x == "API")];
+			string group = inputData.resultsRow[0].resultsColumn[inputData.fieldNames.FindIndex(x => x == "GroupName")];
+            string test = inputData.resultsRow[0].resultsColumn[inputData.fieldNames.FindIndex(x => x == "TestName")];
+            //This line controls how baselines are selected, right now only Platform and API are unique
+            string query = String.Format("SELECT * FROM {0} WHERE platform='{1}' AND api='{2}' AND groupname='{3}' AND testname='{4}'", table, platform, api, group, test);
+			RawData _rawData = new RawData();
+			yield return StartCoroutine(SQLRequest(query, (value => { _rawData = value; })));
+			data.fieldNames.AddRange(_rawData.fields);//Grab the fields from the RawData
+			for (int i = 0; i < _rawData.data.Count; i++)
+			{
+				ResultsIORow row = new ResultsIORow();//create a new row
+				row.resultsColumn.AddRange(_rawData.data[i]);//store the current row of values
+				data.resultsRow.Add(row);//add it to the data to send back to resultsIO
+			}
+            outdata(data);
+        }
 
 		public IEnumerator FetchSpecificEntry(ResultsIOData inputData, Action<ResultsIOData> outdata)
 		{
@@ -331,11 +361,8 @@ namespace GraphicsTestFramework.SQL
 		//convert table string to tableStrings, Takes 'Suite_TestType_Baseline' and splits into a TableStringsClass
 		public static TableStrings TableStringToStrings(string tableString)
 		{
-            TableStrings _tableStrings = new TableStrings();
             string[] splitName = tableString.Split('_');
-            _tableStrings.suite = splitName[0];
-            _tableStrings.testType = splitName[1];
-            _tableStrings.baseline = splitName[2] == "Baseline" ? true : false;
+			TableStrings _tableStrings = new TableStrings(splitName[0], splitName[1], (splitName[2] == "Baseline" ? true : false));
             return _tableStrings;
         }
 
@@ -496,6 +523,14 @@ namespace GraphicsTestFramework.SQL
             public string suite;
             public string testType;
             public bool baseline;
+
+			public TableStrings(string _suite, string _testType, bool b)
+			{
+                suite = _suite;
+                testType = _testType;
+                b = baseline;
+            }
+
         }
 
 		enum QueryType{ Query, NonQuery, QueryRequest};

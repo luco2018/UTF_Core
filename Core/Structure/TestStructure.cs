@@ -229,7 +229,7 @@ namespace GraphicsTestFramework
                         ResultsIOData riodB = new ResultsIOData();
                         riodB.suite = resultsA[i].suite;
                         riodB.testType = resultsA[i].testType;
-                        riodB.baseline = resultsA[i].baseline; // TODO - Should be true
+                        riodB.baseline = true; //resultsA[i].baseline; // TODO - Should be true
                         riodB.fieldNames = resultsA[i].fieldNames;
                         riodB.resultsRow.Add(resultsA[i].resultsRow[row]);
                         test.dataB = riodB; // Set results data A

@@ -572,8 +572,18 @@ namespace GraphicsTestFramework
             ResultsIOData resultsDataFull = new ResultsIOData(); // Create output data
             yield return StartCoroutine(SQL.SQLIO.Instance.FetchSpecificEntry(inputEntry.resultsEntryData.resultsData, (value => { resultsDataFull = value; }))); // Get full results data
             ResultsIOData resultsDataFullB = new ResultsIOData(); // Create output data
-            if(inputEntry.resultsEntryData.resultsDataB != null)
-                yield return StartCoroutine(SQL.SQLIO.Instance.FetchSpecificEntry(inputEntry.resultsEntryData.resultsDataB, (value => { resultsDataFullB = value; }))); // Get full results data
+            if(TestRunner.Instance)
+            {
+                if(TestRunner.Instance.runnerType == RunnerType.Analytic)
+                {
+                    yield return StartCoroutine(SQL.SQLIO.Instance.FetchBaseline(inputEntry.resultsEntryData.resultsDataB, (value => { resultsDataFullB = value; }))); // Get full results data
+                }
+                else if(TestRunner.Instance.runnerType == RunnerType.AnalyticComparison)
+                {
+                    yield return StartCoroutine(SQL.SQLIO.Instance.FetchSpecificEntry(inputEntry.resultsEntryData.resultsDataB, (value => { resultsDataFullB = value; }))); // Get full results data
+                }
+            }
+            //if(inputEntry.resultsEntryData.resultsDataB != null)
             display.SetupResultsContext(resultsContext, resultsDataFull, resultsDataFullB); // Tell Display how to setup the results context
         }
 

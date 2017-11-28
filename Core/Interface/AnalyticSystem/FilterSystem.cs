@@ -19,6 +19,7 @@ namespace GraphicsTestFramework
 
 		public TableContainer tableOptions;
         public Text filterCountText;
+        public Button filterFetchButton;
         public List<string> tableStrings = new List<string>();
         private string[] baseTableStrings;
         private List<List<string>> suiteTestTypes = new List<List<string>>();
@@ -147,7 +148,7 @@ namespace GraphicsTestFramework
 
         public void FetchFilter()
         {
-			if(rowCount < maxResults)
+			if(rowCount < maxResults && rowCount > 0)
             	StartCoroutine(FetchFilteredResults());
         }
 
@@ -163,8 +164,8 @@ namespace GraphicsTestFramework
 			else
                 riodB = riodA;
             ProgressScreen.Instance.SetState(false, ProgressType.CloudLoad, "null"); //Show loading screen
-            //StartCoroutine(TestStructure.Instance.GenerateAnalyticStructure(riodA));
-			StartCoroutine(TestStructure.Instance.GenerateAnalyticStructure(riodA, riodB));
+            StartCoroutine(TestStructure.Instance.GenerateAnalyticStructure(riodA));
+			//StartCoroutine(TestStructure.Instance.GenerateAnalyticStructure(riodA, riodB));
         }
 
         IEnumerator FetchFilterData(Action<ResultsIOData[]> outData)
