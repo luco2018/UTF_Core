@@ -181,7 +181,7 @@ namespace GraphicsTestFramework
             do { yield return null; } while (runnerIsWaiting == true); // Wait for previous test to finish before enabling menus
             Console.Instance.Write(DebugLevel.Logic, MessageLevel.Log, "Ended automation run"); // Write to console
             ProgressScreen.Instance.SetState(false, ProgressType.LocalLoad, ""); // Disable ProgressScreen
-            if(Master.Instance._sqlMode == SQLmode.Live)
+            if(Master.Instance._sqlMode == SQLmode.Live && !TestRunner.Instance.isAnalytic)
             {
                 yield return Slack.Instance.SendSlackResults(); // Send results to slack
             }

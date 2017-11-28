@@ -31,6 +31,7 @@ namespace GraphicsTestFramework
         bool runID;
         bool comparison;
         string currentRunID;
+        static string commonFields = "DateTime, UnityVersion, AppVersion, OS, Device, Platform, API, RenderPipe, GroupName, TestName, PassFail, Custom";
 
         // Singleton
         private static FilterSystem _Instance = null;
@@ -162,7 +163,8 @@ namespace GraphicsTestFramework
 			else
                 riodB = riodA;
             ProgressScreen.Instance.SetState(false, ProgressType.CloudLoad, "null"); //Show loading screen
-            StartCoroutine(TestStructure.Instance.GenerateAnalyticStructure(riodA, riodB));
+            //StartCoroutine(TestStructure.Instance.GenerateAnalyticStructure(riodA));
+			StartCoroutine(TestStructure.Instance.GenerateAnalyticStructure(riodA, riodB));
         }
 
         IEnumerator FetchFilterData(Action<ResultsIOData[]> outData)
@@ -171,7 +173,7 @@ namespace GraphicsTestFramework
             foreach (string table in tableStrings)
             {
                 SQL.SQLIO.TableStrings ts = SQL.SQLIO.TableStringToStrings(table);
-                string query = CreateQueryString(table, runID, "API", null, ("'%runID|" + currentRunID + "%'"));///hardcoded to run id
+                string query = CreateQueryString(table, runID, commonFields, null, ("'%runID|" + currentRunID + "%'"));///hardcoded to run id
                 SQL.SQLIO.RawData rawData = new GraphicsTestFramework.SQL.SQLIO.RawData();
                 yield return StartCoroutine(SQL.SQLIO.Instance.SQLRequest(query, (value => { rawData = value; })));//Get all tables
                 riod.Add(SQL.SQLIO.ConvertRawDataToResultsIOData(ts.suite, ts.testType, rawData, ts.baseline));
