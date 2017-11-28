@@ -31,6 +31,7 @@ namespace GraphicsTestFramework
         public GameObject menuParent;
         public List list;
         public Breadcrumb breadcrumb;
+        private bool topLevel = true;//bool for checking if the breadcrumb is at the top level
         public Actions actions;
         public ResolveWindow resolveWindow;
         public Color[] colors;
@@ -71,21 +72,25 @@ namespace GraphicsTestFramework
                     breadcrumb.suite.Setup(inputData, 1, 0);
                     breadcrumb.type.Setup(inputData, 1, 1);
                     breadcrumb.group.Setup(inputData, 1, 2);
+                    topLevel = true;
                     break;
                 case 0:     // Suite
                     breadcrumb.suite.Setup(inputData, 0, 0);
                     breadcrumb.type.Setup(inputData, 1, 1);
                     breadcrumb.group.Setup(inputData, 1, 2);
+                    topLevel = false;
                     break;
                 case 1:     // Type
                     breadcrumb.suite.Setup(inputData, 2, 0);
                     breadcrumb.type.Setup(inputData, 0, 1);
                     breadcrumb.group.Setup(inputData, 1, 2);
+                    topLevel = false;
                     break;
                 case 2:     // Scene
                     breadcrumb.suite.Setup(inputData, 2, 0);
                     breadcrumb.type.Setup(inputData, 2, 1);
                     breadcrumb.group.Setup(inputData, 0, 2);
+                    topLevel = false;
                     break;
             }
         }
@@ -318,14 +323,21 @@ namespace GraphicsTestFramework
         // Called every time a breadcrumb entry is clicked (button listener)
         public void OnBreadcrumbEntryClick(MenuBreadcrumbEntry clicked)
         {
-            Console.Instance.Write(DebugLevel.Full, MessageLevel.Log, "Clicked: Breadcrumb entry"); // Write to console
-            MenuEntryData entryData = CloneMenuEntryData(clicked.entryData); // Clone the entry data of the clicked entry
-            ClearList(); // Clear the list
-            selectedId = entryData.id; // Set selected id
-            GenerateBreadcrumb(clicked.entryData); // Generate new breadcrumb
-            selectedId.currentLevel++; // Increment current level
-            GenerateList(); // Generate a new list
-            CheckViewButtonStatus(); // Check view button status
+            if(topLevel)
+            {
+                Navigation.Instance.ReturnHome();
+            }
+            else
+            {
+                Console.Instance.Write(DebugLevel.Full, MessageLevel.Log, "Clicked: Breadcrumb entry"); // Write to console
+                MenuEntryData entryData = CloneMenuEntryData(clicked.entryData); // Clone the entry data of the clicked entry
+                ClearList(); // Clear the list
+                selectedId = entryData.id; // Set selected id
+                GenerateBreadcrumb(clicked.entryData); // Generate new breadcrumb
+                selectedId.currentLevel++; // Increment current level
+                GenerateList(); // Generate a new list
+                CheckViewButtonStatus(); // Check view button status
+            }
         }
 
         // Called when results button is clicked

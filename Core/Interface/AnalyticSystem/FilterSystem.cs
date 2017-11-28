@@ -16,7 +16,17 @@ namespace GraphicsTestFramework
 	{
 		// ------------------------------------------------------------------------------------
 		// Variables
-
+		private static FilterSystem _Instance = null;
+        public static FilterSystem Instance
+        {
+            get
+            {
+                if (_Instance == null)
+                    _Instance = (FilterSystem)FindObjectOfType(typeof(FilterSystem));
+                return _Instance;
+            }
+        }
+		public GameObject canvas;
 		public TableContainer tableOptions;
         public Text filterCountText;
         public Button filterFetchButton;
@@ -33,23 +43,12 @@ namespace GraphicsTestFramework
         bool comparison;
         string currentRunID;
         static string commonFields = "DateTime, UnityVersion, AppVersion, OS, Device, Platform, API, RenderPipe, GroupName, TestName, PassFail, Custom";
-
-        // Singleton
-        private static FilterSystem _Instance = null;
-
-		public static FilterSystem Instance {
-			get {
-				if (_Instance == null)
-					_Instance = (FilterSystem)FindObjectOfType (typeof(FilterSystem));
-				return _Instance;
-			}
-		}
+		static bool firstRun = false;
 
 		public void BaseFilter()
 		{
-            suiteTestTypes.Clear();
-            tableStrings.Clear();
-            StartCoroutine(GetTableNames(String.Format("SHOW TABLES LIKE '%{0}'", "Results"))); //tableOptions.baselineBool._selection[0])));//TODO - default is results
+			if(baseTableStrings == null || baseTableStrings.Length == 0)
+            	StartCoroutine(GetTableNames(String.Format("SHOW TABLES LIKE '%{0}'", "Results"))); //tableOptions.baselineBool._selection[0])));//TODO - default is results
 		}
 
 		IEnumerator GetTableNames(string query)
@@ -84,15 +83,16 @@ namespace GraphicsTestFramework
 				tableOptions.suiteMask.Init(suiteTestTypes[0].ToArray());
 			if(tableOptions.testTypeMask)
 				tableOptions.testTypeMask.Init(suiteTestTypes[1].ToArray());
-
+				
             yield return StartCoroutine(UpdateResultCount(runID, null, null, (value => { rowCount = value; })));
-			
         }
 
 		public void SetRunID(string id)
 		{
 			if(id != null && id != "")
 			{
+				tableStrings.Clear();
+				tableStrings.AddRange(baseTableStrings);
 				runID = true;
                 currentRunID = id;
                 StartCoroutine(UpdateResultCount(runID, null, ("'%runID|" + id + "%'"), (value => { rowCount = value; })));
@@ -163,6 +163,7 @@ namespace GraphicsTestFramework
 			else
                 riodB = riodA;
             ProgressScreen.Instance.SetState(false, ProgressType.CloudLoad, "null"); //Show loading screen
+			canvas.SetActive(false);//turn off the filter menu
             StartCoroutine(TestStructure.Instance.GenerateAnalyticStructure(riodA));
 			//StartCoroutine(TestStructure.Instance.GenerateAnalyticStructure(riodA, riodB));
         }

@@ -98,15 +98,7 @@ namespace GraphicsTestFramework
                     resultsViewerParent.SetActive(false);
                     homeButton.gameObject.SetActive(false);
                     overviewButton.gameObject.SetActive(false);
-                    if(TestRunner.Instance)
-                    {
-                        if(TestRunner.Instance.isAnalytic)
-                        {
-                            Master.Instance.ReturnToTitle();
-                            return;
-                        }
-                    }
-                    Menu.Instance.SetMenuState(true);
+                    Navigation.Instance.ReturnHome();
                     break;
                 case 1: // Overview
                     overviewParent.SetActive(true);

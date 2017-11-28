@@ -121,6 +121,12 @@ namespace GraphicsTestFramework
             ProgressScreen.Instance.SetState(false, ProgressType.LocalLoad, ""); // Disable ProgressScreen
         }
 
+        public void ClearStructure()//clears the structure, needed as analytic creates one that differs from the testing
+        {
+            testStructure = null;
+            m_IsGenerated = false;
+        }
+
         public IEnumerator GenerateAnalyticStructure(ResultsIOData[] results)
         {
             yield return null;

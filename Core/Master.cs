@@ -15,9 +15,6 @@ namespace GraphicsTestFramework
         // Variables
         public SQLmode _sqlMode;
 
-        public GameObject titleMenu;
-        public Button runTestButton;
-
         // Singleton
         private static Master _Instance = null;
         public static Master Instance
@@ -37,11 +34,6 @@ namespace GraphicsTestFramework
         private void Awake()
         {
             DontDestroyOnLoad(gameObject); // Set this object to DontDestroy
-        }
-
-        void Start()
-        {
-            runTestButton.interactable = SuiteManager.HasSuites();
         }
 
         // ------------------------------------------------------------------------------------
@@ -84,12 +76,6 @@ namespace GraphicsTestFramework
             UnityEditor.EditorApplication.isPlaying = false; // If editor stop play mode
 #endif
         }
-
-        public void ReturnToTitle()
-        {
-            titleMenu.SetActive(true);
-        }
-
     }
 
     // ------------------------------------------------------------------------------------
