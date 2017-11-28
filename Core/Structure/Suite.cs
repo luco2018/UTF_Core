@@ -37,5 +37,6 @@ namespace GraphicsTestFramework
         [SerializeField] public int minimumUnityVersion;
         [SerializeField] public int platforms = -1;
         [SerializeField] public bool run = true;
+        [SerializeField] public string caseID;//testrail caseID
     }
 }

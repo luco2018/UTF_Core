@@ -88,6 +88,7 @@ namespace GraphicsTestFramework.Experimental
                     //Rects for drawing test elements
                     Rect runRect = new Rect(testRect.x, testRect.y, 20, EditorGUIUtility.singleLineHeight);
                     Rect sceneRect = new Rect(runRect.x + runRect.width, testRect.y, (testRect.width - runRect.width) * 0.35f, EditorGUIUtility.singleLineHeight + 2);
+                    Rect testRailcaseID = new Rect(runRect.x + runRect.width, testRect.y, (testRect.width - runRect.width) * 0.35f, EditorGUIUtility.singleLineHeight + 2);
                     Rect typeRect = new Rect(sceneRect.x + sceneRect.width + 5, testRect.y, (testRect.width) * 0.24f, EditorGUIUtility.singleLineHeight + 2);
                     Rect platformRect = new Rect(typeRect.x + typeRect.width, testRect.y, (testRect.width) * 0.24f, EditorGUIUtility.singleLineHeight + 2);
                     Rect versionRect = new Rect(platformRect.x + platformRect.width, testRect.y, (testRect.width) * 0.12f, EditorGUIUtility.singleLineHeight + 2);
@@ -96,7 +97,8 @@ namespace GraphicsTestFramework.Experimental
                     var scene = testElement.FindPropertyRelative("scene");//Ref to the scene value
                     if(scene.objectReferenceValue == null)//If it's not assigned check bool to show error message
                         emptyTests = true;
-                    EditorGUI.PropertyField(sceneRect, scene, GUIContent.none);//Draw he scene property
+                    EditorGUI.PropertyField(sceneRect, scene, GUIContent.none);//Draw the scene property
+                    
                     var testType = testElement.FindPropertyRelative("testTypes");//Ref to the test type value
                     testType.intValue = EditorGUI.MaskField(typeRect, GUIContent.none, testType.intValue, TestTypes.GetTypeStringList());//Draw the test types mask
                     testType.intValue = FixBitmask(testType.intValue);//if all current types selected(-1 everything) convert to a bitmask of just those things
@@ -130,6 +132,12 @@ namespace GraphicsTestFramework.Experimental
                     return l.count > 1;
                 };
 
+                testList[index].elementHeightCallback = (i) =>
+                {
+                    var elementHeight = testList[index].serializedProperty.GetArrayElementAtIndex(index);
+                    return EditorGUIUtility.singleLineHeight * 3f;
+                };
+
                 //if test list is expanded, draw the reorderable list
                 if(tests.isExpanded)
                     testList[index].DoList(new Rect(rect.x, rect.y + (EditorGUIUtility.singleLineHeight * 1.5f), rect.width, rect.height));
@@ -141,7 +149,7 @@ namespace GraphicsTestFramework.Experimental
             { 
                 var list = groupList.serializedProperty.GetArrayElementAtIndex(index);
                 var element = list.FindPropertyRelative("tests");
-                var padding = EditorGUIUtility.singleLineHeight * 2;
+                var padding = (EditorGUIUtility.singleLineHeight * 2) * 3;
                 if(!element.isExpanded){
                     padding = 5;
                 }
