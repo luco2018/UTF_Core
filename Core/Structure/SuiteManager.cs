@@ -14,6 +14,16 @@ namespace GraphicsTestFramework
         // ------------------------------------------------------------------------------------
         // Get Data
 
+        // Does the project object have any suites?
+        public static bool HasSuites()
+        {
+            ProjectSettings projectSettings = GetProjectSettings(); // Get the suite list
+            if(projectSettings.suiteList.Count > 0)
+                return true;
+            else
+                return false;
+        }
+
         // Get a string array of all suite names
         public static string[] GetSuiteNames()
         {
