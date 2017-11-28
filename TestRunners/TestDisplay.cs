@@ -60,7 +60,7 @@ namespace GraphicsTestFramework
         }
 
         // Setup the results context entry
-        public abstract void SetupResultsContext(ResultsContext contextObject, ResultsIOData inputData);
+        public abstract void SetupResultsContext(ResultsContext contextObject, ResultsIOData inputData, ResultsIOData inputDataB);
     }
 
     // ------------------------------------------------------------------------------------

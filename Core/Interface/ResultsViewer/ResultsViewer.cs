@@ -276,13 +276,13 @@ namespace GraphicsTestFramework
                                     string scenePath = structure.suites[su].types[ty].groups[gr].tests[te].scenePath; // Get scene path
                                     ResultsDataCommon common = BuildResultsDataCommon(groupName, testName); // Build results data common to retrieve results
                                     ResultsIOData data = new ResultsIOData();
+                                    TestStructure.TestResults testResults = (TestStructure.TestResults)structure.suites[su].types[ty].groups[gr].tests[te];
                                     if(TestRunner.Instance)
                                     {
                                         if (!TestRunner.Instance.isAnalytic)
                                             data = ResultsIO.Instance.RetrieveEntry(suiteName, typeName, common, false, false); // Retrieve results data
                                         else
                                         {
-                                            TestStructure.TestResults testResults = (TestStructure.TestResults)structure.suites[su].types[ty].groups[gr].tests[te];
                                             data = testResults.dataA;
                                         }  
                                     }
@@ -290,34 +290,41 @@ namespace GraphicsTestFramework
                                     {
                                         data = ResultsIO.Instance.RetrieveEntry(suiteName, typeName, common, false, false); // Retrieve results data
                                     }
+                                    ResultsIOData dataB = null;
+                                    if(testResults != null)
+                                        dataB = testResults.dataB;
+
                                     if (resultsDropdown.value != 0) // If filtering based on results
                                     {
                                         int passFail = 2; // Set default state (no results)
                                         int passFailColumn = Common.FindResultsDataIOFieldIdByName(data, "PassFail"); // Find pass fail column index
                                         if (data != null) // If results data exists
                                             passFail = data.resultsRow[0].resultsColumn[passFailColumn] == "True" ? 0 : 1; // Set pass fail state
+                                        
+                                        
+
                                         switch (resultsDropdown.value)
                                         {
                                             case 1: // Pass
                                                 if (passFail == 0)
-                                                    filteredResultsEntries.Add(new ResultsEntryData(new TestEntry(suiteName, groupName, scenePath, typeName, testName, typeIndex, su, gr, ty, te), data)); // Add to list
+                                                    filteredResultsEntries.Add(new ResultsEntryData(new TestEntry(suiteName, groupName, scenePath, typeName, testName, typeIndex, su, gr, ty, te), data, dataB)); // Add to list
                                                 break;
                                             case 2: // Fail
                                                 if (passFail == 1)
-                                                    filteredResultsEntries.Add(new ResultsEntryData(new TestEntry(suiteName, groupName, scenePath, typeName, testName, typeIndex, su, gr, ty, te), data)); // Add to list
+                                                    filteredResultsEntries.Add(new ResultsEntryData(new TestEntry(suiteName, groupName, scenePath, typeName, testName, typeIndex, su, gr, ty, te), data, dataB)); // Add to list
                                                 break;
                                             case 3: // Ran
                                                 if (passFail != 2)
-                                                    filteredResultsEntries.Add(new ResultsEntryData(new TestEntry(suiteName, groupName, scenePath, typeName, testName, typeIndex, su, gr, ty, te), data)); // Add to list
+                                                    filteredResultsEntries.Add(new ResultsEntryData(new TestEntry(suiteName, groupName, scenePath, typeName, testName, typeIndex, su, gr, ty, te), data, dataB)); // Add to list
                                                 break;
                                             case 4: // Not Ran
                                                 if (passFail == 2)
-                                                    filteredResultsEntries.Add(new ResultsEntryData(new TestEntry(suiteName, groupName, scenePath, typeName, testName, typeIndex, su, gr, ty, te), data)); // Add to list
+                                                    filteredResultsEntries.Add(new ResultsEntryData(new TestEntry(suiteName, groupName, scenePath, typeName, testName, typeIndex, su, gr, ty, te), data, dataB)); // Add to list
                                                 break;
                                         }
                                     }
                                     else
-                                        filteredResultsEntries.Add(new ResultsEntryData(new TestEntry(suiteName, groupName, scenePath, typeName, testName, typeIndex, su, gr, ty, te), data)); // Add to list
+                                        filteredResultsEntries.Add(new ResultsEntryData(new TestEntry(suiteName, groupName, scenePath, typeName, testName, typeIndex, su, gr, ty, te), data, dataB)); // Add to list
                                     yield return null;
                                 }
                             }
@@ -564,7 +571,10 @@ namespace GraphicsTestFramework
             resultsContext.Setup(activeContextEntry); // Setup base of results context
             ResultsIOData resultsDataFull = new ResultsIOData(); // Create output data
             yield return StartCoroutine(SQL.SQLIO.Instance.FetchSpecificEntry(inputEntry.resultsEntryData.resultsData, (value => { resultsDataFull = value; }))); // Get full results data
-            display.SetupResultsContext(resultsContext, resultsDataFull); // Tell Display how to setup the results context
+            ResultsIOData resultsDataFullB = new ResultsIOData(); // Create output data
+            if(inputEntry.resultsEntryData.resultsDataB != null)
+                yield return StartCoroutine(SQL.SQLIO.Instance.FetchSpecificEntry(inputEntry.resultsEntryData.resultsDataB, (value => { resultsDataFullB = value; }))); // Get full results data
+            display.SetupResultsContext(resultsContext, resultsDataFull, resultsDataFullB); // Tell Display how to setup the results context
         }
 
         // Hide and destroy context object

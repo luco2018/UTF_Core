@@ -70,11 +70,21 @@ namespace GraphicsTestFramework
         // These method calls are already wrapped in debugs and as such do not require debugs inside them
         // However, should you want to add further debugs please use Console.Write()
 
+        ExampleComparison comparisonData;
+
         // Setup the results context object
-        public override void SetupResultsContext(ResultsContext context, ResultsIOData inputData)
+        public override void SetupResultsContext(ResultsContext context, ResultsIOData inputData, ResultsIOData inputDataB)
         {
             ExampleResults inputResults = (ExampleResults)logic.DeserializeResults(inputData); // Deserialize input and cast to typed results
-            ExampleComparison comparisonData = (ExampleComparison)logic.ProcessComparison(inputResults); // Get comparison data
+
+            if(!TestRunner.Instance.isAnalytic)
+                comparisonData = (ExampleComparison)logic.ProcessComparison(inputResults); // Get comparison data
+            else
+            {
+                ExampleResults inputResultsB = (ExampleResults)logic.DeserializeResults(inputDataB); // Deserialize input and cast to typed results
+                comparisonData = (ExampleComparison)logic.ProcessComparison(inputResultsB, inputResults);
+            }
+
             context.objects[0].GetComponent<Text>().text = inputResults.SomeFloat.ToString(); // Set float
             context.objects[1].GetComponent<Text>().text = comparisonData.SomeFloatDiff.ToString(); // Set diff
         }

@@ -71,11 +71,17 @@ namespace GraphicsTestFramework
         FrameComparisonComparison comparisonData;
 
         // Setup the results context object
-        public override void SetupResultsContext(ResultsContext context, ResultsIOData inputData)
+        public override void SetupResultsContext(ResultsContext context, ResultsIOData inputData, ResultsIOData inputDataB)
         {
             CleanupResultsContext();
             FrameComparisonResults inputResults = (FrameComparisonResults)logic.DeserializeResults(inputData); // Deserialize input and cast to typed results
-            comparisonData = (FrameComparisonComparison)logic.ProcessComparison(inputResults); // Get comparison data
+            if(!TestRunner.Instance.isAnalytic)
+                comparisonData = (FrameComparisonComparison)logic.ProcessComparison(inputResults); // Get comparison data
+            else
+            {
+                FrameComparisonResults inputResultsB = (FrameComparisonResults)logic.DeserializeResults(inputDataB); // Deserialize input and cast to typed results
+                comparisonData = (FrameComparisonComparison)logic.ProcessComparison(inputResultsB, inputResults);
+            }
             buttons = new Button[3]; // Create button array
             for(int i = 0; i < buttons.Length; i++) // Iterate
             { 
