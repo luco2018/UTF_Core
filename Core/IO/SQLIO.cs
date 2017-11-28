@@ -62,7 +62,6 @@ namespace GraphicsTestFramework.SQL
 		
 		public IEnumerator SQLNonQuery(string _query, Action<int> callback)
         {
-			Debug.LogError(_query);
             List<IMultipartFormSection> form = new List<IMultipartFormSection>();
             form.Add(new MultipartFormDataSection("type", "nonQuery"));
 			form.Add(new MultipartFormDataSection("pass", _pass));
@@ -93,7 +92,6 @@ namespace GraphicsTestFramework.SQL
 		
 		public IEnumerator SQLRequest(string _query, Action<RawData> data)
         {
-            Debug.LogError(_query);
             List<IMultipartFormSection> form = new List<IMultipartFormSection>();
             form.Add(new MultipartFormDataSection("type", "request"));
 			form.Add(new MultipartFormDataSection("pass", _pass));
