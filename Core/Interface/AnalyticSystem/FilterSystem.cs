@@ -45,12 +45,11 @@ namespace GraphicsTestFramework
 			}
 		}
 
-		public void Start()
+		public void BaseFilter()
 		{
-			if(Master.Instance.appMode == AppMode.Analytic)
-			{
-                StartCoroutine(GetTableNames(String.Format("SHOW TABLES LIKE '%{0}'", "Results"))); //tableOptions.baselineBool._selection[0])));//TODO - default is results
-            }
+            suiteTestTypes.Clear();
+            tableStrings.Clear();
+            StartCoroutine(GetTableNames(String.Format("SHOW TABLES LIKE '%{0}'", "Results"))); //tableOptions.baselineBool._selection[0])));//TODO - default is results
 		}
 
 		IEnumerator GetTableNames(string query)

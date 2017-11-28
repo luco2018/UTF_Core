@@ -98,6 +98,14 @@ namespace GraphicsTestFramework
                     resultsViewerParent.SetActive(false);
                     homeButton.gameObject.SetActive(false);
                     overviewButton.gameObject.SetActive(false);
+                    if(TestRunner.Instance)
+                    {
+                        if(TestRunner.Instance.isAnalytic)
+                        {
+                            Master.Instance.ReturnToTitle();
+                            return;
+                        }
+                    }
                     Menu.Instance.SetMenuState(true);
                     break;
                 case 1: // Overview
@@ -276,8 +284,7 @@ namespace GraphicsTestFramework
                                     string scenePath = structure.suites[su].types[ty].groups[gr].tests[te].scenePath; // Get scene path
                                     ResultsDataCommon common = BuildResultsDataCommon(groupName, testName); // Build results data common to retrieve results
                                     ResultsIOData data = new ResultsIOData();
-                                    TestStructure.TestResults testResults = (TestStructure.TestResults)structure.suites[su].types[ty].groups[gr].tests[te];
-                                    if(TestRunner.Instance)
+                                    var testResults = structure.suites[su].types[ty].groups[gr].tests[te] as TestStructure.TestResults;                                    if(TestRunner.Instance)
                                     {
                                         if (!TestRunner.Instance.isAnalytic)
                                             data = ResultsIO.Instance.RetrieveEntry(suiteName, typeName, common, false, false); // Retrieve results data

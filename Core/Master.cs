@@ -1,5 +1,6 @@
 ﻿using System;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace GraphicsTestFramework
 {
@@ -12,9 +13,10 @@ namespace GraphicsTestFramework
     {
         // ------------------------------------------------------------------------------------
         // Variables
-
-        public AppMode appMode;
         public SQLmode _sqlMode;
+
+        public GameObject titleMenu;
+        public Button runTestButton;
 
         // Singleton
         private static Master _Instance = null;
@@ -35,6 +37,11 @@ namespace GraphicsTestFramework
         private void Awake()
         {
             DontDestroyOnLoad(gameObject); // Set this object to DontDestroy
+        }
+
+        void Start()
+        {
+            runTestButton.interactable = SuiteManager.HasSuites();
         }
 
         // ------------------------------------------------------------------------------------
@@ -78,6 +85,11 @@ namespace GraphicsTestFramework
 #endif
         }
 
+        public void ReturnToTitle()
+        {
+            titleMenu.SetActive(true);
+        }
+
     }
 
     // ------------------------------------------------------------------------------------
@@ -101,12 +113,5 @@ namespace GraphicsTestFramework
         Live,
         Staging,
         Disabled
-    }
-
-    // Enum for App mode
-    public enum AppMode
-    {
-        TestRunner,
-        Analytic
     }
 }

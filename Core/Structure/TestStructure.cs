@@ -91,12 +91,9 @@ namespace GraphicsTestFramework
         // Start generation process
         void StartGeneration()
         {
-            if(Master.Instance.appMode == AppMode.TestRunner)
-            {
-                Console.Instance.Write(DebugLevel.Full, MessageLevel.Log, "Initializing TestStructure"); // Write to console
-                ProgressScreen.Instance.SetState(true, ProgressType.LocalLoad, "Generating Test Structure"); // Enable ProgressScreen
-                StartCoroutine(GenerateStructure()); // Start generating structure
-            }
+            Console.Instance.Write(DebugLevel.Full, MessageLevel.Log, "Initializing TestStructure"); // Write to console
+            ProgressScreen.Instance.SetState(true, ProgressType.LocalLoad, "Generating Test Structure"); // Enable ProgressScreen
+            StartCoroutine(GenerateStructure()); // Start generating structure
         }
 
         // Generate test structure

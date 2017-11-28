@@ -29,7 +29,7 @@ namespace GraphicsTestFramework
 			}
 		}
 
-		private void Start ()
+		public void Start ()
 		{
 			//Grab the system data to share around
 			sysData = Master.Instance.GetSystemData ();
@@ -45,9 +45,6 @@ namespace GraphicsTestFramework
 			if (SQL.SQLIO.Instance == null)
 				gameObject.AddComponent<SQL.SQLIO> ();
 			SQL.SQLIO.Instance.Init (sysData);
-
-			if (Master.Instance.appMode == AppMode.TestRunner)
-				StartCoroutine (Init ());
 		}
 
 		public void Restart ()
