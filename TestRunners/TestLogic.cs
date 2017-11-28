@@ -698,7 +698,6 @@ namespace GraphicsTestFramework
             BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static;
             FieldInfo[] commonFields = typeof(ResultsDataCommon).GetFields(bindingFlags);
             FieldInfo[] customFields = results.GetFields(bindingFlags);
-
             List<string> commonDataRaw = resultsIOData.resultsRow[0].resultsColumn.GetRange(0, commonFields.Length);
             List<string> resultsDataRaw = resultsIOData.resultsRow[0].resultsColumn.GetRange(commonFields.Length, resultsIOData.resultsRow[0].resultsColumn.Count - (commonFields.Length));
 

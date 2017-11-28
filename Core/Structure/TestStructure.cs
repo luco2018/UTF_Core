@@ -225,7 +225,15 @@ namespace GraphicsTestFramework
                         test.dataB = riodB; // Set results data B
                     }
                     else
-                        test.dataB = null; // Set null
+                    {
+                        ResultsIOData riodB = new ResultsIOData();
+                        riodB.suite = resultsA[i].suite;
+                        riodB.testType = resultsA[i].testType;
+                        riodB.baseline = resultsA[i].baseline; // TODO - Should be true
+                        riodB.fieldNames = resultsA[i].fieldNames;
+                        riodB.resultsRow.Add(resultsA[i].resultsRow[row]);
+                        test.dataB = riodB; // Set results data A
+                    }
                     group.tests.Add(test); // Add to group
                 }
             }

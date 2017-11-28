@@ -158,6 +158,9 @@ namespace GraphicsTestFramework
                     currentTestIndex = 0; // Current index is always 0
                     StartCoroutine(LoadTest()); // Load tests manually from 0
                     break;
+                case RunnerType.Analytic: // Analytic Comparison (runs comparisons on recreated results data)
+                    StartCoroutine(IterateTests()); // Iterate the runner
+                    break;
                 case RunnerType.AnalyticComparison: // Analytic Comparison (runs comparisons on recreated results data)
                     StartCoroutine(IterateTests()); // Iterate the runner
                     break;
