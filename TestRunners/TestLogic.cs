@@ -103,15 +103,22 @@ namespace GraphicsTestFramework
         // Set initial information for test at beginning of test run
         public IEnumerator SetupTest(TestEntry inputEntry, RunnerType runType)
         {
-            ProgressScreen.Instance.SetState(true, ProgressType.LocalSave, "Preparing test"); // Enable ProgressScreen
-            testWasRan = false; // Reset
             activeTestEntry = inputEntry; // Store active TestEntry
             activeRunType = runType; // Store active RunnerType
-            SetSettings(); // Set settings to internal
-            yield return new WaitForEndOfFrame(); // Wait for settings
-            SetupResultsStructs(); // Setup the results structs to be filled
-            CheckForBaseline(); // Check for baselines
-            Console.Instance.Write(DebugLevel.Full, MessageLevel.Log, this.GetType().Name + " set up test " + activeTestEntry.testName); // Write to console
+            if(!TestRunner.Instance.isAnalytic) // If not analytic
+            {
+                ProgressScreen.Instance.SetState(true, ProgressType.LocalSave, "Preparing test"); // Enable ProgressScreen
+                testWasRan = false; // Reset
+                SetSettings(); // Set settings to internal
+                yield return new WaitForEndOfFrame(); // Wait for settings
+                SetupResultsStructs(); // Setup the results structs to be filled
+                CheckForBaseline(); // Check for baselines
+                Console.Instance.Write(DebugLevel.Full, MessageLevel.Log, this.GetType().Name + " set up test " + activeTestEntry.testName); // Write to console
+            }
+            else
+            {
+                SetSettings(); // Set settings to internal
+            }
             ResultsIOData localResult; // Used for certain active run types
             switch (activeRunType)
             {
@@ -119,21 +126,29 @@ namespace GraphicsTestFramework
                     TestPreProcess(); // Start pre-process
                     break;
                 case RunnerType.Manual:
-                    localResult = ResultsIO.Instance.RetrieveResult(suiteName, GetType().ToString().Replace("GraphicsTestFramework.", "").Replace("Logic", ""), activeResultData.common); // Try get local result
+                    localResult = ResultsIO.Instance.RetrieveEntry(suiteName, GetType().ToString().Replace("GraphicsTestFramework.", "").Replace("Logic", ""), activeResultData.common, false, true); // Try get local result
                     if (localResult == null) // If not found
                         TestPreProcess(); // Start pre-process
                     else // If found
                         UseLocalResult(localResult); // Use local
                     break;
                 case RunnerType.Results:
-                    localResult = ResultsIO.Instance.RetrieveResult(suiteName, GetType().ToString().Replace("GraphicsTestFramework.", "").Replace("Logic", ""), activeResultData.common); // Try get local result
+                    localResult = ResultsIO.Instance.RetrieveEntry(suiteName, GetType().ToString().Replace("GraphicsTestFramework.", "").Replace("Logic", ""), activeResultData.common, false, true); // Try get local result
                     UseLocalResult(localResult); // Use local
                     break;
                 case RunnerType.Resolve:
                     TestPreProcess(); // Start pre-process
                     break;
+                case RunnerType.Analytic:
+                    break;
+                case RunnerType.AnalyticComparison:
+                    StartCoroutine(ProcessAnalyticComparison());
+                    break;
             }
         }
+
+        // Analytic comparson Logic
+        public abstract IEnumerator ProcessAnalyticComparison();
 
         // First injection point for custom code. Runs before any test logic.
         public virtual void TestPreProcess()
@@ -200,6 +215,9 @@ namespace GraphicsTestFramework
                     break;
                 case RunnerType.Resolve:
                     GetComponent<TestDisplayBase>().EnableTestViewer(activeResultData, new TestViewerToolbar.State(false, false, false, true, true)); // Enable test viewer with active results data
+                    break;
+                case RunnerType.AnalyticComparison:
+                    BroadcastEndTestAction(); // Broadcast to TestList that rest is completed
                     break;
             }
         }
@@ -268,9 +286,9 @@ namespace GraphicsTestFramework
         // Comparison Methods
 
         // Get comparison data
-        public object GetComparisonData(ResultsBase resultsData)
+        public object ProcessComparison(ResultsBase resultsData)
         {
-            ResultsIOData baselineFetch = ResultsIO.Instance.RetrieveBaseline(suiteName, testTypeName, resultsData.common); // Get baseline data
+            ResultsIOData baselineFetch = ResultsIO.Instance.RetrieveEntry(suiteName, testTypeName, resultsData.common, true, true); // Get baseline data
             if (baselineFetch != null) // If successful
             {
                 ResultsBase baselineData = (ResultsBase)DeserializeResults(baselineFetch); // Convert to results class
@@ -398,7 +416,7 @@ namespace GraphicsTestFramework
     // - Next level TestLogic class that all user facing logics derive from
     // - Adds an abstraction layer for defining model type
 
-    public abstract class TestLogic<M, D, R, S> : TestLogicBase where M : TestModelBase where D : TestDisplayBase where R : ResultsBase where S : SettingsBase
+    public abstract class TestLogic<M, D, R, S, C> : TestLogicBase where M : TestModelBase where D : TestDisplayBase where R : ResultsBase where S : SettingsBase where C : ComparisonBase
     {
         // ------------------------------------------------------------------------------------
         // Variables
@@ -591,6 +609,22 @@ namespace GraphicsTestFramework
 			}
 		}
 
+        // Analytic comparson logic
+        public override IEnumerator ProcessAnalyticComparison()
+        {
+            ResultsIOData resultsA = new ResultsIOData(); // Create results A
+            yield return StartCoroutine(SQL.SQLIO.Instance.FetchSpecificEntry(TestStructure.Instance.RequestAnalyticData(0, activeTestEntry), (value => { resultsA = value; }))); // Get full results A
+            var rawResultsA = (R)DeserializeResults(resultsA); // Deserialize
+            ResultsIOData resultsB = new ResultsIOData(); // Create results A
+            yield return StartCoroutine(SQL.SQLIO.Instance.FetchSpecificEntry(TestStructure.Instance.RequestAnalyticData(1, activeTestEntry), (value => { resultsB = value; }))); // Get full results A
+            var rawResultsB = (R)DeserializeResults(resultsB); // Deserialize
+            bool passFail = GetComparisonResult(rawResultsA, rawResultsB); // Get Comparison result
+            resultsA.resultsRow[0].resultsColumn[Common.FindResultsDataIOFieldIdByName(resultsA, "PassFail")] = passFail.ToString(); // Set pass fail
+            EndTest(); // End test
+        }
+
+        public abstract bool GetComparisonResult(ResultsBase results, ResultsBase baseline);
+
         // ------------------------------------------------------------------------------------
         // Stable Framerate
 
@@ -664,7 +698,6 @@ namespace GraphicsTestFramework
             BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static;
             FieldInfo[] commonFields = typeof(ResultsDataCommon).GetFields(bindingFlags);
             FieldInfo[] customFields = results.GetFields(bindingFlags);
-
             List<string> commonDataRaw = resultsIOData.resultsRow[0].resultsColumn.GetRange(0, commonFields.Length);
             List<string> resultsDataRaw = resultsIOData.resultsRow[0].resultsColumn.GetRange(commonFields.Length, resultsIOData.resultsRow[0].resultsColumn.Count - (commonFields.Length));
 

@@ -11,7 +11,6 @@ namespace GraphicsTestFramework.SQL
 	public class SQLIO : MonoBehaviour {
 
 		public static SQLIO _Instance = null;//Instance
-
 		public static SQLIO Instance {
 			get {
 				if (_Instance == null)
@@ -32,6 +31,17 @@ namespace GraphicsTestFramework.SQL
 
 		//Query retry list - TODO - not hooked up or solved yet
 		private List<QueryBackup> SQLNonQueryBackup = new List<QueryBackup>();
+
+		//TEMPORARY
+		// public ResultsIOData[] _tempData;
+		// public ResultsIOData _tempDataFull;
+		
+		// IEnumerator Start()
+		// {
+		// 	yield return new WaitForSeconds(2f);
+		// 	yield return StartCoroutine(GetaData(false, (value => { _tempData = value; })));
+		// 	StartCoroutine(FetchSpecificEntry(_tempData[0], (value => { _tempDataFull = value; })));
+		// }
 
 		// ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		//INFORMATION
@@ -109,7 +119,9 @@ namespace GraphicsTestFramework.SQL
 				else
 				{
                     Console.Instance.Write(DebugLevel.File, MessageLevel.LogWarning, "SQL response:" + www.downloadHandler.text); // Write to console
-                    data(new RawData());
+					RawData _data = new RawData();
+					_data.fields.Add("Null");
+                    data(_data);
 				}
             }
             else
@@ -128,11 +140,7 @@ namespace GraphicsTestFramework.SQL
 			DateTime timestamp = DateTime.MinValue;//make date time min, we check this on the other end since it is not nullable
             RawData _rawData = null;//RawData to be filled by the request
             string query = String.Format("SELECT suiteTimestamp FROM SuiteBaselineTimestamps WHERE api='{0}' AND suiteName='{1}' AND platform='{2}';", sysData.API, suiteName, sysData.Platform);//This line sends a query to get timestamps for matching API/platform/suite
-            StartCoroutine(SQLRequest(query, (value => { _rawData = value; })));//send the request
-
-			while(_rawData == null){//we wait until the data is fill from the wwwrequest
-                yield return null;
-            }
+            yield return StartCoroutine(SQLRequest(query, (value => { _rawData = value; })));//send the request
 			if(_rawData.data.Count != 0)
             	timestamp = System.DateTime.Parse(_rawData.data[0][0]);//convert the string to a timestamp
 
@@ -146,10 +154,7 @@ namespace GraphicsTestFramework.SQL
 			//Get the table names to pull baselines from
 			foreach(string suite in suiteNames){
                 RawData rawData = new RawData();//RawData to be filled by the wwwRequest
-                StartCoroutine(SQLRequest(String.Format("SHOW TABLES LIKE '{0}%Baseline'", suite), (value => { rawData = value; })));//Get all tables with the suite and ending with baseline
-				while(rawData.data.Count == 0){
-                    yield return null;
-                }
+                yield return StartCoroutine(SQLRequest(String.Format("SHOW TABLES LIKE '{0}%Baseline'", suite), (value => { rawData = value; })));//Get all tables with the suite and ending with baseline
                 for (int t = 0; t < rawData.data.Count; t++){
 					tables.Add(rawData.data[t][0]);//add the table name to the list of tables to pull
 				}
@@ -164,10 +169,7 @@ namespace GraphicsTestFramework.SQL
                 //This line controls how baselines are selected, right now only Platform and API are unique
                 string query = String.Format("SELECT * FROM {0} WHERE platform='{1}' AND api='{2}'", table, platform, api);
                 RawData _rawData = new RawData();
-                StartCoroutine(SQLRequest(query, (value => { _rawData = value; })));
-				while(_rawData.data.Count == 0){
-                    yield return null;
-                }
+                yield return StartCoroutine(SQLRequest(query, (value => { _rawData = value; })));
                 data[n].fieldNames.AddRange(_rawData.fields);//Grab the fields from the RawData
 				for (int i = 0; i < _rawData.data.Count; i++)
                 {
@@ -182,6 +184,57 @@ namespace GraphicsTestFramework.SQL
 			outdata(data.ToArray ());
 		}
 
+		//Fetches a single baseline based of deets
+		public IEnumerator FetchBaseline(ResultsIOData inputData, Action<ResultsIOData> outdata)
+        {
+            ResultsIOData data = new ResultsIOData();//ResultsIOData to send back to resultsIO for local processing
+            TableStrings ts = new TableStrings(inputData.suite, inputData.testType, true);
+            string table = TableStringToStrings(ts);
+
+			data.suite = inputData.suite;
+			data.testType = inputData.testType;
+
+            string platform = inputData.resultsRow[0].resultsColumn[inputData.fieldNames.FindIndex(x => x =="Platform")];
+			string api = inputData.resultsRow[0].resultsColumn[inputData.fieldNames.FindIndex(x => x == "API")];
+			string group = inputData.resultsRow[0].resultsColumn[inputData.fieldNames.FindIndex(x => x == "GroupName")];
+            string test = inputData.resultsRow[0].resultsColumn[inputData.fieldNames.FindIndex(x => x == "TestName")];
+            //This line controls how baselines are selected, right now only Platform and API are unique
+            string query = String.Format("SELECT * FROM {0} WHERE platform='{1}' AND api='{2}' AND groupname='{3}' AND testname='{4}'", table, platform, api, group, test);
+			RawData _rawData = new RawData();
+			yield return StartCoroutine(SQLRequest(query, (value => { _rawData = value; })));
+			data.fieldNames.AddRange(_rawData.fields);//Grab the fields from the RawData
+			for (int i = 0; i < _rawData.data.Count; i++)
+			{
+				ResultsIORow row = new ResultsIORow();//create a new row
+				row.resultsColumn.AddRange(_rawData.data[i]);//store the current row of values
+				data.resultsRow.Add(row);//add it to the data to send back to resultsIO
+			}
+            outdata(data);
+        }
+
+		public IEnumerator FetchSpecificEntry(ResultsIOData inputData, Action<ResultsIOData> outdata)
+		{
+			//make request based off common
+			string baseline = inputData.baseline == true ? "Baseline" : "Results";
+			string table = inputData.suite + "_" + inputData.testType + "_" + baseline;
+
+			string values = ConvertToCondition(inputData.resultsRow[0].resultsColumn, inputData.fieldNames);
+
+			string query = String.Format("SELECT * FROM {0} WHERE {1}", table, values);
+			RawData _rawData = new RawData();
+			yield return StartCoroutine(SQLRequest(query, (value => { _rawData = value; })));
+			inputData.fieldNames.Clear();
+			inputData.resultsRow.Clear();
+			inputData.fieldNames.AddRange(_rawData.fields);//Grab the fields from the RawData
+			for (int i = 0; i < _rawData.data.Count; i++)
+			{
+				ResultsIORow row = new ResultsIORow();//create a new row
+				row.resultsColumn.AddRange(_rawData.data[i]);//store the current row of values
+				inputData.resultsRow.Add(row);//add it to the data to send back to resultsIO
+			}
+			outdata(inputData);
+		}
+
 		public IEnumerator RunUUID(Action<string> uuid)
 		{
 			string _uuid = "";
@@ -190,8 +243,7 @@ namespace GraphicsTestFramework.SQL
 			do
 			{
 				_uuid = Common.RandomUUID();
-				StartCoroutine(SQLRequest(string.Format("SELECT COUNT(*) FROM RunUUIDs WHERE runID='{0}'", _uuid), (value) => { rawData = value; }));//send the query, this will return a number if successful or -1 for a failure
-				while(rawData.data.Count == 0) { yield return null; }
+				yield return StartCoroutine(SQLRequest(string.Format("SELECT COUNT(*) FROM RunUUIDs WHERE runID='{0}'", _uuid), (value) => { rawData = value; }));//send the query, this will return a number if successful or -1 for a failure
 				if(rawData.data[0][0] == "0")
 					exists = false;
 			}while(exists);
@@ -303,6 +355,22 @@ namespace GraphicsTestFramework.SQL
             string _template = tableName.Substring(tableName.IndexOf('_') + 1, tableName.Length - (tableName.IndexOf('_') + 1));//shave off the suite name to get the template table
 			return string.Format ("CREATE TABLE IF NOT EXISTS {0} LIKE {1};\n", tableName, _template);//query to check for table, otherwise create one
 		}
+		
+		//convert table string to tableStrings, Takes 'Suite_TestType_Baseline' and splits into a TableStringsClass
+		public static TableStrings TableStringToStrings(string tableString)
+		{
+            string[] splitName = tableString.Split('_');
+			TableStrings _tableStrings = new TableStrings(splitName[0], splitName[1], (splitName[2] == "Baseline" ? true : false));
+            return _tableStrings;
+        }
+
+        //convert tableStrings to table string, Takes a tablestrings class and outputs a string formatted like 'Suite_TestType_Baseline'
+        public static string TableStringToStrings(TableStrings tableString)
+        {
+			string baseline = tableString.baseline ? "Baseline" : "Results";
+            string _tableString = tableString.suite + "_" + tableString.testType + "_" + baseline;
+            return _tableString;
+        }
 
 		//create column list for table creation, inclued data type
 		string CreateColumns(string[] columns){
@@ -343,7 +411,18 @@ namespace GraphicsTestFramework.SQL
 			return sb.ToString ();
 		}
 
-		//Convert raw data form the webserver to table data
+		//create column list for named values for condition use
+		string ConvertToCondition(List<string> values, List<string> fields){
+			StringBuilder sb = new StringBuilder ();
+			for (int i = 0; i < values.Count; i++) {
+				sb.Append (fields[i] + "='" + values[i] + "' ");
+				if (i != values.Count - 1)
+					sb.Append (" AND ");
+			}
+			return sb.ToString ();
+		}
+
+		//Convert raw string data form the webserver to table data
 		RawData ConvertRawData(string data)
         {
             RawData _output = new RawData();
@@ -357,15 +436,48 @@ namespace GraphicsTestFramework.SQL
             return _output;
         }
 
+		//Convert RawData class to ResultsIOData Class
+		public static ResultsIOData ConvertRawDataToResultsIOData(string suite, string testType, RawData data, bool baseline)
+		{
+            ResultsIOData outData = new ResultsIOData();
+            outData.suite = suite;
+            outData.testType = testType;
+            outData.baseline = baseline;
+            outData.fieldNames = data.fields;
+            for (int i = 0; i < data.data.Count; i++)
+			{
+                ResultsIORow row = new ResultsIORow();
+                row.resultsColumn.AddRange(data.data[i]);
+                outData.resultsRow.Add(row);
+            }
+            return outData;
+        }
+		
 		class QueryBackup{
 			public QueryType type;
 			public string query;
 		}
 
+		[System.Serializable]
         public class RawData
         {
             public List<string> fields = new List<string>();
             public List<string[]> data = new List<string[]>();
+        }
+
+		public class TableStrings
+		{
+            public string suite;
+            public string testType;
+            public bool baseline;
+
+			public TableStrings(string _suite, string _testType, bool b)
+			{
+                suite = _suite;
+                testType = _testType;
+                b = baseline;
+            }
+
         }
 
 		enum QueryType{ Query, NonQuery, QueryRequest};

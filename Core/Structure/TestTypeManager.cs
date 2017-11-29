@@ -109,6 +109,18 @@ namespace GraphicsTestFramework
             return type.ToString().Replace("GraphicsTestFramework.", "").Replace("Model", ""); // Return the type name of the requested index
         }
 
+        // Get a type index from its type name
+        public int GetTestTypeIndexFromName(string name)
+        {
+            string[] stringArray = TestTypes.GetTypeStringList(); // Get list of type string
+            for(int i = 0; i < stringArray.Length; i++) // Iterate
+            {
+                if (stringArray[i] == name) // If matches query
+                    return i; // Return index
+            }
+            return -1; // Return fail
+        }
+
         // Get the active test logic
         public TestLogicBase GetActiveTestLogic()
         {

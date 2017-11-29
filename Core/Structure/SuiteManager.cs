@@ -14,6 +14,16 @@ namespace GraphicsTestFramework
         // ------------------------------------------------------------------------------------
         // Get Data
 
+        // Does the project object have any suites?
+        public static bool HasSuites()
+        {
+            ProjectSettings projectSettings = GetProjectSettings(); // Get the suite list
+            if(projectSettings.suiteList.Count > 0)
+                return true;
+            else
+                return false;
+        }
+
         // Get a string array of all suite names
         public static string[] GetSuiteNames()
         {
@@ -111,6 +121,7 @@ namespace GraphicsTestFramework
                     for (int te = 0; te < projectSettings.suiteList[su].groups[gr].tests.Count; te++) // Iterate tests on the group
                     {
                         projectSettings.suiteList[su].groups[gr].tests[te].scenePath = UnityEditor.AssetDatabase.GetAssetPath(projectSettings.suiteList[su].groups[gr].tests[te].scene);
+                        projectSettings.suiteList[su].groups[gr].tests[te].name = projectSettings.suiteList[su].groups[gr].tests[te].scenePath;
                         UnityEditor.EditorUtility.SetDirty(projectSettings.suiteList[su]);
                         UnityEditor.EditorBuildSettingsScene scene = new UnityEditor.EditorBuildSettingsScene(projectSettings.suiteList[su].groups[gr].tests[te].scenePath, true); // Create new build settings scene from asset path
                         if (!FindDuplicateScene(buildSettingsScenes, projectSettings.suiteList[su].groups[gr].tests[te].scenePath)) // If no duplicate scene found

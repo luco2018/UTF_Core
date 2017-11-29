@@ -7,11 +7,18 @@ namespace GraphicsTestFramework
     // Results Data Structures
 
     // Structure for results (Inherits from ResultsBase. Class contents can be anything)
-    [System.Serializable]
+    [Serializable]
     public class ExampleResults : ResultsBase
     {
         public float SomeFloat; // Just some example data. Well use this for comparison.
         public int SomeInt; // Just some more example data (can save most types, including arrays)
+    }
+
+    // Structure for comparison results (Do not rename class. Class contents can be anything)
+    [Serializable]
+    public class ExampleComparison : ComparisonBase
+    {
+        public float SomeFloatDiff; // Just some example data. Well use this for comparison.
     }
 
     // ------------------------------------------------------------------------------------

@@ -206,7 +206,7 @@ namespace GraphicsTestFramework
 		/// <param name="testType">Test type.</param>
 		/// <param name="resultsDataCommon">Results data common.</param>
 		/// <param name="baseline">If set to <c>true</c> baseline.</param>
-		public ResultsIOData FetchDataFile (string suite, string testType, ResultsDataCommon resultsDataCommon, bool baseline)
+		public ResultsIOData FetchDataFile (string suite, string testType, ResultsDataCommon resultsDataCommon, bool baseline, bool full)
 		{
             Console.Instance.Write(DebugLevel.Full, MessageLevel.Log, "Beginning fetch process"); // Write to console
 			string filePath = dataPath + "/" + suite + "/" + resultsDataCommon.Platform + "_" + resultsDataCommon.API + "/" + resultsDataCommon.RenderPipe + "/" + testType;
@@ -226,7 +226,25 @@ namespace GraphicsTestFramework
                     Console.Instance.Write(DebugLevel.Full, MessageLevel.Log, "Baseline file does not exist for the requested test, please make sure you pull the latest or create them"); // Write to console
 					return null;
 				} else {
-					string[] fileLines = File.ReadAllLines (filePath + "/" + fileName);
+					string[] fileLines;
+					if(!full)
+					{
+						fileLines = File.ReadAllLines (filePath + "/" + fileName);
+						List<string> lines = new List<string>();
+						int commonEnd = 0;
+						for(int i = 0; i < fileLines.Length; i++)
+						{
+							if(commonEnd == 0)
+								lines.Add(fileLines[i]);
+							if(fileLines[i] == "Custom")
+								commonEnd = 1;
+						}
+						fileLines = lines.ToArray();
+					}
+					else
+					{
+						fileLines = File.ReadAllLines (filePath + "/" + fileName);
+					}
 					return ResultsIO.Instance.GenerateRIOD (fileLines, suite, testType);
 				}
 			}

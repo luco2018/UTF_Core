@@ -26,7 +26,13 @@ namespace GraphicsTestFramework
         // On button click: View Test
         public void OnClickViewTest()
         {
-            Menu.Instance.GenerateTestRunner(RunnerType.Results); // Generate blank runner
+            if(TestRunner.Instance) // If test runner exists
+            {
+                if(!TestRunner.Instance.isAnalytic) // If not analytic
+                    Menu.Instance.GenerateTestRunner(RunnerType.Results); // Generate blank runner
+            }
+            else
+                Menu.Instance.GenerateTestRunner(RunnerType.Results); // Generate blank runner
             TestRunner.Instance.CallLoadSpecificTest(activeResultsEntry.resultsEntryData.testEntry); // Load specific test
             ResultsViewer.Instance.SetState(4); // Disable results viewer
         }

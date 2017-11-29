@@ -46,17 +46,17 @@ namespace GraphicsTestFramework
                     };
                     break;
                 case true:
-                    var comparisonData = (FrameComparisonLogic.ComparisonData)logic.GetComparisonData(resultsObject); // Get the comparison data for this test in this types class (mandatory)
+                    var comparisonData = (FrameComparisonComparison)logic.ProcessComparison(resultsObject); // Get the comparison data for this test in this types class (mandatory)
                     SetupMaterial(comparisonData.baselineTex, comparisonData.resultsTex); // Setup the material
                     output = new TestViewerTabData[3] // Want three tabs
                     {
                         new TestViewerTabData("Results", TestViewerTabType.TextureSlider, new TestViewer.TextureSliderContext(comparisonData.resultsTex, "Result", comparisonData.baselineTex, "Baseline"), new TestViewerTabData.TestViewerTabStatistic[] // Create slider tab for results/baseline
                         {
-                            new TestViewerTabData.TestViewerTabStatistic("Diff", comparisonData.DiffPercentage.ToString()) // Enable the statistics window and display the diff
+                            new TestViewerTabData.TestViewerTabStatistic("Diff", comparisonData.DiffPercentage.ToString("N4")) // Enable the statistics window and display the diff
                         }),
                         new TestViewerTabData("Comparison", TestViewerTabType.Material, material, new TestViewerTabData.TestViewerTabStatistic[] // And the material for the comparison display
                         {
-                            new TestViewerTabData.TestViewerTabStatistic("Diff", comparisonData.DiffPercentage.ToString()) // Enable the statistics window and display the diff
+                            new TestViewerTabData.TestViewerTabStatistic("Diff", comparisonData.DiffPercentage.ToString("N4")) // Enable the statistics window and display the diff
                         }),
                         new TestViewerTabData("Live Camera", TestViewerTabType.Camera, typedSettings.captureCamera, null) // Live camera showing capture camera
                     };
@@ -68,14 +68,20 @@ namespace GraphicsTestFramework
         // ------------------------------------------------------------------------------------
         // ResultsViewer
 
-        FrameComparisonLogic.ComparisonData comparisonData;
+        FrameComparisonComparison comparisonData;
 
         // Setup the results context object
-        public override void SetupResultsContext(ResultsContext context, ResultsIOData inputData)
+        public override void SetupResultsContext(ResultsContext context, ResultsIOData inputData, ResultsIOData inputDataB)
         {
             CleanupResultsContext();
             FrameComparisonResults inputResults = (FrameComparisonResults)logic.DeserializeResults(inputData); // Deserialize input and cast to typed results
-            comparisonData = (FrameComparisonLogic.ComparisonData)logic.GetComparisonData(inputResults); // Get comparison data
+            if(!TestRunner.Instance.isAnalytic)
+                comparisonData = (FrameComparisonComparison)logic.ProcessComparison(inputResults); // Get comparison data
+            else
+            {
+                FrameComparisonResults inputResultsB = (FrameComparisonResults)logic.DeserializeResults(inputDataB); // Deserialize input and cast to typed results
+                comparisonData = (FrameComparisonComparison)logic.ProcessComparison(inputResultsB, inputResults);
+            }
             buttons = new Button[3]; // Create button array
             for(int i = 0; i < buttons.Length; i++) // Iterate
             { 
@@ -84,12 +90,12 @@ namespace GraphicsTestFramework
                 buttons[i].onClick.AddListener(delegate { SetTextureContext(comparisonData, index); }); // Add listener
             }
             resultsContextImage = context.objects[3].GetComponent<RawImage>(); // Get image
-            context.objects[4].GetComponent<Text>().text = comparisonData.DiffPercentage.ToString(); // Set diff to field
+            context.objects[4].GetComponent<Text>().text = comparisonData.DiffPercentage.ToString("N4"); // Set diff to field
             SetTextureContext(comparisonData, 0); // Set default
         }
 
         // Set context for textures
-        public void SetTextureContext(FrameComparisonLogic.ComparisonData comparisonData, int context)
+        public void SetTextureContext(FrameComparisonComparison comparisonData, int context)
         {
             foreach (Button b in buttons) // Iterate buttons
                 b.interactable = true; // Enable

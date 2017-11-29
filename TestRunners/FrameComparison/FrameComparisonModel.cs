@@ -14,6 +14,15 @@ namespace GraphicsTestFramework
         public string resultFrame;
     }
 
+    // Structure for comparison
+    [Serializable]
+    public class FrameComparisonComparison : ComparisonBase
+    {
+        public float DiffPercentage;
+        public Texture2D baselineTex;
+        public Texture2D resultsTex;
+    }
+
     // ------------------------------------------------------------------------------------
     // Settings Data Structures
 

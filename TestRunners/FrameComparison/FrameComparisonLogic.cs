@@ -9,7 +9,7 @@ namespace GraphicsTestFramework
     // - Results: Captures a screenshot from models test camera
     // - Comparison: Gets average value of pixel differences between results screenshot and baseline
 
-    public class FrameComparisonLogic : TestLogic<FrameComparisonModel, FrameComparisonDisplay, FrameComparisonResults, FrameComparisonSettings>
+    public class FrameComparisonLogic : TestLogic<FrameComparisonModel, FrameComparisonDisplay, FrameComparisonResults, FrameComparisonSettings, FrameComparisonComparison>
     {
         // ------------------------------------------------------------------------------------
         // Variables
@@ -18,16 +18,7 @@ namespace GraphicsTestFramework
         Camera menuCamera;
         RenderTexture temporaryRt;
         Texture2D resultsTexture;
-        bool doCapture;
-
-        // Structure for comparison
-        [System.Serializable]
-        public class ComparisonData
-        {
-            public float DiffPercentage;
-            public Texture2D baselineTex;
-            public Texture2D resultsTex;
-        }
+        bool doCapture;     
 
         // ------------------------------------------------------------------------------------
         // Execution Overrides
@@ -84,13 +75,8 @@ namespace GraphicsTestFramework
             m_TempData.resultFrame = Common.ConvertTextureToString(resultsTexture); // Convert results texture to Base64 String and save to results data
             if (baselineExists) // Comparison (mandatory)
             {
-                FrameComparisonResults referenceData = (FrameComparisonResults)DeserializeResults(ResultsIO.Instance.RetrieveBaseline(suiteName, testTypeName, m_TempData.common)); // Deserialize baseline data (mandatory)
-                ComparisonData comparisonData = (ComparisonData)ProcessComparison(referenceData, m_TempData);  // Prrocess comparison (mandatory)
-                if (comparisonData.DiffPercentage < model.settings.passFailThreshold)  // Pass/fail decision logic (logic specific)
-                    m_TempData.common.PassFail = true;
-                else
-                    m_TempData.common.PassFail = false;
-                comparisonData = null;  // Null comparison (mandatory)
+                FrameComparisonResults referenceData = (FrameComparisonResults)DeserializeResults(ResultsIO.Instance.RetrieveEntry(suiteName, testTypeName, m_TempData.common, true, true)); // Deserialize baseline data (mandatory)
+                m_TempData.common.PassFail = GetComparisonResult(m_TempData, referenceData); // Get comparison results
             }
             if (typedSettings.useBackBuffer)
             {
@@ -113,11 +99,24 @@ namespace GraphicsTestFramework
             EndTest(); // End test
         }
 
+        // Get a comparison result from any given result and baseline
+        public override bool GetComparisonResult(ResultsBase results, ResultsBase baseline)
+        {
+            FrameComparisonComparison comparisonData = (FrameComparisonComparison)ProcessComparison(baseline, results);  // Prrocess comparison (mandatory)
+            bool output = false;
+            if (comparisonData.DiffPercentage < model.settings.passFailThreshold)  // Pass/fail decision logic (logic specific)
+                output = true;
+            else
+                output = false;
+            comparisonData = null;  // Null comparison (mandatory)
+            return output;
+        }
+
         // Logic for comparison process (mandatory)
         // TODO - Will use last run test model, need to get this for every call from Viewers?
         public override object ProcessComparison(ResultsBase baselineData, ResultsBase resultsData)
         {
-            ComparisonData newComparison = new ComparisonData(); // Create new ComparisonData instance (mandatory)
+            FrameComparisonComparison newComparison = new FrameComparisonComparison(); // Create new ComparisonData instance (mandatory)
             FrameComparisonResults baselineDataTyped = (FrameComparisonResults)baselineData; // Set baseline data to local type
             FrameComparisonResults resultsDataTyped = (FrameComparisonResults)resultsData; // Set results data to local type
             newComparison.baselineTex = Common.ConvertStringToTexture(resultsDataTyped.common.TestName + "_Reference", baselineDataTyped.resultFrame); // Convert baseline frame to Texture2D (logic specific)
