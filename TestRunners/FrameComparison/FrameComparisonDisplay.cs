@@ -52,11 +52,11 @@ namespace GraphicsTestFramework
                     {
                         new TestViewerTabData("Results", TestViewerTabType.TextureSlider, new TestViewer.TextureSliderContext(comparisonData.resultsTex, "Result", comparisonData.baselineTex, "Baseline"), new TestViewerTabData.TestViewerTabStatistic[] // Create slider tab for results/baseline
                         {
-                            new TestViewerTabData.TestViewerTabStatistic("Diff", comparisonData.DiffPercentage.ToString()) // Enable the statistics window and display the diff
+                            new TestViewerTabData.TestViewerTabStatistic("Diff", comparisonData.DiffPercentage.ToString("N4")) // Enable the statistics window and display the diff
                         }),
                         new TestViewerTabData("Comparison", TestViewerTabType.Material, material, new TestViewerTabData.TestViewerTabStatistic[] // And the material for the comparison display
                         {
-                            new TestViewerTabData.TestViewerTabStatistic("Diff", comparisonData.DiffPercentage.ToString()) // Enable the statistics window and display the diff
+                            new TestViewerTabData.TestViewerTabStatistic("Diff", comparisonData.DiffPercentage.ToString("N4")) // Enable the statistics window and display the diff
                         }),
                         new TestViewerTabData("Live Camera", TestViewerTabType.Camera, typedSettings.captureCamera, null) // Live camera showing capture camera
                     };
@@ -90,7 +90,7 @@ namespace GraphicsTestFramework
                 buttons[i].onClick.AddListener(delegate { SetTextureContext(comparisonData, index); }); // Add listener
             }
             resultsContextImage = context.objects[3].GetComponent<RawImage>(); // Get image
-            context.objects[4].GetComponent<Text>().text = comparisonData.DiffPercentage.ToString(); // Set diff to field
+            context.objects[4].GetComponent<Text>().text = comparisonData.DiffPercentage.ToString("N4"); // Set diff to field
             SetTextureContext(comparisonData, 0); // Set default
         }
 

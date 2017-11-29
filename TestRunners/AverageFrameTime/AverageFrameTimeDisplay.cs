@@ -23,7 +23,7 @@ namespace GraphicsTestFramework
                     {
                         new TestViewerTabData ("Live Camera", TestViewerTabType.DefaultCamera, null, new TestViewerTabData.TestViewerTabStatistic[1] // Set the tab to use the default camera
                             {
-                                new TestViewerTabData.TestViewerTabStatistic("Average Frame Time", localResultData.avgFrameTime.ToString()) // Enable the statistics window and display the avg frame time
+                                new TestViewerTabData.TestViewerTabStatistic("Average Frame Time", localResultData.avgFrameTime.ToString("N4")) // Enable the statistics window and display the avg frame time
                             })
                     };
                     break;
@@ -33,8 +33,8 @@ namespace GraphicsTestFramework
                     {
                         new TestViewerTabData ("Live Camera", TestViewerTabType.DefaultCamera, null, new TestViewerTabData.TestViewerTabStatistic[2] // Set the tab to use the default camera
                             {
-                                new TestViewerTabData.TestViewerTabStatistic("Average Frame Time", localResultData.avgFrameTime.ToString()), // Enable the statistics window and display the avg frame time
-                                new TestViewerTabData.TestViewerTabStatistic("Delta", comparisonData.delta.ToString()) // Also display the delta from the comparison
+                                new TestViewerTabData.TestViewerTabStatistic("Average Frame Time", localResultData.avgFrameTime.ToString("N4")), // Enable the statistics window and display the avg frame time
+                                new TestViewerTabData.TestViewerTabStatistic("Delta", comparisonData.delta.ToString("N4")) // Also display the delta from the comparison
                             })
                     };
                     break;
@@ -60,8 +60,8 @@ namespace GraphicsTestFramework
                 comparisonData = (AverageFrameTimeComparison)logic.ProcessComparison(inputResultsB, inputResults);
             }
 
-            context.objects[0].GetComponent<Text>().text = inputResults.avgFrameTime.ToString(); // Set average frame time
-            context.objects[1].GetComponent<Text>().text = comparisonData.delta.ToString(); // Set delta
+            context.objects[0].GetComponent<Text>().text = inputResults.avgFrameTime.ToString("N4"); // Set average frame time
+            context.objects[1].GetComponent<Text>().text = comparisonData.delta.ToString("N4"); // Set delta
         }
     }
 }
