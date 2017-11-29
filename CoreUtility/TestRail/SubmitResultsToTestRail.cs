@@ -76,7 +76,7 @@ public class SubmitResultsToTestRail : MonoBehaviour {
 						string caseID = structure.suites[su].types[ty].groups[gr].tests[te].caseID;
 						string scenePath = structure.suites[su].types[ty].groups[gr].tests[te].scenePath; // Get scene path
 						ResultsDataCommon common = Common.BuildResultsDataCommon(groupName, testName); // Build results data common to retrieve results
-						ResultsIOData data = ResultsIO.Instance.RetrieveResult(suiteName, typeName, common); // Retrieve results data
+						ResultsIOData data = ResultsIO.Instance.RetrieveEntry(suiteName, typeName, common, false, true); // Retrieve results data
 
 						int passFail = 0; // Set default state (no results)
 						if (data != null) // If results data exists

@@ -72,22 +72,11 @@ namespace GraphicsTestFramework
         {
             yield return null; // TODO - Remove
             testStructure = new Structure(); // Create new test structure instance
-
-            string[] testTypes = TestTypes.GetTypeStringList(); // Get the type list
-            List<TestType> typeList = new List<TestType>(); // Create new list to fill
-            for(int i = 0; i < testTypes.Length; i++) // ITerate type list
-            {
-                TestType newType = new TestType(); // Create new instance
-                newType.typeName = testTypes[i]; // Set name
-                newType.typeIndex = i; // Set index
-                typeList.Add(newType); // Add to list
-                TestModelBase model = (TestModelBase)Activator.CreateInstance(TestTypes.GetTypeFromIndex(i)); // Create model instance for logic references
-                model.SetLogic(); // Need to set logic before generating type instances
-                TestTypeManager.Instance.GenerateTestTypeInstance(model); // Generate an instance object for test logic/display
-            }
+            List<TestType> typeList = GenerateTypeListAndInstances(); // Generate type list and create instances
             ProjectSettings projectSettings = SuiteManager.GetProjectSettings(); // Get the suite list
             if (projectSettings == null) // If no suite list found
                 StopAllCoroutines(); // Abort
+
             for (int su = 0; su < projectSettings.suiteList.Count; su++) // Iterate suites on suite list
             {
                 Suite newSuite = new Suite(); // Create new suite instance
@@ -130,6 +119,129 @@ namespace GraphicsTestFramework
             m_IsGenerated = true; // Set generated
             Console.Instance.Write(DebugLevel.Logic, MessageLevel.Log, "TestStructure finished generating"); // Write to console
             ProgressScreen.Instance.SetState(false, ProgressType.LocalLoad, ""); // Disable ProgressScreen
+        }
+
+        public void ClearStructure()//clears the structure, needed as analytic creates one that differs from the testing
+        {
+            testStructure = null;
+            m_IsGenerated = false;
+        }
+
+        public IEnumerator GenerateAnalyticStructure(ResultsIOData[] results)
+        {
+            yield return null;
+            StartCoroutine(GenerateAnalyticStructure(results, null));
+        }
+
+        public IEnumerator GenerateAnalyticStructure(ResultsIOData[] resultsA, ResultsIOData[] resultsB)
+        {
+            yield return null;
+            testStructure = new Structure(); // Create new test structure instance
+            List<TestType> typeList = GenerateTypeListAndInstances(); // Generate type list and create instances
+
+            int groupColumn = Common.FindResultsDataIOFieldIdByName(resultsA[0], "GroupName"); // Get group column ID
+            if (groupColumn == -1) // If error return
+                Console.Instance.Write(DebugLevel.Critical, MessageLevel.LogError, "GroupName ID not found"); // Debug
+            int testColumn = Common.FindResultsDataIOFieldIdByName(resultsA[0], "TestName"); // Get test column ID
+            if (testColumn == -1) // If error return
+                Console.Instance.Write(DebugLevel.Critical, MessageLevel.LogError, "TestName ID not found"); // Debug
+
+            for (int i = 0; i < resultsA.Length; i++)
+            {
+                Debug.LogWarning(resultsA[i].testType);
+                string suiteName = resultsA[i].suite;
+                Suite suite = FindDuplicateSuiteInStructure(suiteName);
+                if (suite == null)
+                {
+                    suite = new Suite(); // Create new suite instance
+                    suite.suiteName = suiteName; // Set suite name
+                    suite.types = CloneTestTypeList(typeList); // Clone the type list
+                    testStructure.suites.Add(suite); // Add to suites list
+                }
+                //iterate through all the tests in ResultsIOData.Rows
+                for (int row = 0; row < resultsA[i].resultsRow.Count; row++)
+                {
+                    string groupName = resultsA[i].resultsRow[row].resultsColumn[groupColumn]; // Get group name
+                    int typeIndex = TestTypeManager.Instance.GetTestTypeIndexFromName(resultsA[i].testType); // Get type index
+                    if (typeIndex == -1) // If error return
+                        Console.Instance.Write(DebugLevel.Critical, MessageLevel.LogError, "TestType ID not found"); // Debug
+                    Group group = FindDuplicateGroupInType(suite, typeIndex, groupName);
+                    if (group == null)
+                    {
+                        group = new Group(); // Create new group instance
+                        group.groupName = groupName; // Set group name
+                        suite.types[typeIndex].groups.Add(group); // Add to groups list
+                    }
+
+                    string testName = resultsA[i].resultsRow[row].resultsColumn[testColumn]; // Get test name
+                    TestResults test = new TestResults(); // Create new TestResults
+                    test.testName = testName; // Set test name
+
+                    //create resultsIOdata for this single row
+                    ResultsIOData riodA = new ResultsIOData();
+                    riodA.suite = resultsA[i].suite;
+                    riodA.testType = resultsA[i].testType;
+                    riodA.baseline = resultsA[i].baseline;
+                    riodA.fieldNames = resultsA[i].fieldNames;
+                    riodA.resultsRow.Add(resultsA[i].resultsRow[row]);
+                    test.dataA = riodA; // Set results data A
+
+                    if (resultsB != null) // If analytic comparison
+                    {
+                        ResultsIOData riodB = new ResultsIOData();
+                        riodB.suite = resultsB[i].suite;
+                        riodB.testType = resultsB[i].testType;
+                        riodB.baseline = resultsB[i].baseline;
+                        riodB.fieldNames = resultsB[i].fieldNames;
+                        riodB.resultsRow.Add(resultsB[i].resultsRow[row]);
+                        test.dataB = riodB; // Set results data B
+                    }
+                    else
+                    {
+                        ResultsIOData riodB = new ResultsIOData();
+                        riodB.suite = resultsA[i].suite;
+                        riodB.testType = resultsA[i].testType;
+                        riodB.baseline = true; //resultsA[i].baseline; // TODO - Should be true
+                        riodB.fieldNames = resultsA[i].fieldNames;
+                        riodB.resultsRow.Add(resultsA[i].resultsRow[row]);
+                        test.dataB = riodB; // Set results data A
+                    }
+                    group.tests.Add(test); // Add to group
+                }
+            }
+            // Reiterate suites to remove empty type entries
+            for (int i = 0; i < testStructure.suites.Count; i++) 
+            {
+                for (int ty = 0; ty < testStructure.suites[i].types.Count; ty++) // Iterate types
+                {
+                    if (testStructure.suites[i].types[ty].groups.Count == 0) // If empty
+                        testStructure.suites[i].types.RemoveAt(ty); // Remove it
+                }
+                testStructure.suites[i].types.TrimExcess(); // Trim the types list
+            }
+            Console.Instance.Write(DebugLevel.Logic, MessageLevel.Log, "AnalyticTestStructure finished generating"); // Write to console
+
+            if (resultsB == null) // If analytic
+                Menu.Instance.GenerateTestRunner(RunnerType.Analytic); // Generate anyaltic test runner
+            else // If analytic comparison
+                Menu.Instance.GenerateTestRunner(RunnerType.AnalyticComparison);
+        }
+
+        List<TestType> GenerateTypeListAndInstances()
+        {
+            string[] testTypes = TestTypes.GetTypeStringList(); // Get the type list
+            List<TestType> typeList = new List<TestType>(); // Create new list to fill
+            for (int i = 0; i < testTypes.Length; i++) // ITerate type list
+            {
+                TestType newType = new TestType(); // Create new instance
+                newType.typeName = testTypes[i]; // Set name
+                newType.typeIndex = i; // Set index
+                typeList.Add(newType); // Add to list
+                TestModelBase model = (TestModelBase)Activator.CreateInstance(TestTypes.GetTypeFromIndex(i)); // Create model instance for logic references
+                model.SetLogic(); // Need to set logic before generating type instances
+                TestTypeManager.Instance.GenerateTestTypeInstance(model); // Generate an instance object for test logic/display
+            }
+            return typeList;
         }
 
         // ------------------------------------------------------------------------------------
@@ -196,6 +308,17 @@ namespace GraphicsTestFramework
                 {
                     return suite.types[ty]; // Return the type
                 }
+            }
+            return null; // Return fail
+        }
+
+        // Find duplicate suite entries in the structure
+        Suite FindDuplicateSuiteInStructure(string suiteName)
+        {
+            for(int su = 0; su < testStructure.suites.Count; su++) // Iterate suites
+            {
+                if (testStructure.suites[su].suiteName == suiteName) // If name matches
+                    return testStructure.suites[su]; // Return suite
             }
             return null; // Return fail
         }
@@ -525,6 +648,19 @@ namespace GraphicsTestFramework
             return output;
         }
 
+        // Get analytic data from a specific test structure entry
+        public ResultsIOData RequestAnalyticData(int dataSet, TestEntry testEntry)
+        {
+            TestResults testResults = (TestResults)testStructure.suites[testEntry.suiteIndex].types[testEntry.typeIndex].groups[testEntry.groupIndex].tests[testEntry.testIndex]; // Get entry and cast
+            return dataSet == 0 ? testResults.dataA : testResults.dataB; // Return data set
+        }
+
+        // Get a suite name from index
+        public string GetSuiteNameFromIndex(int index)
+        {
+            return testStructure.suites[index].suiteName; // Return suite name
+        }
+
         // ------------------------------------------------------------------------------------
         // Local Data Structures
 
@@ -570,6 +706,13 @@ namespace GraphicsTestFramework
             public int selectionState;
             public bool baseline;
             public string caseID;
+        }
+
+        [Serializable]
+        public class TestResults : Test
+        {
+            public ResultsIOData dataA;
+            public ResultsIOData dataB;
         }
     }
 }

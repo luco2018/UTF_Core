@@ -1,5 +1,6 @@
 ﻿using System;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace GraphicsTestFramework
 {
@@ -12,7 +13,6 @@ namespace GraphicsTestFramework
     {
         // ------------------------------------------------------------------------------------
         // Variables
-
         public SQLmode _sqlMode;
 
         // Singleton
@@ -76,7 +76,6 @@ namespace GraphicsTestFramework
             UnityEditor.EditorApplication.isPlaying = false; // If editor stop play mode
 #endif
         }
-
     }
 
     // ------------------------------------------------------------------------------------
@@ -101,5 +100,4 @@ namespace GraphicsTestFramework
         Staging,
         Disabled
     }
-
 }

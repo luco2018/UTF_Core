@@ -17,7 +17,7 @@ namespace GraphicsTestFramework
     public class Common : MonoBehaviour
     {
         // Framework Information
-        public static string applicationVersion = "1.0b1";
+        public static string applicationVersion = "1.0b2";
 
 
         // ------------------------------------------------------------------------------------
@@ -518,9 +518,27 @@ namespace GraphicsTestFramework
             return _color;
         }
 
-    }
+        // Return an ResultsCommon index from a Field Name input
+        public static int FindResultsDataIOFieldIdByName(ResultsIOData results, string name)
+        {
+            for (int i = 0; i < results.fieldNames.Count; i++) // Iterate field names
+            {
+                if (results.fieldNames[i] == name) // If matches query
+                    return i; // Return
+            }
+            return -1; // Fail
+        }
 
-    // ------------------------------------------------------------------------------------
+        // Generates a dummy Test instance from a TestEntry
+        public static Test GenerateTestFromTestEntry(TestEntry input)
+        {
+            Test output = new Test(); // Create output
+            output.name = input.testName; // Set name as thats all we need
+            return output; // Return
+        }
+    }    
+	
+	// ------------------------------------------------------------------------------------
     // Global Data Structures
 
     [System.Serializable]
