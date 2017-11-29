@@ -17,7 +17,7 @@ namespace GraphicsTestFramework
     public class Common : MonoBehaviour
     {
         // Framework Information
-        public static string applicationVersion = "1.0b1";
+        public static string applicationVersion = "1.0b2";
 
 
         // ------------------------------------------------------------------------------------
