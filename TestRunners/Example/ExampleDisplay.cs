@@ -77,12 +77,19 @@ namespace GraphicsTestFramework
         {
             ExampleResults inputResults = (ExampleResults)logic.DeserializeResults(inputData); // Deserialize input and cast to typed results
 
-            if(!TestRunner.Instance.isAnalytic)
-                comparisonData = (ExampleComparison)logic.ProcessComparison(inputResults); // Get comparison data
+            if(TestRunner.Instance)
+            {
+                if (!TestRunner.Instance.isAnalytic)
+                    comparisonData = (ExampleComparison)logic.ProcessComparison(inputResults); // Get comparison data
+                else
+                {
+                    ExampleResults inputResultsB = (ExampleResults)logic.DeserializeResults(inputDataB); // Deserialize input and cast to typed results
+                    comparisonData = (ExampleComparison)logic.ProcessComparison(inputResultsB, inputResults);
+                }
+            }
             else
             {
-                ExampleResults inputResultsB = (ExampleResults)logic.DeserializeResults(inputDataB); // Deserialize input and cast to typed results
-                comparisonData = (ExampleComparison)logic.ProcessComparison(inputResultsB, inputResults);
+                comparisonData = (ExampleComparison)logic.ProcessComparison(inputResults); // Get comparison data
             }
 
             context.objects[0].GetComponent<Text>().text = inputResults.SomeFloat.ToString(); // Set float
