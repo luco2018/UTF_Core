@@ -18,6 +18,7 @@ namespace GraphicsTestFramework
         [SerializeField] public bool isDebugSuite;
         [SerializeField] public TestSettings defaultTestSettings;
         [SerializeField] public RenderPipelineAsset defaultRenderPipeline;
+        [SerializeField] public string suiteID;
         [SerializeField] public List<Group> groups = new List<Group>();
     }
 
