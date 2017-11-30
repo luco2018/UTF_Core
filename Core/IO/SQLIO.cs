@@ -475,7 +475,7 @@ namespace GraphicsTestFramework.SQL
 			{
                 suite = _suite;
                 testType = _testType;
-                b = baseline;
+                baseline = b;
             }
 
         }
