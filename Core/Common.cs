@@ -214,37 +214,12 @@ namespace GraphicsTestFramework
         public static bool IsStandaloneTarget(UnityEditor.BuildTarget target)
         {
             bool output = false; // Create output
-            foreach (UnityEditor.BuildTarget t in editorTargets) // Iterate editor target list
-            {
-                if (t == target) // If matches input target
-                    output = true; // Set output to true
-            }
+
+            if(target.ToString().Contains("Standalone"))//is it a standalone platform?
+                output = true;
+
             return output; // Return
         }
-
-#if UNITY_2017_3_OR_NEWER
-        // Editor target list (editor targets that are not emulated)
-        public static UnityEditor.BuildTarget[] editorTargets = new UnityEditor.BuildTarget[6]
-        {
-            UnityEditor.BuildTarget.StandaloneLinux,
-            UnityEditor.BuildTarget.StandaloneLinux64,
-            UnityEditor.BuildTarget.StandaloneLinuxUniversal,
-            UnityEditor.BuildTarget.StandaloneOSX,
-            UnityEditor.BuildTarget.StandaloneWindows,
-            UnityEditor.BuildTarget.StandaloneWindows64
-        };
-#else
-        // Editor target list (editor targets that are not emulated)
-        public static UnityEditor.BuildTarget[] editorTargets = new UnityEditor.BuildTarget[6]
-        {
-            UnityEditor.BuildTarget.StandaloneLinux,
-            UnityEditor.BuildTarget.StandaloneLinux64,
-            UnityEditor.BuildTarget.StandaloneLinuxUniversal,
-            UnityEditor.BuildTarget.StandaloneOSXUniversal,
-            UnityEditor.BuildTarget.StandaloneWindows,
-            UnityEditor.BuildTarget.StandaloneWindows64
-        };
-#endif
 
 #endif
 

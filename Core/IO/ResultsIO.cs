@@ -85,7 +85,7 @@ namespace GraphicsTestFramework
 
 				//now we check local timestamps vs server to make sure up to date, then add the outdated ones to be pulled
 				foreach (string suiteName in suiteNames) {
-					Console.Instance.Write (DebugLevel.File, MessageLevel.Log, "Fetching baseline timestamps from cloud");
+					Console.Instance.Write (DebugLevel.File, MessageLevel.Log, "Fetching baseline timestamps from cloud for " + suiteName);
                     //Get timestamp for suite via SQL
                     DateTime dt = DateTime.MaxValue;
                     StartCoroutine(SQL.SQLIO.Instance.GetbaselineTimestamp(suiteName, (value => { dt = value; })));
