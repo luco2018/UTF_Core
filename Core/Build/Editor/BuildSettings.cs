@@ -153,7 +153,7 @@ namespace GraphicsTestFramework
             }
             productName += append;
             PlayerSettings.productName = productName;
-            if(target != null)
+            if (target != null)
             {
                 if (target.platform == UnityEditor.BuildTarget.iOS)
                     productName = productName.Replace("_", "-");
@@ -169,14 +169,24 @@ namespace GraphicsTestFramework
     {
         public int callbackOrder { get { return 0; } }
 
+        #if UNITY_2018_1_OR_NEWER
+        public void OnPreprocessBuild(UnityEditor.Build.Reporting.BuildReport buildReport)
+        {
+            BuildSettings.GetUnityVersionInfo(); // Get unity version info
+            BuildTarget target = new BuildTarget();
+            target.platform = buildReport.summary.platform;
+            BuildSettings.SetApplicationSettings(target, buildReport.summary.outputPath); // Set application settings
+            BuildSettings.SetScriptingDefines(); // Set defines
+            BuildSettings.SetPlayerSettings(); // Set player settings
+        }
+        #else
         public void OnPreprocessBuild(UnityEditor.BuildTarget target, string path)
         {
-#if UNITY_EDITOR
-            //BuildSettings.GetUnityVersionInfo(); // Get unity version info
-            //BuildSettings.SetApplicationSettings(); // Set application settings
-            //BuildSettings.SetScriptingDefines(); // Set defines
-            //BuildSettings.SetPlayerSettings(); // Set player settings
-#endif
+            BuildSettings.GetUnityVersionInfo(); // Get unity version info
+            BuildSettings.SetApplicationSettings(); // Set application settings
+            BuildSettings.SetScriptingDefines(); // Set defines
+            BuildSettings.SetPlayerSettings(); // Set player settings
         }
+        #endif
     }
 }
