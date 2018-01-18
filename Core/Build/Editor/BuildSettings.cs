@@ -100,7 +100,8 @@ namespace GraphicsTestFramework
             int platformCount = Enum.GetNames(typeof(BuildTargetGroup)).Length; // Get platform count
             for (int i = 0; i < platformCount; i++) // Iterate all platforms
             {
-                PlayerSettings.SetScriptingDefineSymbolsForGroup((BuildTargetGroup)i, output); // Add custom to current
+                if(!depreciatedBuiltTargets.Contains(i))
+                    PlayerSettings.SetScriptingDefineSymbolsForGroup((BuildTargetGroup)i, output); // Add custom to current
             }
         }
 
@@ -153,15 +154,20 @@ namespace GraphicsTestFramework
             }
             productName += append;
             PlayerSettings.productName = productName;
-            if(target != null)
+            if (target != null)
             {
                 if (target.platform == UnityEditor.BuildTarget.iOS)
                     productName = productName.Replace("_", "-");
             }
             int platformCount = Enum.GetNames(typeof(BuildTargetGroup)).Length; // Get platform count
             for (int i = 0; i < platformCount; i++) // Iterate all platforms
-                PlayerSettings.SetApplicationIdentifier((BuildTargetGroup)i, "com.UnityTechnologies."+productName); // Set bundle identifiers
+            {
+                if (!depreciatedBuiltTargets.Contains(i))
+                    PlayerSettings.SetApplicationIdentifier((BuildTargetGroup)i, "com.UnityTechnologies." + productName); // Set bundle identifiers
+            }
         }
+
+        private static List<int> depreciatedBuiltTargets = new List<int>(){ 0 , 3, 5, 6, 8, 9, 10, 11, 12, 15, 16};
     }
 
     // Build preprocess steps
@@ -169,14 +175,26 @@ namespace GraphicsTestFramework
     {
         public int callbackOrder { get { return 0; } }
 
-        public void OnPreprocessBuild(UnityEditor.BuildTarget target, string path)
+        #if UNITY_2018_1_OR_NEWER
+        public void OnPreprocessBuild(UnityEditor.Build.Reporting.BuildReport buildReport)
         {
-#if UNITY_EDITOR
-            //BuildSettings.GetUnityVersionInfo(); // Get unity version info
-            //BuildSettings.SetApplicationSettings(); // Set application settings
-            //BuildSettings.SetScriptingDefines(); // Set defines
-            //BuildSettings.SetPlayerSettings(); // Set player settings
-#endif
+            BuildSettings.GetUnityVersionInfo(); // Get unity version info
+            BuildTarget target = new BuildTarget();
+            target.platform = buildReport.summary.platform;
+            BuildSettings.SetApplicationSettings(target, buildReport.summary.outputPath); // Set application settings
+            BuildSettings.SetScriptingDefines(); // Set defines
+            BuildSettings.SetPlayerSettings(); // Set player settings
         }
+        #else
+        public void OnPreprocessBuild(UnityEditor.BuildTarget buildTarget, string path)
+        {
+            BuildSettings.GetUnityVersionInfo(); // Get unity version info
+            BuildTarget target = new BuildTarget();
+            target.platform = buildTarget;
+            BuildSettings.SetApplicationSettings(target, path); // Set application settings
+            BuildSettings.SetScriptingDefines(); // Set defines
+            BuildSettings.SetPlayerSettings(); // Set player settings
+        }
+        #endif
     }
 }

@@ -68,4 +68,14 @@ namespace GraphicsTestFramework
 		public float waitSeconds = 0f; // Count of frames or seconds to wait before capture
         public float passFailThreshold = 0.1f; // Threshold for comparison pass/fail
     }
+
+    // ------------------------------------------------------------------------------------
+    // ComparisonBase
+    // - Base class for Comparison
+
+    [Serializable]
+    public class ComparisonBase
+    {
+        
+    }
 }

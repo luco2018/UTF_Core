@@ -12,7 +12,6 @@ namespace GraphicsTestFramework
 		private List<string> suiteBaselinesPullList = new List<string> ();
 		private SystemData sysData;
 		public bool isWaiting = false;
-		public bool companionMode = false;
 		[HideInInspector]
 		public bool writeLocal = true;
 		[HideInInspector]
@@ -30,7 +29,7 @@ namespace GraphicsTestFramework
 			}
 		}
 
-		private void Start ()
+		public void Start ()
 		{
 			//Grab the system data to share around
 			sysData = Master.Instance.GetSystemData ();
@@ -46,9 +45,6 @@ namespace GraphicsTestFramework
 			if (SQL.SQLIO.Instance == null)
 				gameObject.AddComponent<SQL.SQLIO> ();
 			SQL.SQLIO.Instance.Init (sysData);
-
-			if (!companionMode)
-				StartCoroutine (Init ());
 		}
 
 		public void Restart ()
@@ -89,7 +85,7 @@ namespace GraphicsTestFramework
 
 				//now we check local timestamps vs server to make sure up to date, then add the outdated ones to be pulled
 				foreach (string suiteName in suiteNames) {
-					Console.Instance.Write (DebugLevel.File, MessageLevel.Log, "Fetching baseline timestamps from cloud");
+					Console.Instance.Write (DebugLevel.File, MessageLevel.Log, "Fetching baseline timestamps from cloud for " + suiteName);
                     //Get timestamp for suite via SQL
                     DateTime dt = DateTime.MaxValue;
                     StartCoroutine(SQL.SQLIO.Instance.GetbaselineTimestamp(suiteName, (value => { dt = value; })));
@@ -245,30 +241,16 @@ namespace GraphicsTestFramework
 		}
 
 		/// <summary>
-		/// Retrieves a result file.
+		/// Retrieves a file.
 		/// </summary>
-		/// <returns>The result.</returns>
+		/// <returns>The data.</returns>
 		/// <param name="suiteName">Suite name.</param>
 		/// <param name="testType">Test type.</param>
 		/// <param name="inputData">Input data.</param>
-		public ResultsIOData RetrieveResult (string suiteName, string testType, ResultsDataCommon inputData)
-		{
-			//string rawJSONdata = LocalIO.Instance.FetchDataFile (suiteName, testType, inputData, false);//fetch string from file
-			ResultsIOData data = LocalIO.Instance.FetchDataFile (suiteName, testType, inputData, false); //JSONHelper.FromJSON (rawJSONdata);//take JSON convert to ResultsIOData //REORG
-			return data;
-		}
-
-		/// <summary>
-		/// Retrieves a baseline file.
-		/// </summary>
-		/// <returns>The baseline.</returns>
-		/// <param name="suiteName">Suite name.</param>
-		/// <param name="testType">Test type.</param>
-		/// <param name="inputData">Input data.</param>
-		public ResultsIOData RetrieveBaseline (string suiteName, string testType, ResultsDataCommon inputData)
+		public ResultsIOData RetrieveEntry (string suiteName, string testType, ResultsDataCommon inputData, bool baseline, bool full)
 		{
 			//string rawJSONdata = LocalIO.Instance.FetchDataFile (suiteName, testType, inputData, true);//fetch string from file
-			ResultsIOData data = LocalIO.Instance.FetchDataFile (suiteName, testType, inputData, true);//JSONHelper.FromJSON (rawJSONdata);//take JSON convert to ResultsIOData //REORG
+			ResultsIOData data = LocalIO.Instance.FetchDataFile (suiteName, testType, inputData, baseline, full);//JSONHelper.FromJSON (rawJSONdata);//take JSON convert to ResultsIOData //REORG
 			return data;
 		}
 
@@ -424,6 +406,7 @@ namespace GraphicsTestFramework
 	{
 		public string suite;
 		public string testType;
+		public bool baseline;
 		public List<string> fieldNames = new List<string> ();//string list of fields
 		public List<ResultsIORow> resultsRow = new List<ResultsIORow> ();//list of row data
 	}

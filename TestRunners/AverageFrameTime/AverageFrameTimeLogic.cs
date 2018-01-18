@@ -8,20 +8,13 @@ namespace GraphicsTestFramework
     // - Results: Samples a number of frames and returns an average
     // - Comparison: Compares average frame time to baseline
 
-    public class AverageFrameTimeLogic : TestLogic<AverageFrameTimeModel, AverageFrameTimeDisplay, AverageFrameTimeResults, AverageFrameTimeSettings>
+    public class AverageFrameTimeLogic : TestLogic<AverageFrameTimeModel, AverageFrameTimeDisplay, AverageFrameTimeResults, AverageFrameTimeSettings, AverageFrameTimeComparison>
 	{
         // ------------------------------------------------------------------------------------
         // Variables
 
         float time;
 		int samples;
-
-        // Structure for comparison
-        [System.Serializable]
-        public class ComparisonData
-        {
-            public float delta;
-        }
 
         // ------------------------------------------------------------------------------------
         // Execution Overrides
@@ -38,22 +31,30 @@ namespace GraphicsTestFramework
 			m_TempData.avgFrameTime = Timestamp(true); // Perform a timestamp (logic specific)
             if (baselineExists) // Comparison (mandatory)
             {
-                AverageFrameTimeResults referenceData = (AverageFrameTimeResults)DeserializeResults(ResultsIO.Instance.RetrieveBaseline(suiteName, testTypeName, m_TempData.common)); // Deserialize baseline data (mandatory)
-                ComparisonData comparisonData = (ComparisonData)ProcessComparison(referenceData, m_TempData);  // Process comparison (mandatory)
-                if (comparisonData.delta < model.settings.passFailThreshold)  // Pass/fail decision logic (logic specific)
-                    m_TempData.common.PassFail = true;
-                else
-                    m_TempData.common.PassFail = false;
-                comparisonData = null;  // Null comparison (mandatory)
+                AverageFrameTimeResults referenceData = (AverageFrameTimeResults)DeserializeResults(ResultsIO.Instance.RetrieveEntry(suiteName, testTypeName, m_TempData.common, true, true)); // Deserialize baseline data (mandatory)
+                m_TempData.common.PassFail = GetComparisonResult(m_TempData, referenceData); // Get comparison result
             }
             BuildResultsStruct(m_TempData); // Submit (mandatory)
+        }
+
+        // Get a comparison result from any given result and baseline
+        public override bool GetComparisonResult(ResultsBase results, ResultsBase baseline)
+        {
+            AverageFrameTimeComparison comparisonData = (AverageFrameTimeComparison)ProcessComparison(baseline, results);  // Process comparison (mandatory)
+            bool output = false;
+            if (comparisonData.delta < model.settings.passFailThreshold)  // Pass/fail decision logic (logic specific)
+                output = true;
+            else
+                output = false;
+            comparisonData = null;  // Null comparison (mandatory)
+            return output;
         }
 
         // Logic for comparison process (mandatory)
         // TODO - Will use last run test model, need to get this for every call from Viewers?
         public override object ProcessComparison(ResultsBase baselineData, ResultsBase resultsData)
         {
-            ComparisonData newComparison = new ComparisonData(); // Create new ComparisonData instance (mandatory)
+            AverageFrameTimeComparison newComparison = new AverageFrameTimeComparison(); // Create new ComparisonData instance (mandatory)
             AverageFrameTimeResults baselineDataTyped = (AverageFrameTimeResults)baselineData; // Set baseline data to local type
             AverageFrameTimeResults resultsDataTyped = (AverageFrameTimeResults)resultsData; // Set results data to local type
             newComparison.delta = resultsDataTyped.avgFrameTime - baselineDataTyped.avgFrameTime; // Perform comparison logic (logic specific)

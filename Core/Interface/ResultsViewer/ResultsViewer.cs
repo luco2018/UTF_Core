@@ -98,7 +98,7 @@ namespace GraphicsTestFramework
                     resultsViewerParent.SetActive(false);
                     homeButton.gameObject.SetActive(false);
                     overviewButton.gameObject.SetActive(false);
-                    Menu.Instance.SetMenuState(true);
+                    Navigation.Instance.ReturnHome();
                     break;
                 case 1: // Overview
                     overviewParent.SetActive(true);
@@ -138,6 +138,17 @@ namespace GraphicsTestFramework
                     overviewButton.gameObject.SetActive(false);
                     Menu.Instance.SetMenuState(false);
                     break;
+                case 5: // Analytic mode
+                    Setup();
+                    overviewParent.SetActive(true);
+                    detailedResultsParent.SetActive(false);
+                    resultsViewerParent.SetActive(true);
+                    homeButton.gameObject.SetActive(true);
+                    overviewButton.gameObject.SetActive(false);
+                    viewerState = 1; // Set back for content generation
+                    GenerateContent(true); // Main call for generation of viewer content
+                    Menu.Instance.SetMenuState(false);
+                    break;
             }
         }
 
@@ -159,9 +170,8 @@ namespace GraphicsTestFramework
             Console.Instance.Write(DebugLevel.Full, MessageLevel.Log, "Generating suites dropdown"); // Write to console
             List<Dropdown.OptionData> options = new List<Dropdown.OptionData>(); // Create new options list
             options.Add(Common.ConvertStringToDropdownOptionData("All Suites"));
-            string[] suites = SuiteManager.GetSuiteNames(); // Get suite names
-            for (int i = 0; i < suites.Length; i++) // Iterate suites
-                options.Add(Common.ConvertStringToDropdownOptionData(suites[i])); // Convert string to option data and add
+            for (int i = 0; i < TestStructure.Instance.testStructure.suites.Count; i++) // Iterate suites
+                options.Add(Common.ConvertStringToDropdownOptionData(TestStructure.Instance.testStructure.suites[i].suiteName)); // Convert string to option data and add
             suitesDropdown.options = options; // Add options
         }
 
@@ -265,34 +275,55 @@ namespace GraphicsTestFramework
                                     string testName = structure.suites[su].types[ty].groups[gr].tests[te].testName; // Get test name
                                     string scenePath = structure.suites[su].types[ty].groups[gr].tests[te].scenePath; // Get scene path
                                     ResultsDataCommon common = BuildResultsDataCommon(groupName, testName); // Build results data common to retrieve results
-                                    ResultsIOData data = ResultsIO.Instance.RetrieveResult(suiteName, typeName, common); // Retrieve results data
+                                    ResultsIOData data = new ResultsIOData();
+                                    var testResults = structure.suites[su].types[ty].groups[gr].tests[te] as TestStructure.TestResults;                                    if(TestRunner.Instance)
+                                    {
+                                        if (!TestRunner.Instance.isAnalytic)
+                                            data = ResultsIO.Instance.RetrieveEntry(suiteName, typeName, common, false, false); // Retrieve results data
+                                        else
+                                        {
+                                            data = testResults.dataA;
+                                        }  
+                                    }
+                                    else
+                                    {
+                                        data = ResultsIO.Instance.RetrieveEntry(suiteName, typeName, common, false, false); // Retrieve results data
+                                    }
+                                    ResultsIOData dataB = null;
+                                    if(testResults != null)
+                                        dataB = testResults.dataB;
+
                                     if (resultsDropdown.value != 0) // If filtering based on results
                                     {
                                         int passFail = 2; // Set default state (no results)
+                                        int passFailColumn = Common.FindResultsDataIOFieldIdByName(data, "PassFail"); // Find pass fail column index
                                         if (data != null) // If results data exists
-                                            passFail = data.resultsRow[0].resultsColumn[21] == "True" ? 0 : 1; // Set pass fail state
+                                            passFail = data.resultsRow[0].resultsColumn[passFailColumn] == "True" ? 0 : 1; // Set pass fail state
+                                        
+                                        
+
                                         switch (resultsDropdown.value)
                                         {
                                             case 1: // Pass
                                                 if (passFail == 0)
-                                                    filteredResultsEntries.Add(new ResultsEntryData(new TestEntry(suiteName, groupName, scenePath, typeName, testName, typeIndex, su, gr, ty, te), data)); // Add to list
+                                                    filteredResultsEntries.Add(new ResultsEntryData(new TestEntry(suiteName, groupName, scenePath, typeName, testName, typeIndex, su, gr, ty, te), data, dataB)); // Add to list
                                                 break;
                                             case 2: // Fail
                                                 if (passFail == 1)
-                                                    filteredResultsEntries.Add(new ResultsEntryData(new TestEntry(suiteName, groupName, scenePath, typeName, testName, typeIndex, su, gr, ty, te), data)); // Add to list
+                                                    filteredResultsEntries.Add(new ResultsEntryData(new TestEntry(suiteName, groupName, scenePath, typeName, testName, typeIndex, su, gr, ty, te), data, dataB)); // Add to list
                                                 break;
                                             case 3: // Ran
                                                 if (passFail != 2)
-                                                    filteredResultsEntries.Add(new ResultsEntryData(new TestEntry(suiteName, groupName, scenePath, typeName, testName, typeIndex, su, gr, ty, te), data)); // Add to list
+                                                    filteredResultsEntries.Add(new ResultsEntryData(new TestEntry(suiteName, groupName, scenePath, typeName, testName, typeIndex, su, gr, ty, te), data, dataB)); // Add to list
                                                 break;
                                             case 4: // Not Ran
                                                 if (passFail == 2)
-                                                    filteredResultsEntries.Add(new ResultsEntryData(new TestEntry(suiteName, groupName, scenePath, typeName, testName, typeIndex, su, gr, ty, te), data)); // Add to list
+                                                    filteredResultsEntries.Add(new ResultsEntryData(new TestEntry(suiteName, groupName, scenePath, typeName, testName, typeIndex, su, gr, ty, te), data, dataB)); // Add to list
                                                 break;
                                         }
                                     }
                                     else
-                                        filteredResultsEntries.Add(new ResultsEntryData(new TestEntry(suiteName, groupName, scenePath, typeName, testName, typeIndex, su, gr, ty, te), data)); // Add to list
+                                        filteredResultsEntries.Add(new ResultsEntryData(new TestEntry(suiteName, groupName, scenePath, typeName, testName, typeIndex, su, gr, ty, te), data, dataB)); // Add to list
                                     yield return null;
                                 }
                             }
@@ -510,7 +541,7 @@ namespace GraphicsTestFramework
         {
             Console.Instance.Write(DebugLevel.Full, MessageLevel.Log, "Toggling context object for " + inputEntry); // Write to console
             if (activeContextObject == null) // If context object is null
-                ExpandContextObject(inputEntry, display); // Create and expand
+                StartCoroutine(ExpandContextObject(inputEntry, display)); // Create and expand
             else
             {
                 if (activeContextEntry == inputEntry) // If selected entry matches current context
@@ -518,14 +549,14 @@ namespace GraphicsTestFramework
                 else
                 {
                     HideContextObject(activeContextEntry); // Hide the current
-                    ExpandContextObject(inputEntry, display); // Create and expand
+                    StartCoroutine(ExpandContextObject(inputEntry, display)); // Create and expand
                 }
             }
             RefreshMenu(); // Refresh menu - WORKAROUND   
         }
 
         // Create and expand context object
-        void ExpandContextObject(ResultsEntry inputEntry, TestDisplayBase display)
+        IEnumerator ExpandContextObject(ResultsEntry inputEntry, TestDisplayBase display)
         {
             Console.Instance.Write(DebugLevel.Full, MessageLevel.Log, "Expanding context object"); // Write to console
             int entryIndex = FindEntryInDetailedResultsList(inputEntry); // Get index of selected entry
@@ -537,7 +568,22 @@ namespace GraphicsTestFramework
             NudgeDetailedResultsListEntries(entryIndex, -contextObjectRect.sizeDelta.y); // Nudge entries
             ResultsContext resultsContext = activeContextObject.GetComponent<ResultsContext>(); // Get results context reference
             resultsContext.Setup(activeContextEntry); // Setup base of results context
-            display.SetupResultsContext(resultsContext, inputEntry.resultsEntryData.resultsData); // Tell Display how to setup the results context
+            ResultsIOData resultsDataFull = new ResultsIOData(); // Create output data
+            yield return StartCoroutine(SQL.SQLIO.Instance.FetchSpecificEntry(inputEntry.resultsEntryData.resultsData, (value => { resultsDataFull = value; }))); // Get full results data
+            ResultsIOData resultsDataFullB = new ResultsIOData(); // Create output data
+            if(TestRunner.Instance)
+            {
+                if(TestRunner.Instance.runnerType == RunnerType.Analytic)
+                {
+                    yield return StartCoroutine(SQL.SQLIO.Instance.FetchBaseline(inputEntry.resultsEntryData.resultsDataB, (value => { resultsDataFullB = value; }))); // Get full results data
+                }
+                else if(TestRunner.Instance.runnerType == RunnerType.AnalyticComparison)
+                {
+                    yield return StartCoroutine(SQL.SQLIO.Instance.FetchSpecificEntry(inputEntry.resultsEntryData.resultsDataB, (value => { resultsDataFullB = value; }))); // Get full results data
+                }
+            }
+            //if(inputEntry.resultsEntryData.resultsDataB != null)
+            display.SetupResultsContext(resultsContext, resultsDataFull, resultsDataFullB); // Tell Display how to setup the results context
         }
 
         // Hide and destroy context object

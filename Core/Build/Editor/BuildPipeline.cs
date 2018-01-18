@@ -191,7 +191,7 @@ namespace GraphicsTestFramework
             if (!System.IO.Directory.Exists(directory + "/" + "")) // If directory doesnt exist
                 System.IO.Directory.CreateDirectory(directory + "/" + applicationName); // Create it
             Debug.Log("Building Player, Directory: " + directory + "/" + applicationName); // Debug "building"
-            return UnityEditor.BuildPipeline.BuildPlayer(GetBuildSettings(target.platform, directory + "/" + applicationName, config)); // Build player and return debug result           
+            return UnityEditor.BuildPipeline.BuildPlayer(GetBuildSettings(target.platform, directory + "/" + applicationName, config)).ToString(); // Build player and return debug result           
         }
 
         // Get BuildSettings object

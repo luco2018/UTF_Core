@@ -31,6 +31,7 @@ namespace GraphicsTestFramework
     [Serializable]
     public class Test
     {
+        [SerializeField] public string name = "";
         [SerializeField] public UnityEngine.Object scene;
         [SerializeField] public string scenePath;
         [SerializeField] public int testTypes;
