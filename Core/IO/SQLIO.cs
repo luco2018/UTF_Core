@@ -70,13 +70,13 @@ namespace GraphicsTestFramework.SQL
 
 #if !UNITY_2018_1_OR_NEWER
             yield return www.Send();
-			#else
+#else
             UnityWebRequestAsyncOperation wwwData = www.SendWebRequest();
 			while(!wwwData.isDone){
                 yield return null;
             }
             www = wwwData.webRequest;
-			#endif
+#endif
 
             if (string.IsNullOrEmpty(www.error))
             {
