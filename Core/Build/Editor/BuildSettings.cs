@@ -100,7 +100,8 @@ namespace GraphicsTestFramework
             int platformCount = Enum.GetNames(typeof(BuildTargetGroup)).Length; // Get platform count
             for (int i = 0; i < platformCount; i++) // Iterate all platforms
             {
-                PlayerSettings.SetScriptingDefineSymbolsForGroup((BuildTargetGroup)i, output); // Add custom to current
+                if(!depreciatedBuiltTargets.Contains(i))
+                    PlayerSettings.SetScriptingDefineSymbolsForGroup((BuildTargetGroup)i, output); // Add custom to current
             }
         }
 
@@ -160,8 +161,13 @@ namespace GraphicsTestFramework
             }
             int platformCount = Enum.GetNames(typeof(BuildTargetGroup)).Length; // Get platform count
             for (int i = 0; i < platformCount; i++) // Iterate all platforms
-                PlayerSettings.SetApplicationIdentifier((BuildTargetGroup)i, "com.UnityTechnologies."+productName); // Set bundle identifiers
+            {
+                if (!depreciatedBuiltTargets.Contains(i))
+                    PlayerSettings.SetApplicationIdentifier((BuildTargetGroup)i, "com.UnityTechnologies." + productName); // Set bundle identifiers
+            }
         }
+
+        private static List<int> depreciatedBuiltTargets = new List<int>(){ 0 , 3, 5, 6, 8, 9, 10, 11, 12, 15, 16};
     }
 
     // Build preprocess steps
@@ -180,10 +186,12 @@ namespace GraphicsTestFramework
             BuildSettings.SetPlayerSettings(); // Set player settings
         }
         #else
-        public void OnPreprocessBuild(UnityEditor.BuildTarget target, string path)
+        public void OnPreprocessBuild(UnityEditor.BuildTarget buildTarget, string path)
         {
             BuildSettings.GetUnityVersionInfo(); // Get unity version info
-            BuildSettings.SetApplicationSettings(); // Set application settings
+            BuildTarget target = new BuildTarget();
+            target.platform = buildTarget;
+            BuildSettings.SetApplicationSettings(target, path); // Set application settings
             BuildSettings.SetScriptingDefines(); // Set defines
             BuildSettings.SetPlayerSettings(); // Set player settings
         }
