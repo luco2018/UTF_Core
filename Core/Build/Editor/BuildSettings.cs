@@ -173,32 +173,4 @@ namespace GraphicsTestFramework
         private static List<int> depreciatedBuiltTargets = new List<int>() { 0, 3, 5, 6, 8, 9, 10, 11, 12, 15, 16 };
         #endif
     }
-
-    // Build preprocess steps
-    // class MyCustomBuildProcessor : IPreprocessBuild
-    // {
-    //     public int callbackOrder { get { return 0; } }
-
-    //     #if UNITY_2018_1_OR_NEWER
-    //     public void OnPreprocessBuild(UnityEditor.Build.Reporting.BuildReport buildReport)
-    //     {
-    //         BuildSettings.GetUnityVersionInfo(); // Get unity version info
-    //         BuildTarget target = new BuildTarget();
-    //         target.platform = buildReport.summary.platform;
-    //         BuildSettings.SetApplicationSettings(target); // Set application settings
-    //         BuildSettings.SetScriptingDefines(); // Set defines
-    //         BuildSettings.SetPlayerSettings(); // Set player settings
-    //     }
-    //     #else
-    //     public void OnPreprocessBuild(UnityEditor.BuildTarget buildTarget, string path)
-    //     {
-    //         BuildSettings.GetUnityVersionInfo(); // Get unity version info
-    //         BuildTarget target = new BuildTarget();
-    //         target.platform = buildTarget;
-    //         BuildSettings.SetApplicationSettings(target); // Set application settings
-    //         BuildSettings.SetScriptingDefines(); // Set defines
-    //         BuildSettings.SetPlayerSettings(); // Set player settings
-    //     }
-    //     #endif
-    // }
 }
