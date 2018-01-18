@@ -123,7 +123,7 @@ namespace GraphicsTestFramework
         }
 
         // Set various application specific settings
-        public static void SetApplicationSettings(BuildTarget target, string append)
+        public static void SetApplicationSettings(BuildTarget target)
         {
             PlayerSettings.companyName = "Unity Technologies";
             string productName = "";
@@ -152,7 +152,6 @@ namespace GraphicsTestFramework
                 Debug.LogError("No Settings object found. Aborting.");
                 return;
             }
-            productName += append;
             PlayerSettings.productName = productName;
             if (target != null)
             {
@@ -181,7 +180,7 @@ namespace GraphicsTestFramework
             BuildSettings.GetUnityVersionInfo(); // Get unity version info
             BuildTarget target = new BuildTarget();
             target.platform = buildReport.summary.platform;
-            BuildSettings.SetApplicationSettings(target, buildReport.summary.outputPath); // Set application settings
+            BuildSettings.SetApplicationSettings(target); // Set application settings
             BuildSettings.SetScriptingDefines(); // Set defines
             BuildSettings.SetPlayerSettings(); // Set player settings
         }
@@ -191,7 +190,7 @@ namespace GraphicsTestFramework
             BuildSettings.GetUnityVersionInfo(); // Get unity version info
             BuildTarget target = new BuildTarget();
             target.platform = buildTarget;
-            BuildSettings.SetApplicationSettings(target, path); // Set application settings
+            BuildSettings.SetApplicationSettings(target); // Set application settings
             BuildSettings.SetScriptingDefines(); // Set defines
             BuildSettings.SetPlayerSettings(); // Set player settings
         }
