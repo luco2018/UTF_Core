@@ -25,6 +25,12 @@ namespace GraphicsTestFramework
 
                     string applicationName = GetApplicationName(target, projectSettings, config.nameOverride); // Get application name
 
+                    if (SetGraphicsAPI(target) == false) // Check if Graphics API can be set to the specified target
+                    {
+                        Debug.LogError("Failed to build Player, Directory: " + directory + "/" + applicationName); // Log error
+                        continue; // Go to next target
+                    }
+
                     BuildSettings.SetApplicationSettings(target);
 
                     //Set Script logging settings
@@ -35,12 +41,6 @@ namespace GraphicsTestFramework
                     else
                     {
                         SetScriptLoggingParams(StackTraceLogType.None);
-                    }
-
-                    if (SetGraphicsAPI(target) == false) // Check if Graphics API can be set to the specified target
-                    {
-                        Debug.LogError("Failed to build Player, Directory: " + directory + "/" + applicationName); // Log error
-                        continue; // Go to next target
                     }
 
                     string build = BuildClient(target, directory, applicationName, config); // Build client
