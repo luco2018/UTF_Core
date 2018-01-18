@@ -25,7 +25,7 @@ namespace GraphicsTestFramework
 
                     string applicationName = GetApplicationName(target, projectSettings, config.nameOverride); // Get application name
 
-                    BuildSettings.SetApplicationSettings(target, AppendProductName(target));
+                    BuildSettings.SetApplicationSettings(target);
 
                     //Set Script logging settings
                     if (config.enableScriptLogging)

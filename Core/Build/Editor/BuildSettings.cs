@@ -45,7 +45,7 @@ namespace GraphicsTestFramework
         public void RunBuildPipeline()
         {
             GetUnityVersionInfo(); // Get unity version info
-            SetApplicationSettings(null, ""); // Set application settings
+            SetApplicationSettings(null); // Set application settings
             SetScriptingDefines(); // Set defines
             SetPlayerSettings(); // Set player settings
             SetQualitySettings(); // Set quality settings
@@ -58,7 +58,7 @@ namespace GraphicsTestFramework
         {
             GetUnityVersionInfo(); // Get unity version info
             SuiteManager.GenerateSceneList(false); // Create suite structure
-            SetApplicationSettings(null, ""); // Set application settings
+            SetApplicationSettings(null); // Set application settings
             SetScriptingDefines(); // Set defines
             SetPlayerSettings(); // Set player settings
             SetQualitySettings(); // Set quality settings
@@ -70,7 +70,7 @@ namespace GraphicsTestFramework
         {
             GetUnityVersionInfo(); // Get unity version info
             SuiteManager.GenerateSceneList(true); // Create suite structure
-            SetApplicationSettings(null, ""); // Set application settings
+            SetApplicationSettings(null); // Set application settings
             SetScriptingDefines(); // Set defines
             SetPlayerSettings(); // Set player settings
             SetQualitySettings(); // Set quality settings
