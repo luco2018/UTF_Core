@@ -25,7 +25,7 @@ namespace GraphicsTestFramework
 
                     string applicationName = GetApplicationName(target, projectSettings, config.nameOverride); // Get application name
 
-                    BuildSettings.SetApplicationSettings(target, AppendProductName(target));
+                    BuildSettings.SetApplicationSettings(target);
 
                     //Set Script logging settings
                     if (config.enableScriptLogging)
@@ -34,7 +34,7 @@ namespace GraphicsTestFramework
                     }
                     else
                     {
-                        SetScriptLoggingParams(StackTraceLogType.None);
+                        SetScriptLoggingParams(StackTraceLogType.ScriptOnly);
                     }
 
                     if (SetGraphicsAPI(target) == false) // Check if Graphics API can be set to the specified target
@@ -66,15 +66,23 @@ namespace GraphicsTestFramework
         // On certain platforms append target data to product name
         public static string AppendProductName(BuildTarget target)
         {
-            string modifiedAPI = target.graphicsApi.ToString().Replace(" ", "").Replace("_", "-");
-            switch (target.platform) // Append target data based on target platform
+            if (target != null)
             {
-                case UnityEditor.BuildTarget.iOS:
-                    return "_" + modifiedAPI;
-                case UnityEditor.BuildTarget.Android:
-                    return "_" + modifiedAPI;
-                default:
-                    return "";
+                Debug.Log(target.graphicsApi.ToString());
+                string modifiedAPI = target.graphicsApi.ToString().Replace(" ", "").Replace("_", "-");
+                switch (target.platform) // Append target data based on target platform
+                {
+                    case UnityEditor.BuildTarget.iOS:
+                        return "_" + modifiedAPI;
+                    case UnityEditor.BuildTarget.Android:
+                        return "_" + modifiedAPI;
+                    default:
+                        return "";
+                }
+            }
+            else
+            {
+                return "";
             }
         }
 
