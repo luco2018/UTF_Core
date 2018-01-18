@@ -152,6 +152,7 @@ namespace GraphicsTestFramework
                 Debug.LogError("No Settings object found. Aborting.");
                 return;
             }
+            productName += BuildPipeline.AppendProductName(target);
             PlayerSettings.productName = productName;
             if (target != null)
             {
@@ -166,7 +167,11 @@ namespace GraphicsTestFramework
             }
         }
 
-        private static List<int> depreciatedBuiltTargets = new List<int>(){ 0 , 3, 5, 6, 8, 9, 10, 11, 12, 15, 16};
+        #if UNITY_2017_1_OR_NEWER
+        private static List<int> depreciatedBuiltTargets = new List<int>(){ 0 , 2, 3, 5, 6, 8, 9, 10, 11, 12, 15, 16, 17, 20, 22};
+        #else
+        private static List<int> depreciatedBuiltTargets = new List<int>() { 0, 3, 5, 6, 8, 9, 10, 11, 12, 15, 16 };
+        #endif
     }
 
     // Build preprocess steps

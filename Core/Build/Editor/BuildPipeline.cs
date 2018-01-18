@@ -66,15 +66,22 @@ namespace GraphicsTestFramework
         // On certain platforms append target data to product name
         public static string AppendProductName(BuildTarget target)
         {
-            string modifiedAPI = target.graphicsApi.ToString().Replace(" ", "").Replace("_", "-");
-            switch (target.platform) // Append target data based on target platform
+            if (target != null)
             {
-                case UnityEditor.BuildTarget.iOS:
-                    return "_" + modifiedAPI;
-                case UnityEditor.BuildTarget.Android:
-                    return "_" + modifiedAPI;
-                default:
-                    return "";
+                string modifiedAPI = target.graphicsApi.ToString().Replace(" ", "").Replace("_", "-");
+                switch (target.platform) // Append target data based on target platform
+                {
+                    case UnityEditor.BuildTarget.iOS:
+                        return "_" + modifiedAPI;
+                    case UnityEditor.BuildTarget.Android:
+                        return "_" + modifiedAPI;
+                    default:
+                        return "";
+                }
+            }
+            else
+            {
+                return "";
             }
         }
 
