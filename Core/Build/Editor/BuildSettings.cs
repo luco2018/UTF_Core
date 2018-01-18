@@ -111,6 +111,7 @@ namespace GraphicsTestFramework
             PlayerSettings.gpuSkinning = true;
             PlayerSettings.colorSpace = ColorSpace.Linear;
             //QualitySettings.vSyncCount = 0;
+            Application.runInBackground = true; //ignored on mobiles
         }
 
         // Set quality settings
