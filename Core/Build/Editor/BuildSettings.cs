@@ -45,7 +45,7 @@ namespace GraphicsTestFramework
         public void RunBuildPipeline()
         {
             GetUnityVersionInfo(); // Get unity version info
-            SetApplicationSettings(null, ""); // Set application settings
+            //SetApplicationSettings(null); // Set application settings
             SetScriptingDefines(); // Set defines
             SetPlayerSettings(); // Set player settings
             SetQualitySettings(); // Set quality settings
@@ -58,7 +58,7 @@ namespace GraphicsTestFramework
         {
             GetUnityVersionInfo(); // Get unity version info
             SuiteManager.GenerateSceneList(false); // Create suite structure
-            SetApplicationSettings(null, ""); // Set application settings
+            SetApplicationSettings(null); // Set application settings
             SetScriptingDefines(); // Set defines
             SetPlayerSettings(); // Set player settings
             SetQualitySettings(); // Set quality settings
@@ -70,7 +70,7 @@ namespace GraphicsTestFramework
         {
             GetUnityVersionInfo(); // Get unity version info
             SuiteManager.GenerateSceneList(true); // Create suite structure
-            SetApplicationSettings(null, ""); // Set application settings
+            SetApplicationSettings(null); // Set application settings
             SetScriptingDefines(); // Set defines
             SetPlayerSettings(); // Set player settings
             SetQualitySettings(); // Set quality settings
@@ -124,7 +124,7 @@ namespace GraphicsTestFramework
         }
 
         // Set various application specific settings
-        public static void SetApplicationSettings(BuildTarget target, string append)
+        public static void SetApplicationSettings(BuildTarget target)
         {
             PlayerSettings.companyName = "Unity Technologies";
             string productName = "";
@@ -153,7 +153,7 @@ namespace GraphicsTestFramework
                 Debug.LogError("No Settings object found. Aborting.");
                 return;
             }
-            productName += append;
+            productName += BuildPipeline.AppendProductName(target);
             PlayerSettings.productName = productName;
             if (target != null)
             {
@@ -168,34 +168,10 @@ namespace GraphicsTestFramework
             }
         }
 
-        private static List<int> depreciatedBuiltTargets = new List<int>(){ 0 , 3, 5, 6, 8, 9, 10, 11, 12, 15, 16};
-    }
-
-    // Build preprocess steps
-    class MyCustomBuildProcessor : IPreprocessBuild
-    {
-        public int callbackOrder { get { return 0; } }
-
-        #if UNITY_2018_1_OR_NEWER
-        public void OnPreprocessBuild(UnityEditor.Build.Reporting.BuildReport buildReport)
-        {
-            BuildSettings.GetUnityVersionInfo(); // Get unity version info
-            BuildTarget target = new BuildTarget();
-            target.platform = buildReport.summary.platform;
-            BuildSettings.SetApplicationSettings(target, buildReport.summary.outputPath); // Set application settings
-            BuildSettings.SetScriptingDefines(); // Set defines
-            BuildSettings.SetPlayerSettings(); // Set player settings
-        }
+        #if UNITY_2017_1_OR_NEWER
+        private static List<int> depreciatedBuiltTargets = new List<int>(){ 0 , 2, 3, 5, 6, 8, 9, 10, 11, 12, 15, 16, 17, 20, 22};
         #else
-        public void OnPreprocessBuild(UnityEditor.BuildTarget buildTarget, string path)
-        {
-            BuildSettings.GetUnityVersionInfo(); // Get unity version info
-            BuildTarget target = new BuildTarget();
-            target.platform = buildTarget;
-            BuildSettings.SetApplicationSettings(target, path); // Set application settings
-            BuildSettings.SetScriptingDefines(); // Set defines
-            BuildSettings.SetPlayerSettings(); // Set player settings
-        }
+        private static List<int> depreciatedBuiltTargets = new List<int>() { 0, 3, 5, 6, 8, 9, 10, 11, 12, 15, 16 };
         #endif
     }
 }
