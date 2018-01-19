@@ -32,17 +32,6 @@ namespace GraphicsTestFramework.SQL
 		//Query retry list - TODO - not hooked up or solved yet
 		private List<QueryBackup> SQLNonQueryBackup = new List<QueryBackup>();
 
-		//TEMPORARY
-		// public ResultsIOData[] _tempData;
-		// public ResultsIOData _tempDataFull;
-		
-		// IEnumerator Start()
-		// {
-		// 	yield return new WaitForSeconds(2f);
-		// 	yield return StartCoroutine(GetaData(false, (value => { _tempData = value; })));
-		// 	StartCoroutine(FetchSpecificEntry(_tempData[0], (value => { _tempDataFull = value; })));
-		// }
-
 		// ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		//INFORMATION
 		private SystemData sysData;//local version of systemData
@@ -324,6 +313,20 @@ namespace GraphicsTestFramework.SQL
 			}
 		}
 
+
+		public static IEnumerator SuiteReference(Suite suite)
+		{
+            string tableName = suite.suiteName + "_Reference";
+            Console.Instance.Write(DebugLevel.File, MessageLevel.Log, "Starting SQL query creation"); // Write to console
+            StringBuilder outputString = new StringBuilder();
+            outputString.Append("SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;\n");//using isolation to avoid double write issues
+            outputString.Append("START TRANSACTION;\n");//using transaction to do the query in one chunk
+            outputString.Append(TableCheck(tableName));//adds a table check/creation
+
+            yield return null;
+            Debug.Log("doing coroutine");
+        }
+
 		// ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		// Utilities - TODO wip
 		// ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -353,7 +356,7 @@ namespace GraphicsTestFramework.SQL
 		}
 
 		//Check to see if table exists
-		public string TableCheck(string tableName){
+		public static string TableCheck(string tableName){
             string _template = tableName.Substring(tableName.IndexOf('_') + 1, tableName.Length - (tableName.IndexOf('_') + 1));//shave off the suite name to get the template table
 			return string.Format ("CREATE TABLE IF NOT EXISTS {0} LIKE {1};\n", tableName, _template);//query to check for table, otherwise create one
 		}
