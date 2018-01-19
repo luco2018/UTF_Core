@@ -42,10 +42,13 @@ namespace GraphicsTestFramework
 				gameObject.AddComponent<LocalIO> ();
 			LocalIO.Instance.Init ();
 			//setup SQL IO
-			if (SQL.SQLIO.Instance == null)
-				gameObject.AddComponent<SQL.SQLIO> ();
-			SQL.SQLIO.Instance.Init (sysData);
+			SQL.SQLIO.Init (sysData); // SQLCHECK
 		}
+
+		void Update()
+		{
+            SQL.SQLIO.Update();
+        }
 
 		public void Restart ()
 		{
@@ -72,12 +75,12 @@ namespace GraphicsTestFramework
 			do {
 				yield return new WaitForEndOfFrame ();
 				timeout += Time.deltaTime;
-			} while(SQL.SQLIO.Instance.liveConnection == connectionStatus.Internet && timeout < 10f);
+			} while(SQL.SQLIO.liveConnection == connectionStatus.Internet && timeout < 10f); // SQLCHECK
 
-			//if timeout reaches 10f then no network
+            //if timeout reaches 10f then no network
 
-			//fetch suite names from the suite manager
-			string[] suiteNames = SuiteManager.GetSuiteNames ();
+            //fetch suite names from the suite manager
+            string[] suiteNames = SuiteManager.GetSuiteNames ();
 
 			if (suiteNames.Length == 0) {//if there are no suites loaded fail - TODO need to add code path for this
 				Console.Instance.Write (DebugLevel.Critical, MessageLevel.LogWarning, "No suites loaded in SuiteManager, unable to continue"); // Write to console
@@ -88,8 +91,10 @@ namespace GraphicsTestFramework
 					Console.Instance.Write (DebugLevel.File, MessageLevel.Log, "Fetching baseline timestamps from cloud for " + suiteName);
                     //Get timestamp for suite via SQL
                     DateTime dt = DateTime.MaxValue;
-                    StartCoroutine(SQL.SQLIO.Instance.GetbaselineTimestamp(suiteName, (value => { dt = value; })));
-					while (dt == DateTime.MaxValue)
+                    IEnumerator i = SQL.SQLIO.GetbaselineTimestamp(suiteName, (value => { dt = value; }));
+                    SQL.SQLIO.StartCoroutine(i);
+                    //StartCoroutine(SQL.SQLIO.GetbaselineTimestamp(suiteName, (value => { dt = value; }))); // SQLCHECK
+                    while (dt == DateTime.MaxValue)
                     {
                         yield return null;
                     }
@@ -99,8 +104,8 @@ namespace GraphicsTestFramework
 
 				if (suiteBaselinesPullList.Count > 0) {
                     ResultsIOData[] data = null;
-                    StartCoroutine(SQL.SQLIO.Instance.FetchBaselines(suiteBaselinesPullList.ToArray(), sysData.Platform, sysData.API, (value => { data = value; })));
-					while(data == null){
+                    StartCoroutine(SQL.SQLIO.FetchBaselines(suiteBaselinesPullList.ToArray(), sysData.Platform, sysData.API, (value => { data = value; }))); // SQLCHECK
+                    while(data == null){
                         yield return null;
                     }
                     //ResultsIOData[] data = SQL.SQLIO.Instance.FetchBaselines (suiteBaselinesPullList.ToArray (), sysData.Platform, sysData.API);
@@ -220,8 +225,8 @@ namespace GraphicsTestFramework
 					sheetName = suiteName + "_" + testType + "_Baseline";
 				else //cloud upload for results
 					sheetName = suiteName + "_" + testType + "_Results";
-				StartCoroutine(SQL.SQLIO.Instance.AddEntry(inputData, sheetName, baseline, (value) => { uploaded = value; }));
-			}else{
+				StartCoroutine(SQL.SQLIO.AddEntry(inputData, sheetName, baseline, (value) => { uploaded = value; })); // SQLCHECK
+            }else{
                 uploaded = 1;
             }
 

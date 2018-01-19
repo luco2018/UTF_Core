@@ -204,7 +204,6 @@ namespace GraphicsTestFramework.Experimental
             if(GUILayout.Button("Update Suite On Cloud"))
             {
                 //update on cloud
-                EditorCoroutine.StartCoroutine(SQL.SQLIO.SuiteReference(target as Suite), SQL.SQLIO._Instance);
             }
 
             if(emptyTests)//Checks if there are empty test entries, if so shows an error message

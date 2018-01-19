@@ -54,8 +54,8 @@ namespace GraphicsTestFramework
 		IEnumerator GetTableNames(string query)
 		{
 			SQL.SQLIO.RawData rawData = new GraphicsTestFramework.SQL.SQLIO.RawData();
-			yield return StartCoroutine(SQL.SQLIO.Instance.SQLRequest(query, (value => { rawData = value; })));//Get all tables
-			foreach(string[] strArr in rawData.data)
+			yield return StartCoroutine(SQL.SQLIO.SQLRequest(query, (value => { rawData = value; })));//Get all tables // SQLCHECK
+            foreach(string[] strArr in rawData.data)
 			{
 				if(strArr[0].Split(new char[]{'_'}, StringSplitOptions.None).Length == 3)
 				{
@@ -122,7 +122,7 @@ namespace GraphicsTestFramework
 			// submit the query
 			SQL.SQLIO.RawData rawData = new GraphicsTestFramework.SQL.SQLIO.RawData();
             Debug.LogWarning(rowCountQ);
-            yield return StartCoroutine(SQL.SQLIO.Instance.SQLRequest(rowCountQ, (value => { rawData = value; })));//Get all tables
+            yield return StartCoroutine(SQL.SQLIO.SQLRequest(rowCountQ, (value => { rawData = value; })));//Get all tables // SQLCHECK
 
             //get the count and remove empty table results
             for (int i = tableStrings.Count - 1; i >= 0; i--)
@@ -176,7 +176,7 @@ namespace GraphicsTestFramework
                 SQL.SQLIO.TableStrings ts = SQL.SQLIO.TableStringToStrings(table);
                 string query = CreateQueryString(table, runID, commonFields, null, ("'%runID|" + currentRunID + "%'"));///hardcoded to run id
                 SQL.SQLIO.RawData rawData = new GraphicsTestFramework.SQL.SQLIO.RawData();
-                yield return StartCoroutine(SQL.SQLIO.Instance.SQLRequest(query, (value => { rawData = value; })));//Get all tables
+                yield return StartCoroutine(SQL.SQLIO.SQLRequest(query, (value => { rawData = value; })));//Get all tables // SQLCHECK
                 riod.Add(SQL.SQLIO.ConvertRawDataToResultsIOData(ts.suite, ts.testType, rawData, ts.baseline));
             }
             outData(riod.ToArray());

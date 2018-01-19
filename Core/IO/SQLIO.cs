@@ -4,52 +4,95 @@ using UnityEngine;
 using UnityEngine.Networking;
 using System;
 using System.Text;
+using System.Net;
 using GraphicsTestFramework;
 
 namespace GraphicsTestFramework.SQL
 {	
-	public class SQLIO : MonoBehaviour {
+	public static class SQLIO {
 
-		public static SQLIO _Instance = null;//Instance
-		public static SQLIO Instance {
-			get {
-				if (_Instance == null)
-					_Instance = (SQLIO)FindObjectOfType (typeof(SQLIO));
-				return _Instance;
-			}
-		}
+		// public static SQLIO _Instance = null;//Instance
+		// public static SQLIO Instance {
+		// 	get {
+		// 		if (_Instance == null)
+		// 			_Instance = (SQLIO)FindObjectOfType (typeof(SQLIO));
+		// 		return _Instance;
+		// 	}
+		// }
 
         // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         //CONNECTION VARIABLES
-        private string _webservice = "http://ec2-35-176-162-233.eu-west-2.compute.amazonaws.com/UTFFunctions.php";//web service
-        private string _pass = "f23-95j-vCt";
+		private static string _webservice;// web service address
+        private static string _liveWebservice =		"http://ec2-35-176-162-233.eu-west-2.compute.amazonaws.com/UTFFunctions.php";// web service for live
+		private static string _stagingWebserver =	"http://ec2-35-176-162-233.eu-west-2.compute.amazonaws.com/UTFFunctions_staging.php";// web service for staging
+        private static string _pass = 				"f23-95j-vCt";// Basic security(laughable actually)
 
         // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         //LOCAL VARIABLES
-        public connectionStatus liveConnection;
-		private NetworkReachability netStat = NetworkReachability.NotReachable;
+        public static connectionStatus liveConnection;
+		private static NetworkReachability netStat = NetworkReachability.NotReachable;
 
-		//Query retry list - TODO - not hooked up or solved yet
-		private List<QueryBackup> SQLNonQueryBackup = new List<QueryBackup>();
+        private static IEnumerator _currentIenumerator;
+        private static IEnumerator _currentSubIenumerator;
+
+        //Query retry list - TODO - not hooked up or solved yet
+        private static List<QueryBackup> SQLNonQueryBackup = new List<QueryBackup>();
 
 		// ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		//INFORMATION
-		private SystemData sysData;//local version of systemData
+		private static SystemData sysData;//local version of systemData
 
-		public void Init(SystemData _sysData)
+		public static void Init(SystemData _sysData)// Initialization function, this sets up the needed information - TODO - make it work without being called
         {
             sysData = _sysData;
 
 			//setup staging
-			if(Master.Instance._sqlMode == SQLmode.Staging)
-				_webservice = "http://ec2-35-176-162-233.eu-west-2.compute.amazonaws.com/UTFFunctions_staging.php";//web srvice
+			if(Master.Instance._sqlMode == SQLmode.Live)
+                _webservice = _liveWebservice;
+			else if (Master.Instance._sqlMode == SQLmode.Staging)
+                _webservice = _stagingWebserver;
+
+        }
+
+		public static void Update()
+		{
+            Debug.Log("SQL IO script is updating");
+
+			if(_currentIenumerator != null)
+			{
+				if(!_currentIenumerator.MoveNext())
+				{
+                    _currentIenumerator = null;
+                }
+			}
+        }
+
+		public static void StartCoroutine(IEnumerator f)
+		{
+            _currentIenumerator = f;
+        }
+
+		public static IEnumerator TestCoroutine()
+		{
+            Debug.Log("Coroutine 1 running coroutine2");
+            IEnumerator i = TestCoroutine2();
+            while(i.MoveNext()) yield return null;
+            Debug.Log("Coroutine 1 finsihed running coroutine2");
+        }
+
+		public static IEnumerator TestCoroutine2()
+        {
+            Debug.Log("Coroutine 2 Waiting 10 seconds");
+            IEnumerator i = Wait(10);
+            while (i.MoveNext()) yield return null;
+            Debug.Log("Coroutine 2 finsihed waiting 10 seconds");
         }
 
 		// ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		// Query methods - TODO wip
 		// ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		
-		public IEnumerator SQLNonQuery(string _query, Action<int> callback)
+		public static IEnumerator SQLNonQuery(string _query, Action<int> callback)
         {
 			Console.Instance.Write(DebugLevel.File, MessageLevel.Log, "SQL nonquery:" + _query); // Write to console
             List<IMultipartFormSection> form = new List<IMultipartFormSection>();
@@ -80,17 +123,19 @@ namespace GraphicsTestFramework.SQL
             }
         }
 		
-		public IEnumerator SQLRequest(string _query, Action<RawData> data)
+		public static IEnumerator SQLRequest(string _query, Action<RawData> data)
         {
 			Console.Instance.Write(DebugLevel.File, MessageLevel.Log, "SQL query:" + _query); // Write to console
             List<IMultipartFormSection> form = new List<IMultipartFormSection>();
             form.Add(new MultipartFormDataSection("type", "request"));
 			form.Add(new MultipartFormDataSection("pass", _pass));
             form.Add(new MultipartFormDataSection("query", _query));
-            UnityWebRequest www = UnityWebRequest.Post(_webservice, form); //POST data is sent via the URL
+            UnityWebRequest www = UnityWebRequest.Post(_liveWebservice, form); //POST data is sent via the URL
 
 #if !UNITY_2018_1_OR_NEWER
             yield return www.Send();
+
+			while(www.downloadProgress < 1) yield return null;
 #else
             UnityWebRequestAsyncOperation wwwData = www.SendWebRequest();
             while (!wwwData.isDone)
@@ -127,25 +172,29 @@ namespace GraphicsTestFramework.SQL
 		// ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 		//Gets the timestamp from the server, if none return DateTime.MinValue to cause repull regardless
-		public IEnumerator GetbaselineTimestamp(string suiteName, Action<DateTime> outdata){
+		public static IEnumerator GetbaselineTimestamp(string suiteName, Action<DateTime> outdata){
 			DateTime timestamp = DateTime.MinValue;//make date time min, we check this on the other end since it is not nullable
             RawData _rawData = null;//RawData to be filled by the request
             string query = String.Format("SELECT suiteTimestamp FROM SuiteBaselineTimestamps WHERE api='{0}' AND suiteName='{1}' AND platform='{2}';", sysData.API, suiteName, sysData.Platform);//This line sends a query to get timestamps for matching API/platform/suite
-            yield return StartCoroutine(SQLRequest(query, (value => { _rawData = value; })));//send the request
-			if(_rawData.data.Count != 0)
+
+			IEnumerator i = SQLRequest(query, (value => { _rawData = value; }));
+			while(i.MoveNext()) yield return null;
+            Debug.Log(_rawData.fields[0]);
+            //yield return null;// StartCoroutine(SQLRequest(query, (value => { _rawData = value; })));//send the request FIX
+            if(_rawData.data.Count != 0)
             	timestamp = System.DateTime.Parse(_rawData.data[0][0]);//convert the string to a timestamp
 
             outdata(timestamp);
         }
 
 		//fetch the server side baselines by providing the suites, pltform and API, later will have to change this to allow more strict baseline matching <TODO
-		public IEnumerator FetchBaselines(string[] suiteNames, string platform, string api, Action<ResultsIOData[]> outdata){
+		public static IEnumerator FetchBaselines(string[] suiteNames, string platform, string api, Action<ResultsIOData[]> outdata){
 			List<ResultsIOData> data = new List<ResultsIOData> ();//ResultsIOData to send back to resultsIO for local processing
 			List<string> tables = new List<string>();
 			//Get the table names to pull baselines from
 			foreach(string suite in suiteNames){
                 RawData rawData = new RawData();//RawData to be filled by the wwwRequest
-                yield return StartCoroutine(SQLRequest(String.Format("SHOW TABLES LIKE '{0}%Baseline'", suite), (value => { rawData = value; })));//Get all tables with the suite and ending with baseline
+                yield return null;// FIX StartCoroutine(SQLRequest(String.Format("SHOW TABLES LIKE '{0}%Baseline'", suite), (value => { rawData = value; })));//Get all tables with the suite and ending with baseline
                 for (int t = 0; t < rawData.data.Count; t++){
 					tables.Add(rawData.data[t][0]);//add the table name to the list of tables to pull
 				}
@@ -160,7 +209,7 @@ namespace GraphicsTestFramework.SQL
                 //This line controls how baselines are selected, right now only Platform and API are unique
                 string query = String.Format("SELECT * FROM {0} WHERE platform='{1}' AND api='{2}'", table, platform, api);
                 RawData _rawData = new RawData();
-                yield return StartCoroutine(SQLRequest(query, (value => { _rawData = value; })));
+                yield return null; // FIX StartCoroutine(SQLRequest(query, (value => { _rawData = value; })));
                 data[n].fieldNames.AddRange(_rawData.fields);//Grab the fields from the RawData
 				for (int i = 0; i < _rawData.data.Count; i++)
                 {
@@ -176,7 +225,7 @@ namespace GraphicsTestFramework.SQL
 		}
 
 		//Fetches a single baseline based of deets
-		public IEnumerator FetchBaseline(ResultsIOData inputData, Action<ResultsIOData> outdata)
+		public static IEnumerator FetchBaseline(ResultsIOData inputData, Action<ResultsIOData> outdata)
         {
             ResultsIOData data = new ResultsIOData();//ResultsIOData to send back to resultsIO for local processing
             TableStrings ts = new TableStrings(inputData.suite, inputData.testType, true);
@@ -192,7 +241,7 @@ namespace GraphicsTestFramework.SQL
             //This line controls how baselines are selected, right now only Platform and API are unique
             string query = String.Format("SELECT * FROM {0} WHERE platform='{1}' AND api='{2}' AND groupname='{3}' AND testname='{4}'", table, platform, api, group, test);
 			RawData _rawData = new RawData();
-			yield return StartCoroutine(SQLRequest(query, (value => { _rawData = value; })));
+            yield return null; // FIX StartCoroutine(SQLRequest(query, (value => { _rawData = value; })));
 			data.fieldNames.AddRange(_rawData.fields);//Grab the fields from the RawData
 			for (int i = 0; i < _rawData.data.Count; i++)
 			{
@@ -203,7 +252,7 @@ namespace GraphicsTestFramework.SQL
             outdata(data);
         }
 
-		public IEnumerator FetchSpecificEntry(ResultsIOData inputData, Action<ResultsIOData> outdata)
+		public static IEnumerator FetchSpecificEntry(ResultsIOData inputData, Action<ResultsIOData> outdata)
 		{
 			//make request based off common
 			string baseline = inputData.baseline == true ? "Baseline" : "Results";
@@ -213,7 +262,7 @@ namespace GraphicsTestFramework.SQL
 
 			string query = String.Format("SELECT * FROM {0} WHERE {1}", table, values);
 			RawData _rawData = new RawData();
-			yield return StartCoroutine(SQLRequest(query, (value => { _rawData = value; })));
+            yield return null;// FIX StartCoroutine(SQLRequest(query, (value => { _rawData = value; })));
 			inputData.fieldNames.Clear();
 			inputData.resultsRow.Clear();
 			inputData.fieldNames.AddRange(_rawData.fields);//Grab the fields from the RawData
@@ -226,7 +275,7 @@ namespace GraphicsTestFramework.SQL
 			outdata(inputData);
 		}
 
-		public IEnumerator RunUUID(Action<string> uuid)
+		public static IEnumerator RunUUID(Action<string> uuid)
 		{
 			string _uuid = "";
 			bool exists = true;
@@ -234,13 +283,13 @@ namespace GraphicsTestFramework.SQL
 			do
 			{
 				_uuid = Common.RandomUUID();
-				yield return StartCoroutine(SQLRequest(string.Format("SELECT COUNT(*) FROM RunUUIDs WHERE runID='{0}'", _uuid), (value) => { rawData = value; }));//send the query, this will return a number if successful or -1 for a failure
+                yield return null;// FIX StartCoroutine(SQLRequest(string.Format("SELECT COUNT(*) FROM RunUUIDs WHERE runID='{0}'", _uuid), (value) => { rawData = value; }));//send the query, this will return a number if successful or -1 for a failure
 				if(rawData.data[0][0] == "0")
 					exists = false;
 			}while(exists);
             //Add uuid
 			int num = -2;
-			StartCoroutine(SQLNonQuery(string.Format ("INSERT INTO RunUUIDs (runID) VALUES ('{0}')", _uuid), (value) => { num = value; }));//send the query, this will return a number if successful or -1 for a failure
+			// FIX StartCoroutine(SQLNonQuery(string.Format ("INSERT INTO RunUUIDs (runID) VALUES ('{0}')", _uuid), (value) => { num = value; }));//send the query, this will return a number if successful or -1 for a failure
 			while(num == -2)//while the request hasnt returned
 			{
 				yield return null;
@@ -253,7 +302,7 @@ namespace GraphicsTestFramework.SQL
 		// ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 		//Set the suite baseline timestamp based of given SuiteBaselineData
-		public string SetSuiteTimestamp(SuiteBaselineData SBD){
+		public static string SetSuiteTimestamp(SuiteBaselineData SBD){
 			string tableName = "SuiteBaselineTimestamps";//Hardcoded, this should be ok as it will not change going forwards
 			List<string> values = new List<string> (){ SBD.suiteName, SBD.platform, SBD.api, SBD.suiteTimestamp};
 			//this next line formats a SQL query, this is called at the end of uploading a new baseline
@@ -261,7 +310,7 @@ namespace GraphicsTestFramework.SQL
 		}
 
 		//Creates an entry of either result or baseline(replaces UploadData from old system)
-		public IEnumerator AddEntry(ResultsIOData inputData, string tableName, int baseline, Action<int> uploaded){
+		public static IEnumerator AddEntry(ResultsIOData inputData, string tableName, int baseline, Action<int> uploaded){
 			Console.Instance.Write (DebugLevel.File, MessageLevel.Log, "Starting SQL query creation"); // Write to console
 			StringBuilder outputString = new StringBuilder ();
             outputString.Append ("SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;\n");//using isolation to avoid double write issues
@@ -295,7 +344,7 @@ namespace GraphicsTestFramework.SQL
 
 			outputString.Append ("COMMIT;");//close transaction
 			int num = -2;//int to check changes were commited
-            StartCoroutine(SQLNonQuery(outputString.ToString(), (value) => { num = value; }));//send the query, this will return a number if successful or -1 for a failure
+            // FIX StartCoroutine(SQLNonQuery(outputString.ToString(), (value) => { num = value; }));//send the query, this will return a number if successful or -1 for a failure
 			while(num == -2){//while the request hasnt returned
                 yield return null;
             }
@@ -332,7 +381,7 @@ namespace GraphicsTestFramework.SQL
 		// ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 		//Method to check for valid connection, Invoked from start
-		void CheckConnection(){
+		static void CheckConnection(){
 
 			if(netStat != Application.internetReachability) {
 				netStat = Application.internetReachability; //Get network state
@@ -378,7 +427,7 @@ namespace GraphicsTestFramework.SQL
         }
 
 		//create column list for table creation, inclued data type
-		string CreateColumns(string[] columns){
+		static string CreateColumns(string[] columns){
 			StringBuilder sb = new StringBuilder ();
 			for(int i = 0; i < columns.Length; i++){
 				string dataType = "varchar(255)";
@@ -395,7 +444,7 @@ namespace GraphicsTestFramework.SQL
 		}
 
 		//create column list for un-named values
-		string ConvertToValues(List<string> values){
+		static string ConvertToValues(List<string> values){
 			StringBuilder sb = new StringBuilder ();
 			for (int i = 0; i < values.Count; i++) {
 				sb.Append ("'" + values[i] + "'");
@@ -406,7 +455,7 @@ namespace GraphicsTestFramework.SQL
 		}
 
 		//create column list for named values
-		string ConvertToValues(List<string> values, string[] fields){
+		static string ConvertToValues(List<string> values, string[] fields){
 			StringBuilder sb = new StringBuilder ();
 			for (int i = 0; i < values.Count; i++) {
 				sb.Append (fields[i] + "='" + values[i] + "' ");
@@ -417,7 +466,7 @@ namespace GraphicsTestFramework.SQL
 		}
 
 		//create column list for named values for condition use
-		string ConvertToCondition(List<string> values, List<string> fields){
+		static string ConvertToCondition(List<string> values, List<string> fields){
 			StringBuilder sb = new StringBuilder ();
 			for (int i = 0; i < values.Count; i++) {
 				sb.Append (fields[i] + "='" + values[i] + "' ");
@@ -428,7 +477,7 @@ namespace GraphicsTestFramework.SQL
 		}
 
 		//Convert raw string data form the webserver to table data
-		RawData ConvertRawData(string data)
+		static RawData ConvertRawData(string data)
         {
             RawData _output = new RawData();
             string[] baseSplit = data.Split(new string[] { "<<|>>" }, StringSplitOptions.None);
@@ -457,6 +506,12 @@ namespace GraphicsTestFramework.SQL
             }
             return outData;
         }
+
+		static IEnumerator Wait(float time)
+		{
+			float t = Time.realtimeSinceStartup;
+            while (Time.realtimeSinceStartup - t < time) yield return true;
+		}
 		
 		class QueryBackup{
 			public QueryType type;
@@ -488,7 +543,7 @@ namespace GraphicsTestFramework.SQL
 		enum QueryType{ Query, NonQuery, QueryRequest};
 
 		//SQL data types for common
-		private string[] dataTypes = new string[]{"DATETIME",//datetime
+		private static string[] dataTypes = new string[]{"DATETIME",//datetime
 												"varchar(255)",//UnityVersion
 												"varchar(10)",//AppVersion
 												"varchar(255)",//OS

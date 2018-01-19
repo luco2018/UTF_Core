@@ -172,7 +172,7 @@ namespace GraphicsTestFramework
         {
             Console.Instance.Write(DebugLevel.Logic, MessageLevel.Log, "Starting automation run"); // Write to console
             runUUID = "";
-            StartCoroutine(SQL.SQLIO.Instance.RunUUID((value => { runUUID = value; })));
+            StartCoroutine(SQL.SQLIO.RunUUID((value => { runUUID = value; }))); // SQLCHECK
             while(runUUID == "") { yield return null; }
             for (int i = 0; i < runner.tests.Count; i++) // Iterate tests
             {

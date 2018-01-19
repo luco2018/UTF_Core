@@ -613,10 +613,10 @@ namespace GraphicsTestFramework
         public override IEnumerator ProcessAnalyticComparison()
         {
             ResultsIOData resultsA = new ResultsIOData(); // Create results A
-            yield return StartCoroutine(SQL.SQLIO.Instance.FetchSpecificEntry(TestStructure.Instance.RequestAnalyticData(0, activeTestEntry), (value => { resultsA = value; }))); // Get full results A
+            yield return StartCoroutine(SQL.SQLIO.FetchSpecificEntry(TestStructure.Instance.RequestAnalyticData(0, activeTestEntry), (value => { resultsA = value; }))); // Get full results A // SQLCHECK
             var rawResultsA = (R)DeserializeResults(resultsA); // Deserialize
             ResultsIOData resultsB = new ResultsIOData(); // Create results A
-            yield return StartCoroutine(SQL.SQLIO.Instance.FetchSpecificEntry(TestStructure.Instance.RequestAnalyticData(1, activeTestEntry), (value => { resultsB = value; }))); // Get full results A
+            yield return StartCoroutine(SQL.SQLIO.FetchSpecificEntry(TestStructure.Instance.RequestAnalyticData(1, activeTestEntry), (value => { resultsB = value; }))); // Get full results A // SQLCHECK
             var rawResultsB = (R)DeserializeResults(resultsB); // Deserialize
             bool passFail = GetComparisonResult(rawResultsA, rawResultsB); // Get Comparison result
             resultsA.resultsRow[0].resultsColumn[Common.FindResultsDataIOFieldIdByName(resultsA, "PassFail")] = passFail.ToString(); // Set pass fail
