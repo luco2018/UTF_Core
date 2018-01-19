@@ -45,6 +45,11 @@ namespace GraphicsTestFramework
         static string commonFields = "DateTime, UnityVersion, AppVersion, OS, Device, Platform, API, RenderPipe, GroupName, TestName, PassFail, Custom";
 		static bool firstRun = false;
 
+        void Start()
+        {
+            Menu.Instance.MakeCanvasScaleWithScreenSize(canvas);
+        }
+
 		public void BaseFilter()
 		{
 			if(baseTableStrings == null || baseTableStrings.Length == 0)

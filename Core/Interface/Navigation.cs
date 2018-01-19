@@ -31,6 +31,8 @@ namespace GraphicsTestFramework
 
 			runTestButton.onClick.AddListener(RunTestClick);
 			analyticButton.onClick.AddListener(AnalyticClick);
+
+           Menu.Instance.MakeCanvasScaleWithScreenSize(titleMenu);
 		}
 
 		void RunTestClick()
