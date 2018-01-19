@@ -22,10 +22,10 @@ namespace GraphicsTestFramework.SQL
 
         // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         //CONNECTION VARIABLES
-		private static string _webservice;// web service address
-        private static string _liveWebservice =		"http://ec2-35-176-162-233.eu-west-2.compute.amazonaws.com/UTFFunctions.php";// web service for live
-		private static string _stagingWebserver =	"http://ec2-35-176-162-233.eu-west-2.compute.amazonaws.com/UTFFunctions_staging.php";// web service for staging
-        private static string _pass = 				"f23-95j-vCt";// Basic security(laughable actually)
+		public static string _webservice;// web service address
+        public readonly static string _liveWebservice =		"http://ec2-35-176-162-233.eu-west-2.compute.amazonaws.com/UTFFunctions.php";// web service for live
+		public readonly static string _stagingWebserver =	"http://ec2-35-176-162-233.eu-west-2.compute.amazonaws.com/UTFFunctions_staging.php";// web service for staging
+        private readonly static string _pass = 				"f23-95j-vCt";// Basic security(laughable actually)
 
         // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         //LOCAL VARIABLES
@@ -130,7 +130,7 @@ namespace GraphicsTestFramework.SQL
             form.Add(new MultipartFormDataSection("type", "request"));
 			form.Add(new MultipartFormDataSection("pass", _pass));
             form.Add(new MultipartFormDataSection("query", _query));
-            UnityWebRequest www = UnityWebRequest.Post(_liveWebservice, form); //POST data is sent via the URL
+            UnityWebRequest www = UnityWebRequest.Post(_webservice, form); //POST data is sent via the URL
 
 #if !UNITY_2018_1_OR_NEWER
             yield return www.Send();
@@ -179,8 +179,7 @@ namespace GraphicsTestFramework.SQL
 
 			IEnumerator i = SQLRequest(query, (value => { _rawData = value; }));
 			while(i.MoveNext()) yield return null;
-            Debug.Log(_rawData.fields[0]);
-            //yield return null;// StartCoroutine(SQLRequest(query, (value => { _rawData = value; })));//send the request FIX
+
             if(_rawData.data.Count != 0)
             	timestamp = System.DateTime.Parse(_rawData.data[0][0]);//convert the string to a timestamp
 
@@ -194,7 +193,10 @@ namespace GraphicsTestFramework.SQL
 			//Get the table names to pull baselines from
 			foreach(string suite in suiteNames){
                 RawData rawData = new RawData();//RawData to be filled by the wwwRequest
-                yield return null;// FIX StartCoroutine(SQLRequest(String.Format("SHOW TABLES LIKE '{0}%Baseline'", suite), (value => { rawData = value; })));//Get all tables with the suite and ending with baseline
+
+				IEnumerator i = SQLRequest(String.Format("SHOW TABLES LIKE '{0}%Baseline'", suite), (value => { rawData = value; }));
+                while (i.MoveNext()) yield return null;
+
                 for (int t = 0; t < rawData.data.Count; t++){
 					tables.Add(rawData.data[t][0]);//add the table name to the list of tables to pull
 				}
@@ -209,12 +211,15 @@ namespace GraphicsTestFramework.SQL
                 //This line controls how baselines are selected, right now only Platform and API are unique
                 string query = String.Format("SELECT * FROM {0} WHERE platform='{1}' AND api='{2}'", table, platform, api);
                 RawData _rawData = new RawData();
-                yield return null; // FIX StartCoroutine(SQLRequest(query, (value => { _rawData = value; })));
+
+				IEnumerator i = SQLRequest(query, (value => { _rawData = value; }));
+                while (i.MoveNext()) yield return null;
+
                 data[n].fieldNames.AddRange(_rawData.fields);//Grab the fields from the RawData
-				for (int i = 0; i < _rawData.data.Count; i++)
+				for (int x = 0; x < _rawData.data.Count; x++)
                 {
                     ResultsIORow row = new ResultsIORow();//create a new row
-                    row.resultsColumn.AddRange(_rawData.data[i]);//store the current row of values
+                    row.resultsColumn.AddRange(_rawData.data[x]);//store the current row of values
 					data[n].resultsRow.Add(row);//add it to the data to send back to resultsIO
                 }
 				if (data [n].fieldNames.Count == 0)
@@ -241,12 +246,15 @@ namespace GraphicsTestFramework.SQL
             //This line controls how baselines are selected, right now only Platform and API are unique
             string query = String.Format("SELECT * FROM {0} WHERE platform='{1}' AND api='{2}' AND groupname='{3}' AND testname='{4}'", table, platform, api, group, test);
 			RawData _rawData = new RawData();
-            yield return null; // FIX StartCoroutine(SQLRequest(query, (value => { _rawData = value; })));
+
+			IEnumerator i = SQLRequest(query, (value => { _rawData = value; }));
+            while (i.MoveNext()) yield return null;
+			
 			data.fieldNames.AddRange(_rawData.fields);//Grab the fields from the RawData
-			for (int i = 0; i < _rawData.data.Count; i++)
+			for (int x = 0; x < _rawData.data.Count; x++)
 			{
 				ResultsIORow row = new ResultsIORow();//create a new row
-				row.resultsColumn.AddRange(_rawData.data[i]);//store the current row of values
+				row.resultsColumn.AddRange(_rawData.data[x]);//store the current row of values
 				data.resultsRow.Add(row);//add it to the data to send back to resultsIO
 			}
             outdata(data);
@@ -262,14 +270,17 @@ namespace GraphicsTestFramework.SQL
 
 			string query = String.Format("SELECT * FROM {0} WHERE {1}", table, values);
 			RawData _rawData = new RawData();
-            yield return null;// FIX StartCoroutine(SQLRequest(query, (value => { _rawData = value; })));
+
+			IEnumerator i = SQLRequest(query, (value => { _rawData = value; }));
+            while (i.MoveNext()) yield return null;
+
 			inputData.fieldNames.Clear();
 			inputData.resultsRow.Clear();
 			inputData.fieldNames.AddRange(_rawData.fields);//Grab the fields from the RawData
-			for (int i = 0; i < _rawData.data.Count; i++)
+			for (int x = 0; x < _rawData.data.Count; x++)
 			{
 				ResultsIORow row = new ResultsIORow();//create a new row
-				row.resultsColumn.AddRange(_rawData.data[i]);//store the current row of values
+				row.resultsColumn.AddRange(_rawData.data[x]);//store the current row of values
 				inputData.resultsRow.Add(row);//add it to the data to send back to resultsIO
 			}
 			outdata(inputData);
@@ -283,13 +294,18 @@ namespace GraphicsTestFramework.SQL
 			do
 			{
 				_uuid = Common.RandomUUID();
-                yield return null;// FIX StartCoroutine(SQLRequest(string.Format("SELECT COUNT(*) FROM RunUUIDs WHERE runID='{0}'", _uuid), (value) => { rawData = value; }));//send the query, this will return a number if successful or -1 for a failure
+
+				IEnumerator i1 = SQLRequest(string.Format("SELECT COUNT(*) FROM RunUUIDs WHERE runID='{0}'", _uuid), (value) => { rawData = value; });
+                while (i1.MoveNext()) yield return null;
 				if(rawData.data[0][0] == "0")
 					exists = false;
 			}while(exists);
             //Add uuid
 			int num = -2;
-			// FIX StartCoroutine(SQLNonQuery(string.Format ("INSERT INTO RunUUIDs (runID) VALUES ('{0}')", _uuid), (value) => { num = value; }));//send the query, this will return a number if successful or -1 for a failure
+
+			IEnumerator i2 = SQLNonQuery(string.Format("INSERT INTO RunUUIDs (runID) VALUES ('{0}')", _uuid), (value) => { num = value; });
+            while (i2.MoveNext()) yield return null;
+
 			while(num == -2)//while the request hasnt returned
 			{
 				yield return null;
@@ -331,10 +347,10 @@ namespace GraphicsTestFramework.SQL
 			} else {//result sorting
 				outputString.AppendFormat ("INSERT INTO {0} VALUES ", tableName);
 				int count = inputData.resultsRow.Count;
-				for (int i = 0; i < count; i++) {
+				for (int x = 0; x < count; x++) {
 					rowNum++;
-					outputString.AppendFormat ("({0})", ConvertToValues (inputData.resultsRow [i].resultsColumn));
-					if (i < count - 1)
+					outputString.AppendFormat ("({0})", ConvertToValues (inputData.resultsRow [x].resultsColumn));
+					if (x < count - 1)
 						outputString.Append (",\n");
 					else
                         outputString.Append(";");
@@ -344,7 +360,10 @@ namespace GraphicsTestFramework.SQL
 
 			outputString.Append ("COMMIT;");//close transaction
 			int num = -2;//int to check changes were commited
-            // FIX StartCoroutine(SQLNonQuery(outputString.ToString(), (value) => { num = value; }));//send the query, this will return a number if successful or -1 for a failure
+
+			IEnumerator i = SQLNonQuery(outputString.ToString(), (value) => { num = value; });
+            while (i.MoveNext()) yield return null;
+
 			while(num == -2){//while the request hasnt returned
                 yield return null;
             }
@@ -371,9 +390,37 @@ namespace GraphicsTestFramework.SQL
             outputString.Append("SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;\n");//using isolation to avoid double write issues
             outputString.Append("START TRANSACTION;\n");//using transaction to do the query in one chunk
             outputString.Append(TableCheck(tableName));//adds a table check/creation
+            outputString.Append("DELETE FROM " + tableName + ";\n");// clears the existing suite reference
+            outputString.AppendFormat("INSERT INTO {0} VALUES ('{1}', {2});\n", "Suites", suite.suiteName, suite.suiteVersion);
+            outputString.AppendFormat("INSERT INTO {0} VALUES ", tableName);
+			int grpCount = suite.groups.Count;
+			for(int grp = 0; grp < grpCount; grp++)
+			{
+				int testCount = suite.groups[grp].tests.Count;
+				for (int test = 0; test < testCount; test++)
+				{
+					Test t = suite.groups[grp].tests[test];
+					outputString.AppendFormat("('{0}', '{1}', {2}, {3})", suite.groups[grp].groupName, t.scene.name, t.platforms, t.minimumUnityVersion);
+					if (test < testCount - 1)
+						outputString.Append(",\n");
+					else
+						outputString.Append(";\n");
+					yield return null;
+				}
+			}
 
-            yield return null;
-            Debug.Log("doing coroutine");
+            outputString.Append("COMMIT;");//close transaction
+            int num = -2;//int to check changes were commited
+
+            IEnumerator i = SQLNonQuery(outputString.ToString(), (value) => { num = value; });
+            while (i.MoveNext()) yield return null;
+
+            while (num == -2)
+            {//while the request hasnt returned
+                yield return null;
+            }
+
+            Debug.Log("done upload");
         }
 
 		// ------------------------------------------------------------------------------------------------------------------------------------------------------------------------

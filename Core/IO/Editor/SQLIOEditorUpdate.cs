@@ -20,7 +20,7 @@ namespace GraphicsTestFramework
             EditorApplication.playmodeStateChanged += PauseState;
         }
 
-		[MenuItem("UTF/Toggle SQLIO update")]
+		[MenuItem("UTF/SQL/Toggle SQLIO update")]
 		static void ToggleSQLIOUpdate()
 		{
             if (_running)
@@ -31,10 +31,22 @@ namespace GraphicsTestFramework
 			PlayerPrefs.SetInt("SQLIOUpdate", _running == true ? 1 : 0);
         }
 
-		[MenuItem("UTF/Test SQLIO Coroutine")]
+		[MenuItem("UTF/SQL/Test SQLIO Coroutine")]
 		static void Test()
 		{
             SQL.SQLIO.StartCoroutine(SQL.SQLIO.TestCoroutine());
+        }
+
+        [MenuItem("UTF/SQL/Database Mode/Staging")]
+        static void StagingSQL()
+        {
+            SQL.SQLIO._webservice = SQL.SQLIO._stagingWebserver;
+        }
+
+        [MenuItem("UTF/SQL/Database Mode/Live")]
+        static void LiveSQL()
+        {
+            SQL.SQLIO._webservice = SQL.SQLIO._liveWebservice;
         }
 
 		static void PauseState()
