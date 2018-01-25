@@ -86,7 +86,10 @@ namespace GraphicsTestFramework.SQL
             }
             else
             {
-                Console.Instance.Write(DebugLevel.File, MessageLevel.LogWarning, "SQL response:" + www.downloadHandler.text); // Write to console
+				if(www.downloadHandler.text.Length < 256)
+                	Console.Instance.Write(DebugLevel.File, MessageLevel.LogWarning, "SQL response:" + www.downloadHandler.text); // Write to console
+				else
+					Console.Instance.Write(DebugLevel.File, MessageLevel.LogWarning, "SQL response:Length too long=" + www.downloadHandler.text.Length); // Write to console
                 callback(-1);
             }
         }
@@ -115,8 +118,11 @@ namespace GraphicsTestFramework.SQL
             {
 				if(www.downloadHandler.text != "Null")
 				{
-                    Console.Instance.Write(DebugLevel.File, MessageLevel.Log, "SQL response:" + www.downloadHandler.text); // Write to console
-                	data(ConvertRawData(www.downloadHandler.text));
+                    if (www.downloadHandler.text.Length < 256)
+                        Console.Instance.Write(DebugLevel.File, MessageLevel.LogWarning, "SQL response:" + www.downloadHandler.text); // Write to console
+                    else
+                        Console.Instance.Write(DebugLevel.File, MessageLevel.LogWarning, "SQL response:Length too long=" + www.downloadHandler.text.Length); // Write to console
+                    data(ConvertRawData(www.downloadHandler.text));
 				}
 				else
 				{
@@ -165,7 +171,6 @@ namespace GraphicsTestFramework.SQL
 			foreach(string table in tables){
 				string suite = table.Substring (0, table.IndexOf ("_"));//grab the suite from the table name
 				string testType = table.Substring (table.IndexOf ("_") + 1, table.LastIndexOf ("_") - (suite.Length + 1));//grab the test type from the table name
-                string group = "";
                 data.Add (new ResultsIOData());
 				data [n].suite = suite;
 				data [n].testType = testType;
