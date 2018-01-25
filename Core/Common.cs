@@ -17,7 +17,7 @@ namespace GraphicsTestFramework
     public class Common : MonoBehaviour
     {
         // Framework Information
-        public static string applicationVersion = "1.0b2";
+        public static string applicationVersion = "1.0b3";
 
 
         // ------------------------------------------------------------------------------------
@@ -112,12 +112,15 @@ namespace GraphicsTestFramework
         public static string dateTimeFormat = "yyyy-MM-dd\\THH:mm:ss\\Z";
 
         // Unity Versions
-        public static string[] unityVersionList = new string[4]
+        public static string[] unityVersionList = new string[7]
         {
             "5.6",
             "2017.1",
             "2017.2",
-            "2017.3"
+            "2017.3",
+            "2018.1",
+            "2018.2",
+            "2018.3"
         };
 
         // ------------------------------------------------------------------------------------
