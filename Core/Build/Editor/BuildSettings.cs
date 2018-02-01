@@ -162,8 +162,9 @@ namespace GraphicsTestFramework
                 if (!depreciatedBuiltTargets.Contains(i))
                 {
                     if((BuildTargetGroup)i == BuildTargetGroup.iOS)
-                        productName = productName.Replace("_", "-");
-                    PlayerSettings.SetApplicationIdentifier((BuildTargetGroup)i, "com.UnityTechnologies." + productName); // Set bundle identifiers
+                        PlayerSettings.SetApplicationIdentifier((BuildTargetGroup)i, "com.UnityTechnologies." + productName.Replace("_", "-")); // Set bundle identifier for iOS
+                    else
+                        PlayerSettings.SetApplicationIdentifier((BuildTargetGroup)i, "com.UnityTechnologies." + productName); // Set bundle identifiers for other
                 }
             }
         }
