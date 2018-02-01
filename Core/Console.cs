@@ -49,14 +49,14 @@ namespace GraphicsTestFramework
         // Write to the console
         public void Write(DebugLevel debugLevel, MessageLevel messageLevel, string message)
         {
-			if (Application.platform != RuntimePlatform.IPhonePlayer) {
+			if (Application.platform != RuntimePlatform.IPhonePlayer && Debug.isDebugBuild) {
 				System.Diagnostics.StackFrame stackFrame = new System.Diagnostics.StackTrace (1, true).GetFrame (0); // Get a stack frame from the caller
 				string fileName = stackFrame.GetFileName (); // Get file name of caller
 				string[] fileNameSplit = fileName.Split (new char[] { '\\' }); // Split file name
 				string scriptName = fileNameSplit [fileNameSplit.Length - 1]; // Extract script name from file name
 				string methodName = stackFrame.GetMethod ().ToString (); // Get method name of caller
 				int lineNumber = stackFrame.GetFileLineNumber (); // Get line number of caller
-				message = message + System.Environment.NewLine + scriptName + " - " + methodName + " - L" + lineNumber; // Append stack data to message
+				message += System.Environment.NewLine + scriptName + " - " + methodName + " - L" + lineNumber; // Append stack data to message
 			}
 
             if ((int)debugLevel <= (int)debug) // Filter messages of higher level than requested

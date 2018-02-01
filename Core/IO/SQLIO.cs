@@ -86,7 +86,10 @@ namespace GraphicsTestFramework.SQL
             }
             else
             {
-                Console.Instance.Write(DebugLevel.File, MessageLevel.LogWarning, "SQL response:" + www.downloadHandler.text); // Write to console
+				if(www.downloadHandler.text.Length < 256)
+                	Console.Instance.Write(DebugLevel.File, MessageLevel.LogWarning, "SQL response:" + www.downloadHandler.text); // Write to console
+				else
+					Console.Instance.Write(DebugLevel.File, MessageLevel.LogWarning, "SQL response:Length too long=" + www.downloadHandler.text.Length); // Write to console
                 callback(-1);
             }
         }
@@ -115,8 +118,11 @@ namespace GraphicsTestFramework.SQL
             {
 				if(www.downloadHandler.text != "Null")
 				{
-                    Console.Instance.Write(DebugLevel.File, MessageLevel.Log, "SQL response:" + www.downloadHandler.text); // Write to console
-                	data(ConvertRawData(www.downloadHandler.text));
+                    if (www.downloadHandler.text.Length < 256)
+                        Console.Instance.Write(DebugLevel.File, MessageLevel.LogWarning, "SQL response:" + www.downloadHandler.text); // Write to console
+                    else
+                        Console.Instance.Write(DebugLevel.File, MessageLevel.LogWarning, "SQL response:Length too long=" + www.downloadHandler.text.Length); // Write to console
+                    data(ConvertRawData(www.downloadHandler.text));
 				}
 				else
 				{
@@ -150,13 +156,13 @@ namespace GraphicsTestFramework.SQL
         }
 
 		//fetch the server side baselines by providing the suites, pltform and API, later will have to change this to allow more strict baseline matching <TODO
-		public IEnumerator FetchBaselines(string[] suiteNames, string platform, string api, Action<ResultsIOData[]> outdata){
+		public IEnumerator FetchBaselines(Suite[] suites, string platform, string api, Action<ResultsIOData[]> outdata){
 			List<ResultsIOData> data = new List<ResultsIOData> ();//ResultsIOData to send back to resultsIO for local processing
 			List<string> tables = new List<string>();
 			//Get the table names to pull baselines from
-			foreach(string suite in suiteNames){
+			foreach(Suite suite in suites){
                 RawData rawData = new RawData();//RawData to be filled by the wwwRequest
-                yield return StartCoroutine(SQLRequest(String.Format("SHOW TABLES LIKE '{0}%Baseline'", suite), (value => { rawData = value; })));//Get all tables with the suite and ending with baseline
+                yield return StartCoroutine(SQLRequest(String.Format("SHOW TABLES LIKE '{0}%Baseline'", suite.suiteName), (value => { rawData = value; })));//Get all tables with the suite and ending with baseline
                 for (int t = 0; t < rawData.data.Count; t++){
 					tables.Add(rawData.data[t][0]);//add the table name to the list of tables to pull
 				}
@@ -165,22 +171,26 @@ namespace GraphicsTestFramework.SQL
 			foreach(string table in tables){
 				string suite = table.Substring (0, table.IndexOf ("_"));//grab the suite from the table name
 				string testType = table.Substring (table.IndexOf ("_") + 1, table.LastIndexOf ("_") - (suite.Length + 1));//grab the test type from the table name
-				data.Add (new ResultsIOData());
+                data.Add (new ResultsIOData());
 				data [n].suite = suite;
 				data [n].testType = testType;
-                //This line controls how baselines are selected, right now only Platform and API are unique
-                string query = String.Format("SELECT * FROM {0} WHERE platform='{1}' AND api='{2}'", table, platform, api);
-                RawData _rawData = new RawData();
-                yield return StartCoroutine(SQLRequest(query, (value => { _rawData = value; })));
-                data[n].fieldNames.AddRange(_rawData.fields);//Grab the fields from the RawData
-				for (int i = 0; i < _rawData.data.Count; i++)
+                foreach (Group grp in SuiteManager.GetSuiteByName(suite).groups)
                 {
-                    ResultsIORow row = new ResultsIORow();//create a new row
-                    row.resultsColumn.AddRange(_rawData.data[i]);//store the current row of values
-					data[n].resultsRow.Add(row);//add it to the data to send back to resultsIO
+                    //This line controls how baselines are selected, right now only Platform and API are unique
+                    string query = String.Format("SELECT * FROM {0} WHERE platform='{1}' AND api='{2}' AND groupname='{3}'", table, platform, api, grp.groupName);
+                    RawData _rawData = new RawData();
+                    yield return StartCoroutine(SQLRequest(query, (value => { _rawData = value; })));
+					if (data[n].fieldNames.Count == 0)
+                    	data[n].fieldNames.AddRange(_rawData.fields);//Grab the fields from the RawData
+                    for (int i = 0; i < _rawData.data.Count; i++)
+                    {
+                        ResultsIORow row = new ResultsIORow();//create a new row
+                        row.resultsColumn.AddRange(_rawData.data[i]);//store the current row of values
+                        data[n].resultsRow.Add(row);//add it to the data to send back to resultsIO
+                    }
+					if (data[n].fieldNames.Count == 0)
+                        data.RemoveAt(n);
                 }
-				if (data [n].fieldNames.Count == 0)
-					data.RemoveAt (n);
 				n++;
 			}
 			outdata(data.ToArray ());

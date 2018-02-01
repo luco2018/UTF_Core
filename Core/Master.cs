@@ -34,6 +34,10 @@ namespace GraphicsTestFramework
         private void Awake()
         {
             DontDestroyOnLoad(gameObject); // Set this object to DontDestroy
+
+            #if !UNITY_STANDALONE
+            Application.targetFrameRate = 300;
+            #endif
         }
 
         // ------------------------------------------------------------------------------------

@@ -57,7 +57,7 @@ namespace GraphicsTestFramework
         public static Test GetTest(TestEntry inputEntry)
         {
             ProjectSettings projectSettings = GetProjectSettings(); // Get the suite list
-            return projectSettings.suiteList[inputEntry.suiteIndex].groups[inputEntry.groupIndex].tests[inputEntry.testIndex]; // Return requested
+            return projectSettings.suiteList[inputEntry.suiteIndex].groups[inputEntry.groupIndex].tests[inputEntry.testIndex-1]; // Return requested
         }
 
         // Get the Settings object

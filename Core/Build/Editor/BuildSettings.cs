@@ -155,16 +155,17 @@ namespace GraphicsTestFramework
             }
             productName += BuildPipeline.AppendProductName(target);
             PlayerSettings.productName = productName;
-            if (target != null)
-            {
-                if (target.platform == UnityEditor.BuildTarget.iOS)
-                    productName = productName.Replace("_", "-");
-            }
+            
             int platformCount = Enum.GetNames(typeof(BuildTargetGroup)).Length; // Get platform count
             for (int i = 0; i < platformCount; i++) // Iterate all platforms
             {
                 if (!depreciatedBuiltTargets.Contains(i))
-                    PlayerSettings.SetApplicationIdentifier((BuildTargetGroup)i, "com.UnityTechnologies." + productName); // Set bundle identifiers
+                {
+                    if((BuildTargetGroup)i == BuildTargetGroup.iOS)
+                        PlayerSettings.SetApplicationIdentifier((BuildTargetGroup)i, "com.UnityTechnologies." + productName.Replace("_", "-")); // Set bundle identifier for iOS
+                    else
+                        PlayerSettings.SetApplicationIdentifier((BuildTargetGroup)i, "com.UnityTechnologies." + productName); // Set bundle identifiers for other
+                }
             }
         }
 
