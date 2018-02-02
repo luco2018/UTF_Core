@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using UnityEngine;
 using UnityEditor;
 
@@ -35,6 +36,13 @@ namespace GraphicsTestFramework
 		static void Test()
 		{
             SQL.SQLIO.StartCoroutine(SQL.SQLIO.TestCoroutine());
+        }
+
+        [MenuItem("UTF/SQL/Test SQLIO SuiteBaseline Check")]
+        static void BaselineSetChecl()
+        {
+            NameValueCollection fullSet;
+            SQL.SQLIO.StartCoroutine(SQL.SQLIO.BaselineSetCheck(new string[]{"Debug"}, (value => { fullSet = value; })));
         }
 
         [MenuItem("UTF/SQL/Database Mode/Staging")]

@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using UnityEngine;
 using UnityEngine.Networking;
 using System;
@@ -192,14 +193,10 @@ namespace GraphicsTestFramework.SQL
 			List<string> tables = new List<string>();
 			//Get the table names to pull baselines from
 			foreach(string suite in suiteNames){
-                RawData rawData = new RawData();//RawData to be filled by the wwwRequest
-
-				IEnumerator i = SQLRequest(String.Format("SHOW TABLES LIKE '{0}%Baseline'", suite), (value => { rawData = value; }));
-                while (i.MoveNext()) yield return null;
-
-                for (int t = 0; t < rawData.data.Count; t++){
-					tables.Add(rawData.data[t][0]);//add the table name to the list of tables to pull
-				}
+                string[] tbls = null;
+                IEnumerator i = FetchBaseLineTables(suite, (value => { tbls = value; }));
+				while (i.MoveNext()) yield return null;
+                tables.AddRange(tbls);
             }
 			int n = 0;
 			foreach(string table in tables){
@@ -313,6 +310,22 @@ namespace GraphicsTestFramework.SQL
 			uuid(_uuid);
 		}
 
+		public static IEnumerator FetchBaseLineTables(string suite, Action<string[]> outdata)
+		{
+            List<string> tables = new List<string>();
+            RawData rawData = new RawData();//RawData to be filled by the wwwRequest
+
+            IEnumerator i = SQLRequest(String.Format("SHOW TABLES LIKE '{0}%Baseline'", suite), (value => { rawData = value; }));
+            while (i.MoveNext()) yield return null;
+
+            for (int t = 0; t < rawData.data.Count; t++)
+            {
+                tables.Add(rawData.data[t][0]);//add the table name to the list of tables to pull
+            }
+
+            outdata(tables.ToArray());
+        }
+
 		// ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		// Sending data
 		// ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -391,7 +404,7 @@ namespace GraphicsTestFramework.SQL
             outputString.Append("START TRANSACTION;\n");//using transaction to do the query in one chunk
             outputString.Append(TableCheck(tableName));//adds a table check/creation
             outputString.Append("DELETE FROM " + tableName + ";\n");// clears the existing suite reference
-            outputString.AppendFormat("INSERT INTO {0} VALUES ('{1}', {2});\n", "Suites", suite.suiteName, suite.suiteVersion);
+            outputString.AppendFormat("REPLACE INTO {0} VALUES ('{1}', {2});\n", "Suites", suite.suiteName, suite.suiteVersion);
             outputString.AppendFormat("INSERT INTO {0} VALUES ", tableName);
 			int grpCount = suite.groups.Count;
 			for(int grp = 0; grp < grpCount; grp++)
@@ -400,7 +413,7 @@ namespace GraphicsTestFramework.SQL
 				for (int test = 0; test < testCount; test++)
 				{
 					Test t = suite.groups[grp].tests[test];
-					outputString.AppendFormat("('{0}', '{1}', {2}, {3})", suite.groups[grp].groupName, t.scene.name, t.platforms, t.minimumUnityVersion);
+					outputString.AppendFormat("('{0}', '{1}', {2}, {3}, {4})", suite.groups[grp].groupName, t.scene.name, t.testTypes, t.platforms, t.minimumUnityVersion);
 					if (test < testCount - 1)
 						outputString.Append(",\n");
 					else
@@ -421,6 +434,118 @@ namespace GraphicsTestFramework.SQL
             }
 
             Debug.Log("done upload");
+        }
+
+		public static IEnumerator BaselineSetCheck(string[] suiteNames, Action<NameValueCollection> fullSet)
+		{
+			NameValueCollection[] platformAPIfullSets = new NameValueCollection[suiteNames.Length];
+
+            for (int s = 0; s < suiteNames.Length; s++)
+            {
+                platformAPIfullSets[s] = new NameValueCollection();
+                string suiteName = suiteNames[s];
+                StringBuilder queryString = new StringBuilder();
+
+                //get baseline tables for suite
+                string[] tables = null;
+                IEnumerator enumerator = FetchBaseLineTables(suiteName, (value => { tables = value; }));
+                while (enumerator.MoveNext()) yield return null;
+
+                //get platform/API sets
+                NameValueCollection platformAPIsets = new NameValueCollection();
+                List<Type> types = new List<Type>();
+                RawData rawData = new RawData();//RawData to be filled by the wwwRequest
+                foreach (string tbl in tables)
+                {
+                    types.Add(TestTypes.GetTypeFromString(tbl.Split('_')[1]));
+                    queryString.AppendFormat("SELECT DISTINCT Platform, API FROM {0}\n", tbl);
+                    if (tbl != tables[tables.Length - 1])
+                        queryString.Append("UNION\n");
+                }
+                enumerator = SQLRequest(queryString.ToString(), (value => { rawData = value; }));
+                while (enumerator.MoveNext()) yield return null;
+
+                for (int t = 0; t < rawData.data.Count; t++)
+                {
+                    platformAPIsets.Add(rawData.data[t][0], rawData.data[t][1]);//add the table name to the list of tables to pull
+                }
+
+                //get counts against reference table
+                //NameValueCollection platformAPIfullSets = new NameValueCollection();
+                foreach (string key in platformAPIsets.AllKeys)
+                {
+                    foreach (string val in platformAPIsets.GetValues(key))
+                    {
+                        int count = 0;
+                        foreach (Type t in types)
+                        {
+                            string query = String.Format("SELECT Count(*) FROM {0}_Reference WHERE TestType ={1}\n" +
+                                                        "UNION ALL\n" +
+                                                        "SELECT Count(*) FROM(SELECT GroupName,TestName FROM {0}_{4}_Baseline WHERE Platform =\"{2}\" AND API =\"{3}\") as Num\n" +
+                                                        "JOIN\n" +
+                                                        "(SELECT* FROM {0}_Reference WHERE TestType ={1}) as Ref ON Num.GroupName = Ref.GroupName AND Num.TestName = Ref.TestName",
+                                                        suiteName,
+                                                        TestTypes.GetTypeIndexFromType(t) + 1,
+                                                        key,
+                                                        val,
+                                                        t.Name.Substring(0, t.Name.Length - 5));
+
+                            enumerator = SQLRequest(query, (value => { rawData = value; }));
+                            while (enumerator.MoveNext()) yield return null;
+                            enumerator = null;
+
+                            Debug.Log(rawData.data[0][0] + " vs " + rawData.data[1][0]);
+                            if (rawData.data[0][0] == rawData.data[1][0])
+                                count++;
+                        }
+                        if (count == types.Count)
+                            platformAPIfullSets[s].Add(key, val);
+                    }
+                }
+            }
+
+			NameValueCollection suitePlatformAPIfullSets = new NameValueCollection();
+			string debugSets = "Full baseline sets of:\n";
+
+            if (platformAPIfullSets.Length > 1)
+            {
+                foreach (string baseKey in platformAPIfullSets[0].AllKeys)
+                {
+                    foreach (string baseVal in platformAPIfullSets[0].GetValues(baseKey))
+                    {
+                        for (int nvc = 1; nvc < platformAPIfullSets.Length; nvc++)
+                        {
+                            foreach (string key in platformAPIfullSets[nvc].AllKeys)
+                            {
+                                foreach (string val in platformAPIfullSets[nvc].GetValues(key))
+                                {
+                                    if (baseKey == key && baseVal == val)
+                                    {
+                                        debugSets += "Platform: " + key + " API: " + val + "\n";
+                                        suitePlatformAPIfullSets.Add(key, val);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+				Debug.LogError(debugSets);
+				fullSet(suitePlatformAPIfullSets);
+            }
+			else
+			{
+				foreach (string key in platformAPIfullSets[0].AllKeys)
+                {
+                    foreach (string val in platformAPIfullSets[0].GetValues(key))
+                    {
+                        debugSets += "Platform: " + key + " API: " + val + "\n";
+                    }
+                }
+                Debug.LogError(debugSets);
+                fullSet(platformAPIfullSets[0]);
+            }
+
+            
         }
 
 		// ------------------------------------------------------------------------------------------------------------------------------------------------------------------------

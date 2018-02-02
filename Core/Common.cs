@@ -499,6 +499,7 @@ namespace GraphicsTestFramework
             output.name = input.testName; // Set name as thats all we need
             return output; // Return
         }
+        
     }    
 	
 	// ------------------------------------------------------------------------------------
