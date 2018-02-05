@@ -116,7 +116,14 @@ namespace GraphicsTestFramework.SQL
 
             if (string.IsNullOrEmpty(www.error))
             {
-				if(www.downloadHandler.text != "Null")
+				if (www.downloadHandler.text == "0")
+                {
+                    Console.Instance.Write(DebugLevel.File, MessageLevel.LogWarning, "SQL response:No data returned"); // Write to console
+                    RawData _data = new RawData();
+                    _data.fields.Add("Null");
+                    data(_data);
+                }
+				else if(www.downloadHandler.text != "Null")
 				{
                     if (www.downloadHandler.text.Length < 256)
                         Console.Instance.Write(DebugLevel.File, MessageLevel.LogWarning, "SQL response:" + www.downloadHandler.text); // Write to console
@@ -176,6 +183,7 @@ namespace GraphicsTestFramework.SQL
 				data [n].testType = testType;
                 foreach (Group grp in SuiteManager.GetSuiteByName(suite).groups)
                 {
+					ProgressScreen.Instance.SetState(true, ProgressType.CloudLoad, "Fetching Baselines\n" + data[n].suite + " | " + grp.groupName);
                     //This line controls how baselines are selected, right now only Platform and API are unique
                     string query = String.Format("SELECT * FROM {0} WHERE platform='{1}' AND api='{2}' AND groupname='{3}'", table, platform, api, grp.groupName);
                     RawData _rawData = new RawData();
