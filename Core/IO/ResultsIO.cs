@@ -84,6 +84,7 @@ namespace GraphicsTestFramework
 			} else {
 
 				//now we check local timestamps vs server to make sure up to date, then add the outdated ones to be pulled
+				ProgressScreen.Instance.SetState(true, ProgressType.CloudLoad, "Checking Cloud Timestamps");
 				foreach (string suiteName in suiteNames) {
 					Console.Instance.Write (DebugLevel.File, MessageLevel.Log, "Fetching baseline timestamps from cloud for " + suiteName);
                     //Get timestamp for suite via SQL
@@ -105,10 +106,11 @@ namespace GraphicsTestFramework
                     }
                     //ResultsIOData[] data = SQL.SQLIO.Instance.FetchBaselines (suiteBaselinesPullList.ToArray (), sysData.Platform, sysData.API);
                     Console.Instance.Write (DebugLevel.File, MessageLevel.Log, "Cloud baselines pulled, writing local files");
-					foreach(ResultsIOData rd in data){
-						StartCoroutine (LocalIO.Instance.WriteDataFiles (rd, fileType.Baseline));
+                    ProgressScreen.Instance.SetState(true, ProgressType.LocalSave, "Writing Baselines to Disk");
+                    foreach(ResultsIOData rd in data){
+						yield return StartCoroutine (LocalIO.Instance.WriteDataFiles (rd, fileType.Baseline));
 					}
-					yield return new WaitForSeconds (0.5f);
+					ProgressScreen.Instance.SetState(true, ProgressType.LocalLoad, "Loading Baselines to Memory");
 					_suiteBaselineData = LocalIO.Instance.ReadLocalBaselines ();
 					BroadcastBaselineParsed ();
 				} else {
