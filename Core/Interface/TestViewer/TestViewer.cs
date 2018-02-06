@@ -35,6 +35,14 @@ namespace GraphicsTestFramework
         float cameraDepth; // Tracking cameras previous depth
 
         // ------------------------------------------------------------------------------------
+        // Core
+
+        private void Start()
+        {     
+            Menu.Instance.MakeCanvasScaleWithScreenSize(testViewerParent);
+        }
+        
+        // ------------------------------------------------------------------------------------
         // Content & State
 
         // Enable or disable the viewer

@@ -47,7 +47,7 @@ namespace GraphicsTestFramework
         public RunnerType runnerType;
         public Runner runner;
         bool runnerIsWaiting;
-        int currentTestIndex;
+        public int currentTestIndex;
         public Test activeTest;
 
         // UUID for automated run

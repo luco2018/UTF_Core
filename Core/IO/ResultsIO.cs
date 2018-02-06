@@ -9,7 +9,7 @@ namespace GraphicsTestFramework
 	public class ResultsIO : MonoBehaviour
 	{
 		private static ResultsIO _Instance = null;
-		private List<string> suiteBaselinesPullList = new List<string> ();
+		private List<Suite> suiteBaselinesPullList = new List<Suite> ();
 		private SystemData sysData;
 		public bool isWaiting = false;
 		[HideInInspector]
@@ -87,6 +87,7 @@ namespace GraphicsTestFramework
 			} else {
 
 				//now we check local timestamps vs server to make sure up to date, then add the outdated ones to be pulled
+				ProgressScreen.Instance.SetState(true, ProgressType.CloudLoad, "Checking Cloud Timestamps");
 				foreach (string suiteName in suiteNames) {
 					Console.Instance.Write (DebugLevel.File, MessageLevel.Log, "Fetching baseline timestamps from cloud for " + suiteName);
                     //Get timestamp for suite via SQL
@@ -110,10 +111,11 @@ namespace GraphicsTestFramework
                     }
                     //ResultsIOData[] data = SQL.SQLIO.Instance.FetchBaselines (suiteBaselinesPullList.ToArray (), sysData.Platform, sysData.API);
                     Console.Instance.Write (DebugLevel.File, MessageLevel.Log, "Cloud baselines pulled, writing local files");
-					foreach(ResultsIOData rd in data){
-						StartCoroutine (LocalIO.Instance.WriteDataFiles (rd, fileType.Baseline));
+                    ProgressScreen.Instance.SetState(true, ProgressType.LocalSave, "Writing Baselines to Disk");
+                    foreach(ResultsIOData rd in data){
+						yield return StartCoroutine (LocalIO.Instance.WriteDataFiles (rd, fileType.Baseline));
 					}
-					yield return new WaitForSeconds (0.5f);
+					ProgressScreen.Instance.SetState(true, ProgressType.LocalLoad, "Loading Baselines to Memory");
 					_suiteBaselineData = LocalIO.Instance.ReadLocalBaselines ();
 					BroadcastBaselineParsed ();
 				} else {
@@ -172,7 +174,7 @@ namespace GraphicsTestFramework
 
 			if (_suiteBaselineData.Count == 0) {//TODO - shouldnt add this to pull baselines as has issue with iOS trying to pull baselines for OSX
 				Console.Instance.Write (DebugLevel.File, MessageLevel.Log, "Putting " + suiteName + " in the pull list"); // Write to console
-				suiteBaselinesPullList.Add (suiteName);
+				suiteBaselinesPullList.Add (SuiteManager.GetSuiteByName(suiteName));
 			} else {
 				int matches = 0;
 				foreach (SuiteBaselineData SBD in _suiteBaselineData) {
@@ -186,7 +188,7 @@ namespace GraphicsTestFramework
 							Console.Instance.Write (DebugLevel.File, MessageLevel.Log, "Cloud Timestamp is old"); // Write to console
 						} else if (timeDiff > 0f) {
 							Console.Instance.Write (DebugLevel.File, MessageLevel.Log, "Cloud Timestamp is newer, adding " + suiteName + " to pull list"); // Write to console
-							suiteBaselinesPullList.Add (suiteName);
+							suiteBaselinesPullList.Add (SuiteManager.GetSuiteByName(suiteName));
 						} else if (timeDiff == 0f) {
 							Console.Instance.Write (DebugLevel.File, MessageLevel.Log, "Cloud Timestamp is the same"); // Write to console
 						}
@@ -194,7 +196,7 @@ namespace GraphicsTestFramework
 				}
 
 				if (matches == 0)
-					suiteBaselinesPullList.Add (suiteName);
+					suiteBaselinesPullList.Add (SuiteManager.GetSuiteByName(suiteName));
 
 			}
 		}

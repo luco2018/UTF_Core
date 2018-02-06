@@ -65,6 +65,11 @@ namespace GraphicsTestFramework
         // ------------------------------------------------------------------------------------
         // Core
 
+        private void Start()
+        {
+            Menu.Instance.MakeCanvasScaleWithScreenSize(resultsViewerParent);
+        }
+
         // Every update
         private void Update()
         {

@@ -51,7 +51,18 @@ namespace GraphicsTestFramework
         // Start
         private void Start()
         {
+            MakeCanvasScaleWithScreenSize(menuParent);
+
             StartCoroutine(WaitForTestStructure()); // Begin waiting for TestStructure
+        }
+
+        public void MakeCanvasScaleWithScreenSize(GameObject canvas)
+        {
+            #if UNITY_IOS || UNITY_ANDROID
+                canvas.GetComponent<CanvasScaler>().uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+                if (Screen.orientation != ScreenOrientation.LandscapeLeft)
+                    Screen.orientation = ScreenOrientation.LandscapeLeft;
+            #endif
         }
 
         // Have to wait for Test Structure to generate before generating menus (TODO - move this to a delegate?)

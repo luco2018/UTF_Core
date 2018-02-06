@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Reflection;
 using System.Collections;
 using System.Collections.Generic;
@@ -160,7 +160,7 @@ namespace GraphicsTestFramework
         // Start main test logic
         public void StartTest()
         {
-            ProgressScreen.Instance.SetState(true, ProgressType.LocalSave, "Running test"); // Enable ProgressScreen
+            ProgressScreen.Instance.SetState(true, ProgressType.LocalSave, string.Format("Running Test {2}/{3}\n{0} | {1}", activeTestEntry.groupName, activeTestEntry.testName, TestRunner.Instance.currentTestIndex + 1, TestRunner.Instance.runner.tests.Count)); // Enable ProgressScreen
             Console.Instance.Write(DebugLevel.Logic, MessageLevel.Log, this.GetType().Name + " started test " + activeTestEntry.testName); // Write to console
             testWasRan = true; // Track
             StartCoroutine(ProcessResult()); // Process test results
@@ -520,7 +520,7 @@ namespace GraphicsTestFramework
             newResultsData.common = Common.GetCommonResultsData(); // Initialize common
             newResultsData.common.GroupName = activeTestEntry.groupName; // Set scene name
             newResultsData.common.TestName = activeTestEntry.testName; // Set test name
-            if(TestRunner.runUUID != "null" || TestRunner.runUUID != "No Run ID")
+            if(TestRunner.runUUID != null || TestRunner.runUUID != "null")
                 newResultsData.common.Custom += Common.CustomEntry("runID", TestRunner.runUUID);
             activeResultData = newResultsData; // Set as active
         }

@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using UnityEngine;
@@ -119,7 +119,10 @@ namespace GraphicsTestFramework.SQL
             }
             else
             {
-                Console.Instance.Write(DebugLevel.File, MessageLevel.LogWarning, "SQL response:" + www.downloadHandler.text); // Write to console
+				if(www.downloadHandler.text.Length < 256)
+                	Console.Instance.Write(DebugLevel.File, MessageLevel.LogWarning, "SQL response:" + www.downloadHandler.text); // Write to console
+				else
+					Console.Instance.Write(DebugLevel.File, MessageLevel.LogWarning, "SQL response:Length too long=" + www.downloadHandler.text.Length); // Write to console
                 callback(-1);
             }
         }
@@ -148,10 +151,20 @@ namespace GraphicsTestFramework.SQL
 
             if (string.IsNullOrEmpty(www.error))
             {
-				if(www.downloadHandler.text != "Null")
+				if (www.downloadHandler.text == "0")
+                {
+                    Console.Instance.Write(DebugLevel.File, MessageLevel.LogWarning, "SQL response:No data returned"); // Write to console
+                    RawData _data = new RawData();
+                    _data.fields.Add("Null");
+                    data(_data);
+                }
+				else if(www.downloadHandler.text != "Null")
 				{
-                    Console.Instance.Write(DebugLevel.File, MessageLevel.Log, "SQL response:" + www.downloadHandler.text); // Write to console
-                	data(ConvertRawData(www.downloadHandler.text));
+                    if (www.downloadHandler.text.Length < 256)
+                        Console.Instance.Write(DebugLevel.File, MessageLevel.LogWarning, "SQL response:" + www.downloadHandler.text); // Write to console
+                    else
+                        Console.Instance.Write(DebugLevel.File, MessageLevel.LogWarning, "SQL response:Length too long=" + www.downloadHandler.text.Length); // Write to console
+                    data(ConvertRawData(www.downloadHandler.text));
 				}
 				else
 				{
@@ -188,13 +201,13 @@ namespace GraphicsTestFramework.SQL
         }
 
 		//fetch the server side baselines by providing the suites, pltform and API, later will have to change this to allow more strict baseline matching <TODO
-		public static IEnumerator FetchBaselines(string[] suiteNames, string platform, string api, Action<ResultsIOData[]> outdata){
+		public static IEnumerator FetchBaselines(Suite[] suites, string platform, string api, Action<ResultsIOData[]> outdata){
 			List<ResultsIOData> data = new List<ResultsIOData> ();//ResultsIOData to send back to resultsIO for local processing
 			List<string> tables = new List<string>();
 			//Get the table names to pull baselines from
-			foreach(string suite in suiteNames){
+			foreach(Suite suite in suites){
                 string[] tbls = null;
-                IEnumerator i = FetchBaseLineTables(suite, (value => { tbls = value; }));
+                IEnumerator i = FetchBaseLineTables(suite.suiteName, (value => { tbls = value; }));
 				while (i.MoveNext()) yield return null;
                 tables.AddRange(tbls);
             }
@@ -202,25 +215,30 @@ namespace GraphicsTestFramework.SQL
 			foreach(string table in tables){
 				string suite = table.Substring (0, table.IndexOf ("_"));//grab the suite from the table name
 				string testType = table.Substring (table.IndexOf ("_") + 1, table.LastIndexOf ("_") - (suite.Length + 1));//grab the test type from the table name
-				data.Add (new ResultsIOData());
+                data.Add (new ResultsIOData());
 				data [n].suite = suite;
 				data [n].testType = testType;
-                //This line controls how baselines are selected, right now only Platform and API are unique
-                string query = String.Format("SELECT * FROM {0} WHERE platform='{1}' AND api='{2}'", table, platform, api);
-                RawData _rawData = new RawData();
-
-				IEnumerator i = SQLRequest(query, (value => { _rawData = value; }));
-                while (i.MoveNext()) yield return null;
-
-                data[n].fieldNames.AddRange(_rawData.fields);//Grab the fields from the RawData
-				for (int x = 0; x < _rawData.data.Count; x++)
+                foreach (Group grp in SuiteManager.GetSuiteByName(suite).groups)
                 {
-                    ResultsIORow row = new ResultsIORow();//create a new row
-                    row.resultsColumn.AddRange(_rawData.data[x]);//store the current row of values
-					data[n].resultsRow.Add(row);//add it to the data to send back to resultsIO
+					ProgressScreen.Instance.SetState(true, ProgressType.CloudLoad, "Fetching Baselines\n" + data[n].suite + " | " + grp.groupName);
+                    //This line controls how baselines are selected, right now only Platform and API are unique
+                    string query = String.Format("SELECT * FROM {0} WHERE platform='{1}' AND api='{2}' AND groupname='{3}'", table, platform, api, grp.groupName);
+                    RawData _rawData = new RawData();
+                    
+                    IEnumerator i = SQLRequest(query, (value => { _rawData = value; }));
+                    while (i.MoveNext()) yield return null;
+                    
+					if (data[n].fieldNames.Count == 0)
+                    	data[n].fieldNames.AddRange(_rawData.fields);//Grab the fields from the RawData
+                    for (int x = 0; x < _rawData.data.Count; x++)
+                    {
+                        ResultsIORow row = new ResultsIORow();//create a new row
+                        row.resultsColumn.AddRange(_rawData.data[x]);//store the current row of values
+                        data[n].resultsRow.Add(row);//add it to the data to send back to resultsIO
+                    }
+					if (data[n].fieldNames.Count == 0)
+                        data.RemoveAt(n);
                 }
-				if (data [n].fieldNames.Count == 0)
-					data.RemoveAt (n);
 				n++;
 			}
 			outdata(data.ToArray ());
