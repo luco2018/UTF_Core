@@ -32,12 +32,6 @@ namespace GraphicsTestFramework
 			PlayerPrefs.SetInt("SQLIOUpdate", _running == true ? 1 : 0);
         }
 
-		[MenuItem("UTF/SQL/Test SQLIO Coroutine")]
-		static void Test()
-		{
-            SQL.SQLIO.StartCoroutine(SQL.SQLIO.TestCoroutine());
-        }
-
         [MenuItem("UTF/SQL/Test SQLIO SuiteBaseline Check")]
         static void BaselineSetChecl()
         {

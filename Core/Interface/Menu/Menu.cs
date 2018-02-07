@@ -36,6 +36,7 @@ namespace GraphicsTestFramework
         public Actions actions;
         public ResolveWindow resolveWindow;
         public AltBaselineWindow altBaselineWindow;
+        public InformationDrawer menuInformation;
         public Color[] colors;
         public GameObject menuListEntryPrefab;
         public GameObject listEntryPrefab;
@@ -159,7 +160,7 @@ namespace GraphicsTestFramework
         }
 
         // Update the menu
-        void UpdateMenu()
+        public void UpdateMenu()
         {
             Console.Instance.Write(DebugLevel.Full, MessageLevel.Log, "Updating menu"); // Write to console
             if (TestStructure.Instance.CheckForBaselines()) // Baselines exist
@@ -548,6 +549,7 @@ namespace GraphicsTestFramework
             public Text altBaselineButton;
             public RectTransform contentRect;
             public GameObject listEntryPrefab;
+            public Dictionary<Button, string> altButtons = new Dictionary<Button, string>();
         }
     }
 

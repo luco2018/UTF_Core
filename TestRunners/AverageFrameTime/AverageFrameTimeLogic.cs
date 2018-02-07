@@ -31,7 +31,9 @@ namespace GraphicsTestFramework
 			m_TempData.avgFrameTime = Timestamp(true); // Perform a timestamp (logic specific)
             if (baselineExists) // Comparison (mandatory)
             {
-                AverageFrameTimeResults referenceData = (AverageFrameTimeResults)DeserializeResults(ResultsIO.Instance.RetrieveEntry(suiteName, testTypeName, m_TempData.common, true, true)); // Deserialize baseline data (mandatory)
+                AltBaselineSettings altBaselineSettings = Master.Instance.GetCurrentPlatformAPI(); // current chosen API/plafrom
+                ResultsDataCommon m_BaselineData = m_TempData.common.SwitchPlatformAPI(altBaselineSettings.Platform, altBaselineSettings.API); // makes new ResultsDataCommon to grab baseline
+                AverageFrameTimeResults referenceData = (AverageFrameTimeResults)DeserializeResults(ResultsIO.Instance.RetrieveEntry(suiteName, testTypeName, m_BaselineData, true, true)); // Deserialize baseline data (mandatory)
                 m_TempData.common.PassFail = GetComparisonResult(m_TempData, referenceData); // Get comparison result
             }
             BuildResultsStruct(m_TempData); // Submit (mandatory)

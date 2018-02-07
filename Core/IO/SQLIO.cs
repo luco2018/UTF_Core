@@ -32,7 +32,6 @@ namespace GraphicsTestFramework.SQL
         //LOCAL VARIABLES
         public static connectionStatus liveConnection;
 		private static NetworkReachability netStat = NetworkReachability.NotReachable;
-
         private static IEnumerator _currentIenumerator;
         private static IEnumerator _currentSubIenumerator;
 
@@ -48,17 +47,14 @@ namespace GraphicsTestFramework.SQL
             sysData = _sysData;
 
 			//setup staging
-			if(Master.Instance._sqlMode == SQLmode.Live)
+			if(Master.Instance._sqlMode == SQLmode.Live || Master.Instance._sqlMode == SQLmode.Disabled)
                 _webservice = _liveWebservice;
-			else if (Master.Instance._sqlMode == SQLmode.Staging)
+			else if (Master.Instance._sqlMode == SQLmode.Staging || Master.Instance._sqlMode == SQLmode.DisabledStaging)
                 _webservice = _stagingWebserver;
-
         }
 
 		public static void Update()
 		{
-            Debug.Log("SQL IO script is updating");
-
 			if(_currentIenumerator != null)
 			{
 				if(!_currentIenumerator.MoveNext())
@@ -71,22 +67,6 @@ namespace GraphicsTestFramework.SQL
 		public static void StartCoroutine(IEnumerator f)
 		{
             _currentIenumerator = f;
-        }
-
-		public static IEnumerator TestCoroutine()
-		{
-            Debug.Log("Coroutine 1 running coroutine2");
-            IEnumerator i = TestCoroutine2();
-            while(i.MoveNext()) yield return null;
-            Debug.Log("Coroutine 1 finsihed running coroutine2");
-        }
-
-		public static IEnumerator TestCoroutine2()
-        {
-            Debug.Log("Coroutine 2 Waiting 10 seconds");
-            IEnumerator i = Wait(10);
-            while (i.MoveNext()) yield return null;
-            Debug.Log("Coroutine 2 finsihed waiting 10 seconds");
         }
 
 		// ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -512,7 +492,6 @@ namespace GraphicsTestFramework.SQL
                             while (enumerator.MoveNext()) yield return null;
                             enumerator = null;
 
-                            Debug.Log(rawData.data[0][0] + " vs " + rawData.data[1][0]);
                             if (rawData.data[0][0] == rawData.data[1][0])
                                 count++;
                         }
@@ -559,7 +538,7 @@ namespace GraphicsTestFramework.SQL
                         debugSets += "Platform: " + key + " API: " + val + "\n";
                     }
                 }
-                Debug.LogError(debugSets);
+                //Debug.LogError(debugSets);
                 fullSet(platformAPIfullSets[0]);
             }
 

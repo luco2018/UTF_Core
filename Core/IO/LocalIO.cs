@@ -68,7 +68,7 @@ namespace GraphicsTestFramework
 			int suiteBaselineDataIndex = -1;
 			if (filetype == fileType.Baseline) { //if it's a baseline file we need to update latest baseline timesstamp
 				prefix = baselinePrefix;
-				ResultsIO.Instance.UpdateBaselineDictionary (suite, common.RenderPipe, out suiteBaselineDataIndex);
+				ResultsIO.Instance.UpdateBaselineDictionary (suite, common.Platform, common.API, common.RenderPipe, out suiteBaselineDataIndex);
 			} else {
 				prefix = resultsCurrentPrefix;
 			}
@@ -169,10 +169,12 @@ namespace GraphicsTestFramework
 			List<SuiteBaselineData> baselineData = new List<SuiteBaselineData>();
 			string[] suites = Directory.GetDirectories (dataPath);
 			foreach(string s in suites){
-				string[] platformApis = Directory.GetDirectories (s);
+				Console.Instance.Write(DebugLevel.File, MessageLevel.Log, "Loading Local Suite:" + s); // Write to console
+                string[] platformApis = Directory.GetDirectories (s);
 				foreach(string platformApi in platformApis)
                 {
-					string[] pipes = Directory.GetDirectories (platformApi);
+					Console.Instance.Write(DebugLevel.File, MessageLevel.Log, "Loading Local Platform API:" + platformApi); // Write to console
+                    string[] pipes = Directory.GetDirectories (platformApi);
 					foreach(string pipe in pipes){
 						string fileName = "SuiteData_" + Path.GetFileName (s) + "_" + Path.GetFileName (platformApi) + "_" + Path.GetFileName (pipe) + ".txt";
 						if (File.Exists (platformApi + "/" + fileName)) {
@@ -218,12 +220,12 @@ namespace GraphicsTestFramework
 				fileName = resultsCurrentPrefix + fileName;
 
 			if (!Directory.Exists (filePath)) {
-                Console.Instance.Write(DebugLevel.Critical, MessageLevel.Log, "Directory for baseline does not exist, please pull latest baselines or create them"); // Write to console
+                Console.Instance.Write(DebugLevel.Critical, MessageLevel.Log, "Directory for baseline does not exist:" + filePath); // Write to console
 				return null;
 			} else {
                 Console.Instance.Write(DebugLevel.Full, MessageLevel.Log, "Directory for baseline exists, attempting to fetch requested baseline"); // Write to console
 				if (!File.Exists (filePath + "/" + fileName)) {
-                    Console.Instance.Write(DebugLevel.Full, MessageLevel.Log, "Baseline file does not exist for the requested test, please make sure you pull the latest or create them"); // Write to console
+                    Console.Instance.Write(DebugLevel.Full, MessageLevel.Log, "Baseline file does not exist for the requested test:" + filePath + "/" + fileName); // Write to console
 					return null;
 				} else {
 					string[] fileLines;

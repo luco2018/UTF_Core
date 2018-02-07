@@ -46,6 +46,8 @@ namespace GraphicsTestFramework
             m_TempData = GetDummyData(m_TempData.common); // Just get some dummy data for the example (logic specific)
             if (baselineExists) // Comparison (mandatory)
             {
+                AltBaselineSettings altBaselineSettings = Master.Instance.GetCurrentPlatformAPI(); // current chosen API/plafrom
+                ResultsDataCommon m_BaselineData = m_TempData.common.SwitchPlatformAPI(altBaselineSettings.Platform, altBaselineSettings.API); // makes new ResultsDataCommon to grab baseline
                 ExampleResults referenceData = (ExampleResults)DeserializeResults(ResultsIO.Instance.RetrieveEntry(suiteName, testTypeName, m_TempData.common, true, true)); // Deserialize baseline data (mandatory)
                 m_TempData.common.PassFail = GetComparisonResult(m_TempData, referenceData); // Get comparison results
             }

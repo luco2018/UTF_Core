@@ -75,7 +75,9 @@ namespace GraphicsTestFramework
             m_TempData.resultFrame = Common.ConvertTextureToString(resultsTexture); // Convert results texture to Base64 String and save to results data
             if (baselineExists) // Comparison (mandatory)
             {
-                FrameComparisonResults referenceData = (FrameComparisonResults)DeserializeResults(ResultsIO.Instance.RetrieveEntry(suiteName, testTypeName, m_TempData.common, true, true)); // Deserialize baseline data (mandatory)
+                AltBaselineSettings altBaselineSettings = Master.Instance.GetCurrentPlatformAPI(); // current chosen API/plafrom
+                ResultsDataCommon m_BaselineData = m_TempData.common.SwitchPlatformAPI(altBaselineSettings.Platform, altBaselineSettings.API); // makes new ResultsDataCommon to grab baseline
+                FrameComparisonResults referenceData = (FrameComparisonResults)DeserializeResults(ResultsIO.Instance.RetrieveEntry(suiteName, testTypeName, m_BaselineData, true, true)); // Deserialize baseline data (mandatory)
                 m_TempData.common.PassFail = GetComparisonResult(m_TempData, referenceData); // Get comparison results
             }
             if (typedSettings.useBackBuffer)

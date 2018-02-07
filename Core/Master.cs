@@ -15,6 +15,8 @@ namespace GraphicsTestFramework
         // Variables
         public SQLmode _sqlMode;
 
+        public AltBaselineSettings _altBaselineSettings = null;
+
         // Singleton
         private static Master _Instance = null;
         public static Master Instance
@@ -38,6 +40,31 @@ namespace GraphicsTestFramework
             #if !UNITY_STANDALONE
             Application.targetFrameRate = 300;
             #endif
+        }
+
+        public void SetCurrentPlatformAPI(string platform, string api)
+        {
+            _altBaselineSettings = new AltBaselineSettings(platform, api);
+            if(platform != GetSystemData().Platform || api != GetSystemData().API)
+            {
+                if(_sqlMode == SQLmode.Live)
+                    _sqlMode = SQLmode.Disabled;
+                else if(_sqlMode == SQLmode.Staging)
+                    _sqlMode = SQLmode.DisabledStaging;
+            }
+            else
+            {
+                {
+                    if (_sqlMode == SQLmode.Disabled)
+                        _sqlMode = SQLmode.Live;
+                    else if (_sqlMode == SQLmode.DisabledStaging)
+                        _sqlMode = SQLmode.Staging;
+                }
+            }
+        }
+        public AltBaselineSettings GetCurrentPlatformAPI()
+        {
+            return _altBaselineSettings;
         }
 
         // ------------------------------------------------------------------------------------
@@ -102,6 +129,21 @@ namespace GraphicsTestFramework
     {
         Live,
         Staging,
-        Disabled
+        Disabled,
+        DisabledStaging
     }
+
+    // Class for holding current  platform and API if different from devices
+    [System.Serializable]
+    public class AltBaselineSettings
+    {
+        public string Platform;
+        public string API;
+        public AltBaselineSettings(string platform, string api)
+        {
+            Platform = platform;
+            API = api;
+        }
+    }
+
 }
