@@ -471,7 +471,6 @@ namespace GraphicsTestFramework
             var common = new ResultsDataCommon(); //blank common data
 			BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static;
 			FieldInfo[] commonFields = typeof(ResultsDataCommon).GetFields(bindingFlags);
-            Debug.LogError("Size of incoming data:" + inputData.Length + " size of common:" + commonFields.Length);
             for (int cf = 0; cf < commonFields.Length; cf++)
 			{
 				string value = inputData[cf];

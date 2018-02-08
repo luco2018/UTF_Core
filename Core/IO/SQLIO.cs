@@ -128,7 +128,6 @@ namespace GraphicsTestFramework.SQL
 
 #if !UNITY_2018_1_OR_NEWER
             yield return www.Send();
-
 			while(www.downloadProgress < 1) yield return null;
 #else
             UnityWebRequestAsyncOperation wwwData = www.SendWebRequest();
@@ -234,7 +233,9 @@ namespace GraphicsTestFramework.SQL
                     IEnumerator i = SQLRequest(query, (value => { _rawData = value; }));
                     while (i.MoveNext()) yield return null;
                     
-					if (data[n].fieldNames.Count == 0)
+					if(_rawData.fields.Count == 0 || _rawData.fields[0] == "Null")
+                        continue;
+                    else if (data[n].fieldNames.Count == 0)
                     	data[n].fieldNames.AddRange(_rawData.fields);//Grab the fields from the RawData
                     for (int x = 0; x < _rawData.data.Count; x++)
                     {
@@ -676,8 +677,8 @@ namespace GraphicsTestFramework.SQL
         {
             RawData _output = new RawData();
             string[] baseSplit = data.Split(new string[] { "<<|>>" }, StringSplitOptions.None);
-            string[] rows = baseSplit[1].Split(new string[] { "<|>" }, StringSplitOptions.None);
-            _output.fields.AddRange(baseSplit[0].Split(new string[] { "|||" }, StringSplitOptions.None));
+            string[] rows = baseSplit[2].Split(new string[] { "<|>" }, StringSplitOptions.None);
+            _output.fields.AddRange(baseSplit[1].Split(new string[] { "|||" }, StringSplitOptions.None));
             for (int i = 0; i < rows.Length; i++)
             {
                 _output.data.Add(rows[i].Split(new string[] { "|||" }, StringSplitOptions.None));

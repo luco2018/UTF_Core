@@ -97,7 +97,7 @@ namespace GraphicsTestFramework
 			Console.Instance.Write(DebugLevel.Full, MessageLevel.Log, "Wrote " + resultIOdata.resultsRow.Count + " files to disk"); // Write to console
 			//Write baseline dictionary for suite and update timestamp TODO might need work/tweaking
 			if (filetype == fileType.Baseline) {
-				StartCoroutine (UpdateSuiteDataFiles());
+				yield return StartCoroutine (UpdateSuiteDataFiles());
 			}
 			yield return null;
 		}
