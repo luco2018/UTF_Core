@@ -308,6 +308,10 @@ namespace GraphicsTestFramework
             else
                 ResultsIO.Instance.Restart(); // Save baseline
         }
+		public void ClearLocalResults()
+        {
+            Directory.Delete(dataPath);
+        }
 
         
 	}

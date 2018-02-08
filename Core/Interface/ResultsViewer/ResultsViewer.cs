@@ -574,7 +574,7 @@ namespace GraphicsTestFramework
             ResultsContext resultsContext = activeContextObject.GetComponent<ResultsContext>(); // Get results context reference
             resultsContext.Setup(activeContextEntry); // Setup base of results context
             ResultsIOData resultsDataFull = new ResultsIOData(); // Create output data
-            yield return StartCoroutine(SQL.SQLIO.FetchSpecificEntry(inputEntry.resultsEntryData.resultsData, (value => { resultsDataFull = value; }))); // Get full results data // SQLCHECK
+            yield return StartCoroutine(ResultsIO.Instance.FetchSpecificEntry(inputEntry.resultsEntryData.resultsData, (value => { resultsDataFull = value; }))); // Get full results data // SQLCHECK
             ResultsIOData resultsDataFullB = new ResultsIOData(); // Create output data
             if(TestRunner.Instance)
             {
@@ -584,7 +584,7 @@ namespace GraphicsTestFramework
                 }
                 else if(TestRunner.Instance.runnerType == RunnerType.AnalyticComparison)
                 {
-                    yield return StartCoroutine(SQL.SQLIO.FetchSpecificEntry(inputEntry.resultsEntryData.resultsDataB, (value => { resultsDataFullB = value; }))); // Get full results data // SQLCHECK
+                    yield return StartCoroutine(ResultsIO.Instance.FetchSpecificEntry(inputEntry.resultsEntryData.resultsDataB, (value => { resultsDataFullB = value; }))); // Get full results data // SQLCHECK
                 }
             }
             //if(inputEntry.resultsEntryData.resultsDataB != null)

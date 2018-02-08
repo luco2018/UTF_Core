@@ -16,9 +16,15 @@ namespace GraphicsTestFramework
 
         void OnEnable()
 		{
+			Master.baselinesChanged += UpdateInformation;
 			if(updateOnVisible)
                 UpdateInformation();
         }
+
+		void OnDisable()
+		{
+			Master.baselinesChanged -= UpdateInformation;
+		}
 
         // Update is called once per frame
         public void UpdateInformation()

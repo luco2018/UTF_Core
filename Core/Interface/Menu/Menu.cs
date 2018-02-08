@@ -252,6 +252,8 @@ namespace GraphicsTestFramework
             SQL.SQLIO.StartCoroutine(SQL.SQLIO.BaselineSetCheck(SuiteManager.GetSuiteNames(), (value => { fullSet = value; })));
             while(fullSet == null) yield return null;
 
+            Master.SetAltBaselines(fullSet);
+
             int count = 0;
             foreach(string key in fullSet.AllKeys)
             {

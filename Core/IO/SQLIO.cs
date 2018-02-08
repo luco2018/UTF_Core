@@ -6,6 +6,7 @@ using UnityEngine.Networking;
 using System;
 using System.Text;
 using System.Net;
+using System.IO;
 using GraphicsTestFramework;
 
 namespace GraphicsTestFramework.SQL
@@ -41,8 +42,9 @@ namespace GraphicsTestFramework.SQL
 		// ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		//INFORMATION
 		private static SystemData sysData;//local version of systemData
+        private static int dumpIndex = 0;
 
-		public static void Init(SystemData _sysData)// Initialization function, this sets up the needed information - TODO - make it work without being called
+        public static void Init(SystemData _sysData)// Initialization function, this sets up the needed information - TODO - make it work without being called
         {
             sysData = _sysData;
 
@@ -95,7 +97,11 @@ namespace GraphicsTestFramework.SQL
             if (string.IsNullOrEmpty(www.error))
             {
                 Console.Instance.Write(DebugLevel.File, MessageLevel.Log, "SQL response:" + www.downloadHandler.text); // Write to console
-                callback(1);
+                if(Console.Instance._SQLDebugDump)
+				{
+                    DebugDump(_query, www.downloadHandler.text);
+                }
+				callback(1);
             }
             else
             {
@@ -103,7 +109,11 @@ namespace GraphicsTestFramework.SQL
                 	Console.Instance.Write(DebugLevel.File, MessageLevel.LogWarning, "SQL response:" + www.downloadHandler.text); // Write to console
 				else
 					Console.Instance.Write(DebugLevel.File, MessageLevel.LogWarning, "SQL response:Length too long=" + www.downloadHandler.text.Length); // Write to console
-                callback(-1);
+                if (Console.Instance._SQLDebugDump)
+                {
+                    DebugDump(_query, www.downloadHandler.text);
+                }
+				callback(-1);
             }
         }
 		
@@ -136,7 +146,11 @@ namespace GraphicsTestFramework.SQL
                     Console.Instance.Write(DebugLevel.File, MessageLevel.LogWarning, "SQL response:No data returned"); // Write to console
                     RawData _data = new RawData();
                     _data.fields.Add("Null");
-                    data(_data);
+                    if (Console.Instance._SQLDebugDump)
+                    {
+                        DebugDump(_query, www.downloadHandler.text);
+                    }
+					data(_data);
                 }
 				else if(www.downloadHandler.text != "Null")
 				{
@@ -144,20 +158,32 @@ namespace GraphicsTestFramework.SQL
                         Console.Instance.Write(DebugLevel.File, MessageLevel.LogWarning, "SQL response:" + www.downloadHandler.text); // Write to console
                     else
                         Console.Instance.Write(DebugLevel.File, MessageLevel.LogWarning, "SQL response:Length too long=" + www.downloadHandler.text.Length); // Write to console
-                    data(ConvertRawData(www.downloadHandler.text));
+                    if (Console.Instance._SQLDebugDump)
+                    {
+                        DebugDump(_query, www.downloadHandler.text);
+                    }
+					data(ConvertRawData(www.downloadHandler.text));
 				}
 				else
 				{
                     Console.Instance.Write(DebugLevel.File, MessageLevel.LogWarning, "SQL response:" + www.downloadHandler.text); // Write to console
 					RawData _data = new RawData();
 					_data.fields.Add("Null");
-                    data(_data);
+                    if (Console.Instance._SQLDebugDump)
+                    {
+                        DebugDump(_query, www.downloadHandler.text);
+                    }
+					data(_data);
 				}
             }
             else
             {
                 Console.Instance.Write(DebugLevel.File, MessageLevel.LogError, www.error);
-                data(null);
+                if (Console.Instance._SQLDebugDump)
+                {
+                    DebugDump(_query, www.downloadHandler.text);
+                }
+				data(null);
             }
         }
 
@@ -674,6 +700,22 @@ namespace GraphicsTestFramework.SQL
                 outData.resultsRow.Add(row);
             }
             return outData;
+        }
+
+		static void DebugDump(string debug1, string debug2)
+		{
+#if UNITY_EDITOR
+			string dataPath = (Application.dataPath).Substring(0, Application.dataPath.Length - 6) + "EditorResults/SQLDump";
+            if(!Directory.Exists(dataPath))
+			{
+                Directory.CreateDirectory(dataPath);
+            }
+			string[] lines = new string[4];
+            lines[0] = debug1;
+            lines[3] = debug2;
+            File.WriteAllLines(dataPath + "/dump" + dumpIndex + ".txt", lines);
+            dumpIndex++;
+#endif
         }
 
 		static IEnumerator Wait(float time)

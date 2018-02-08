@@ -41,6 +41,7 @@ namespace GraphicsTestFramework
         }
 
         public DebugLevel debug;
+        public bool _SQLDebugDump = false;
         public bool playerConsole = false;
 
         // ------------------------------------------------------------------------------------

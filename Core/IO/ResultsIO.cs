@@ -420,6 +420,31 @@ namespace GraphicsTestFramework
 			_suiteBaselineData [suiteIndex].suiteTimestamp = System.DateTime.UtcNow.ToString (Common.dateTimeFormat);
 		}
 
+        /// ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+        /// Getters
+        /// ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+        public IEnumerator FetchSpecificEntry(ResultsIOData inputData, Action<ResultsIOData> outdata)
+        {
+            ResultsIOData data = new ResultsIOData();//ResultsIOData to send back to resultsIO for local processing
+            string suite = inputData.suite;
+            string testType = inputData.testType;
+
+            List<string> common = inputData.resultsRow[0].resultsColumn;
+            common.Add("");
+            ResultsDataCommon RDC = GenerateRDC(common.ToArray());
+			ResultsIOData localData = LocalIO.Instance.FetchDataFile(suite, testType, RDC, inputData.baseline, true);
+            if (localData == null)
+            {
+                yield return StartCoroutine(SQL.SQLIO.FetchSpecificEntry(inputData, (value => { data = value; })));
+            }
+			else
+			{
+                data = localData;
+            }
+            outdata(data);
+        }
+
 		/// ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		/// LISTENERS
 		/// ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -443,10 +468,11 @@ namespace GraphicsTestFramework
 
 		//Convert list of strings to ResultsDataCommon
 		public ResultsDataCommon GenerateRDC(string[] inputData){
-			var common = new ResultsDataCommon(); //blank common data
+            var common = new ResultsDataCommon(); //blank common data
 			BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static;
 			FieldInfo[] commonFields = typeof(ResultsDataCommon).GetFields(bindingFlags);
-			for (int cf = 0; cf < commonFields.Length; cf++)
+            Debug.LogError("Size of incoming data:" + inputData.Length + " size of common:" + commonFields.Length);
+            for (int cf = 0; cf < commonFields.Length; cf++)
 			{
 				string value = inputData[cf];
 				FieldInfo fieldInfo = common.GetType().GetField(commonFields[cf].Name);
