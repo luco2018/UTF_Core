@@ -86,6 +86,7 @@ namespace GraphicsTestFramework.SQL
 
 #if !UNITY_2018_1_OR_NEWER
             yield return www.Send();
+			while(!www.isDone && www.error == null) yield return null;
 #else
             UnityWebRequestAsyncOperation wwwData = www.SendWebRequest();
 			while(!wwwData.isDone){
@@ -140,18 +141,7 @@ namespace GraphicsTestFramework.SQL
 
             if (string.IsNullOrEmpty(www.error))
             {
-				if (www.downloadHandler.text == "0")
-                {
-                    Console.Instance.Write(DebugLevel.File, MessageLevel.LogWarning, "SQL response:No data returned"); // Write to console
-                    RawData _data = new RawData();
-                    _data.fields.Add("Null");
-                    if (Console.Instance._SQLDebugDump)
-                    {
-                        DebugDump(_query, www.downloadHandler.text);
-                    }
-					data(_data);
-                }
-				else if(www.downloadHandler.text != "Null")
+				if(www.downloadHandler.text != "Null" && www.downloadHandler.text != "0")
 				{
                     if (www.downloadHandler.text.Length < 256)
                         Console.Instance.Write(DebugLevel.File, MessageLevel.LogWarning, "SQL response:" + www.downloadHandler.text); // Write to console
@@ -328,7 +318,7 @@ namespace GraphicsTestFramework.SQL
 			IEnumerator i2 = SQLNonQuery(string.Format("INSERT INTO RunUUIDs (runID) VALUES ('{0}')", _uuid), (value) => { num = value; });
             while (i2.MoveNext()) yield return null;
 
-			while(num == -2)//while the request hasnt returned
+            while(num == -2)//while the request hasnt returned
 			{
 				yield return null;
 			}
@@ -342,6 +332,7 @@ namespace GraphicsTestFramework.SQL
 
             IEnumerator i = SQLRequest(String.Format("SHOW TABLES LIKE '{0}%Baseline'", suite), (value => { rawData = value; }));
             while (i.MoveNext()) yield return null;
+            i = null;
 
             for (int t = 0; t < rawData.data.Count; t++)
             {
@@ -439,7 +430,7 @@ namespace GraphicsTestFramework.SQL
 				{
 					Test t = suite.groups[grp].tests[test];
 					outputString.AppendFormat("('{0}', '{1}', {2}, {3}, {4})", suite.groups[grp].groupName, t.scene.name, t.testTypes, t.platforms, t.minimumUnityVersion);
-					if (test < testCount - 1)
+					if (test < testCount - 1 && grp < grpCount - 1)
 						outputString.Append(",\n");
 					else
 						outputString.Append(";\n");
@@ -475,6 +466,9 @@ namespace GraphicsTestFramework.SQL
                 string[] tables = null;
                 IEnumerator enumerator = FetchBaseLineTables(suiteName, (value => { tables = value; }));
                 while (enumerator.MoveNext()) yield return null;
+                
+				if(tables.Length == 0)
+                    continue;
 
                 //get platform/API sets
                 NameValueCollection platformAPIsets = new NameValueCollection();
@@ -487,6 +481,7 @@ namespace GraphicsTestFramework.SQL
                     if (tbl != tables[tables.Length - 1])
                         queryString.Append("UNION\n");
                 }
+                Debug.LogWarning(queryString.ToString());
                 enumerator = SQLRequest(queryString.ToString(), (value => { rawData = value; }));
                 while (enumerator.MoveNext()) yield return null;
 
@@ -518,6 +513,9 @@ namespace GraphicsTestFramework.SQL
                             enumerator = SQLRequest(query, (value => { rawData = value; }));
                             while (enumerator.MoveNext()) yield return null;
                             enumerator = null;
+
+							if(rawData.data.Count == 0)
+                                continue;
 
                             if (rawData.data[0][0] == rawData.data[1][0])
                                 count++;
@@ -553,7 +551,7 @@ namespace GraphicsTestFramework.SQL
                         }
                     }
                 }
-				Debug.LogError(debugSets);
+				Console.Instance.Write(DebugLevel.File, MessageLevel.Log, debugSets);
 				fullSet(suitePlatformAPIfullSets);
             }
 			else
