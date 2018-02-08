@@ -430,10 +430,10 @@ namespace GraphicsTestFramework.SQL
 				{
 					Test t = suite.groups[grp].tests[test];
 					outputString.AppendFormat("('{0}', '{1}', {2}, {3}, {4})", suite.groups[grp].groupName, t.scene.name, t.testTypes, t.platforms, t.minimumUnityVersion);
-					if (test < testCount - 1 && grp < grpCount - 1)
-						outputString.Append(",\n");
-					else
+					if (test == testCount - 1 && grp == grpCount - 1)
 						outputString.Append(";\n");
+					else
+                        outputString.Append(",\n");
 					yield return null;
 				}
 			}
