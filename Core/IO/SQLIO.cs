@@ -535,6 +535,7 @@ namespace GraphicsTestFramework.SQL
                 {
                     foreach (string baseVal in platformAPIfullSets[0].GetValues(baseKey))
                     {
+                        int suiteMatches = 1;
                         for (int nvc = 1; nvc < platformAPIfullSets.Length; nvc++)
                         {
                             foreach (string key in platformAPIfullSets[nvc].AllKeys)
@@ -543,11 +544,15 @@ namespace GraphicsTestFramework.SQL
                                 {
                                     if (baseKey == key && baseVal == val)
                                     {
-                                        debugSets += "Platform: " + key + " API: " + val + "\n";
-                                        suitePlatformAPIfullSets.Add(key, val);
+                                        suiteMatches++;
                                     }
                                 }
                             }
+                        }
+                        if (suiteMatches == platformAPIfullSets.Length)
+                        {
+                            debugSets += "Platform: " + baseKey + " API: " + baseVal + "\n";
+                            suitePlatformAPIfullSets.Add(baseKey, baseVal);
                         }
                     }
                 }
