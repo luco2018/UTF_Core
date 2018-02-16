@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Reflection;
 using System.Collections;
 using System.Collections.Generic;
@@ -288,7 +288,9 @@ namespace GraphicsTestFramework
         // Get comparison data
         public object ProcessComparison(ResultsBase resultsData)
         {
-            ResultsIOData baselineFetch = ResultsIO.Instance.RetrieveEntry(suiteName, testTypeName, resultsData.common, true, true); // Get baseline data
+            AltBaselineSettings altBaselineSettings = Master.Instance.GetCurrentPlatformAPI(); // current chosen API/plafrom
+            ResultsDataCommon m_BaselineData = resultsData.common.SwitchPlatformAPI(altBaselineSettings.Platform, altBaselineSettings.API); // makes new ResultsDataCommon to grab baseline
+            ResultsIOData baselineFetch = ResultsIO.Instance.RetrieveEntry(suiteName, testTypeName, m_BaselineData, true, true); // Get baseline data
             if (baselineFetch != null) // If successful
             {
                 ResultsBase baselineData = (ResultsBase)DeserializeResults(baselineFetch); // Convert to results class
@@ -614,10 +616,10 @@ namespace GraphicsTestFramework
         public override IEnumerator ProcessAnalyticComparison()
         {
             ResultsIOData resultsA = new ResultsIOData(); // Create results A
-            yield return StartCoroutine(SQL.SQLIO.Instance.FetchSpecificEntry(TestStructure.Instance.RequestAnalyticData(0, activeTestEntry), (value => { resultsA = value; }))); // Get full results A
+            yield return StartCoroutine(SQL.SQLIO.FetchSpecificEntry(TestStructure.Instance.RequestAnalyticData(0, activeTestEntry), (value => { resultsA = value; }))); // Get full results A // SQLCHECK
             var rawResultsA = (R)DeserializeResults(resultsA); // Deserialize
             ResultsIOData resultsB = new ResultsIOData(); // Create results A
-            yield return StartCoroutine(SQL.SQLIO.Instance.FetchSpecificEntry(TestStructure.Instance.RequestAnalyticData(1, activeTestEntry), (value => { resultsB = value; }))); // Get full results A
+            yield return StartCoroutine(SQL.SQLIO.FetchSpecificEntry(TestStructure.Instance.RequestAnalyticData(1, activeTestEntry), (value => { resultsB = value; }))); // Get full results A // SQLCHECK
             var rawResultsB = (R)DeserializeResults(resultsB); // Deserialize
             bool passFail = GetComparisonResult(rawResultsA, rawResultsB); // Get Comparison result
             resultsA.resultsRow[0].resultsColumn[Common.FindResultsDataIOFieldIdByName(resultsA, "PassFail")] = passFail.ToString(); // Set pass fail

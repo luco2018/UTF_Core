@@ -34,6 +34,13 @@ namespace GraphicsTestFramework
             return suiteNames; // Return
         }
 
+        // Get suites
+        public static Suite[] GetSuites()
+        {
+            ProjectSettings projectSettings = GetProjectSettings();
+            return projectSettings.suiteList.ToArray(); // Return
+        }
+
         // Get a specific suite name
         public static string GetSuiteName(int index)
         {

@@ -28,6 +28,28 @@ namespace GraphicsTestFramework
             return m_TypeList[index]; // Return requested type
         }
 
+        // Get a type from its name
+        public static Type GetTypeFromString(string name)
+        {
+            for (int i = 0; i < m_TypeList.Count; i++)
+            {
+                if(m_TypeList[i].Name == (name + "Model"))
+                    return m_TypeList[i]; // Return requested type
+            }
+            return null;
+        }
+
+        // Get an index from type
+        public static int GetTypeIndexFromType(Type type)
+        {
+            for (int i = 0; i < m_TypeList.Count; i++)
+            {
+                if (m_TypeList[i] == type)
+                    return i; // Return requested type
+            }
+            return -1;
+        }
+
         // Get an array of test types names
         public static string[] GetTypeStringList()
         {

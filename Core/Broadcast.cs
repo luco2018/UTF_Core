@@ -27,5 +27,17 @@
         // TestLogic
         // Custom delegate for waiting in custom test types
         public delegate void ContinueTest();
+
+        // AltBaselines Set
+        // Is called when the current baseline set has changed.
+        public delegate void AltBaselineChanged();
+
+        // Settings Save
+        // Is called when the save button in the settings menu is clicked, use to apply any settings changed in the settings menu
+        public delegate void SaveMenuSettings();
+
+        // Revert Settings
+        // Is called when the close button in the settings menu is clicked, use to revert and settings changed while in the settings menu
+        public delegate void RevertMenuSettings();
     }
 }

@@ -502,6 +502,7 @@ namespace GraphicsTestFramework
             output.name = input.testName; // Set name as thats all we need
             return output; // Return
         }
+        
     }    
 	
 	// ------------------------------------------------------------------------------------
@@ -522,6 +523,32 @@ namespace GraphicsTestFramework
         public string TestName;
         public bool PassFail;
         public string Custom;
+
+        public ResultsDataCommon Clone()
+        {
+            ResultsDataCommon output = new ResultsDataCommon();
+            output.DateTime = this.DateTime;
+            output.UnityVersion = this.UnityVersion;
+            output.AppVersion = this.AppVersion;
+            output.OS = this.OS;
+            output.Device = this.Device;
+            output.Platform = this.Platform;
+            output.API = this.API;
+            output.RenderPipe = this.RenderPipe;
+            output.GroupName = this.GroupName;
+            output.TestName = this.TestName;
+            output.PassFail = this.PassFail;
+            output.Custom = this.Custom;
+            return output;
+        }
+
+        public ResultsDataCommon SwitchPlatformAPI(string platform, string api)
+        {
+            ResultsDataCommon output = this.Clone();
+            output.Platform = platform;
+            output.API = api;
+            return output;
+        }
     }
 
     // ------------------------------------------------------------------------------------

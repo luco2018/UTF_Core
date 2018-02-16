@@ -200,7 +200,15 @@ namespace GraphicsTestFramework.Experimental
             duplicateCount = 0;
             emptyTests = false;
             groupList.DoLayoutList();//Draw the Reorderable lists, this also sets off the test Reorderable lists
-            
+
+            if(GUILayout.Button("Update Suite On Cloud"))
+            {
+                //update on cloud
+                SQL.SQLIO.StartCoroutine(SQL.SQLIO.SuiteReference(target as Suite));
+                var suiteVersion = serializedObject.FindProperty("suiteVersion");
+                suiteVersion.intValue += 1;
+            }
+
             if(emptyTests)//Checks if there are empty test entries, if so shows an error message
                 EditorGUILayout.HelpBox("One or more tests are empty, please remove them or assign a test scene to them.", MessageType.Error);
 
