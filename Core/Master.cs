@@ -31,6 +31,12 @@ namespace GraphicsTestFramework
             }
         }
 
+        private bool m_AutomatedBaselineResolve;
+        public bool automatedBaselineResolve
+        {
+            get { return m_AutomatedBaselineResolve; }
+        }
+
         // ------------------------------------------------------------------------------------
         // Setup
 

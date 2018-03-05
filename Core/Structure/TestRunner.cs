@@ -156,7 +156,10 @@ namespace GraphicsTestFramework
                     break;
                 case RunnerType.Resolve: // Resolve (When forcing baseline resolution in menu)
                     currentTestIndex = 0; // Current index is always 0
-                    StartCoroutine(LoadTest()); // Load tests manually from 0
+                    if(Master.Instance.automatedBaselineResolve)
+                        StartCoroutine(IterateTests()); // Iterate the runner
+                    else
+                        StartCoroutine(LoadTest()); // Load tests manually from 0
                     break;
                 case RunnerType.Analytic: // Analytic Comparison (runs comparisons on recreated results data)
                     StartCoroutine(IterateTests()); // Iterate the runner

@@ -214,7 +214,10 @@ namespace GraphicsTestFramework
                     GetComponent<TestDisplayBase>().EnableTestViewer(activeResultData, new TestViewerToolbar.State(false, false, false, false, false)); // Enable test viewer with active results data
                     break;
                 case RunnerType.Resolve:
-                    GetComponent<TestDisplayBase>().EnableTestViewer(activeResultData, new TestViewerToolbar.State(false, false, false, true, true)); // Enable test viewer with active results data
+                	if(Master.Instance.automatedBaselineResolve)
+                		SubmitResults(1);
+                	else
+                    	GetComponent<TestDisplayBase>().EnableTestViewer(activeResultData, new TestViewerToolbar.State(false, false, false, true, true)); // Enable test viewer with active results data
                     break;
                 case RunnerType.AnalyticComparison:
                     BroadcastEndTestAction(); // Broadcast to TestList that rest is completed
@@ -262,7 +265,10 @@ namespace GraphicsTestFramework
                 switch(activeRunType)
                 {
                     case RunnerType.Resolve:
-                        TestViewerToolbar.Instance.OnClickNext(); // Emulate OnClickNext on ViewerToolbar
+                    	if(Master.Instance.automatedBaselineResolve)
+                    		BroadcastEndTestAction();
+                    	else
+                        	TestViewerToolbar.Instance.OnClickNext(); // Emulate OnClickNext on ViewerToolbar
                         break;
                     case RunnerType.Manual:
                         BroadcastEndTestAction(); // Broadcast to TestList that rest is completed
