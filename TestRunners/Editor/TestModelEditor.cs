@@ -58,7 +58,6 @@ namespace GraphicsTestFramework
             {
                 EditorGUI.indentLevel++; // Indent
                 m_TestSettings.objectReferenceValue = EditorGUILayout.ObjectField("Test Settings", m_TestSettings.objectReferenceValue, typeof(TestSettings), false); // Draw test settings
-                m_RenderPipeline.objectReferenceValue = EditorGUILayout.ObjectField("Render Pipeline", m_RenderPipeline.objectReferenceValue, typeof(RenderPipelineAsset), false); // Draw render pipeline
                 DrawAdvancedContent(); // Call for draw custom advanced content
                 EditorGUI.indentLevel--; // Indent
             }

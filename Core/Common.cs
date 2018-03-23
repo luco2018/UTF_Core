@@ -139,7 +139,7 @@ namespace GraphicsTestFramework
             output.Device = systemData.Device; // Extract from SystemData
             output.Platform = systemData.Platform; // Extract from SystemData
             output.API = systemData.API; // Extract from SystemData
-            output.RenderPipe = GetRenderPipelineName(); // Get the currently assigned pipeline
+            output.RenderPipe = GetCurrentRenderPipelineName(); // Get the currently assigned pipeline
             output.Custom = ""; // Futureproof
             return output; // Return
         }
@@ -403,13 +403,23 @@ namespace GraphicsTestFramework
         }
 
         // Get the active Render Pipeline name
-        public static string GetRenderPipelineName()
+        public static string GetCurrentRenderPipelineName()
         {
             string defaultPipeline = "Standard Legacy"; // If no pipeline is loaded then will be set to this
             if (GraphicsSettings.renderPipelineAsset == null)
+            {
                 return defaultPipeline; // return the default pipeline string
+            }
             else
-                return GraphicsSettings.renderPipelineAsset.GetType().ToString() + "|" + GraphicsSettings.renderPipelineAsset.name; // Gets the currently active pieplines name in 5.6
+            {
+                return GetRenderPipelineName(GraphicsSettings.renderPipelineAsset); // Gets the currently active pipeline name and type
+            }
+        }
+
+        public static string GetRenderPipelineName(RenderPipelineAsset pipeline)
+        {
+            String[] pipelineString = pipeline.GetType().ToString().Split('.');
+            return pipelineString[pipelineString.Length - 1] + "_" + pipeline.name; // Gets the currently active pipeline name and type
         }
 
         // Generate random UUID

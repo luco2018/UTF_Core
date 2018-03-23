@@ -163,7 +163,8 @@ namespace GraphicsTestFramework
             }
             ProgressScreen.Instance.SetState(true, ProgressType.LocalLoad, "Loading Baselines to Memory");
             BroadcastBaselineParsed();
-			Menu.Instance.UpdateMenu();
+            yield return null;
+            Menu.Instance.UpdateMenu();
 		}
 
 		/// ------------------------------------------------------------------------------------------------------------------------------------------------------------------------

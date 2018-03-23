@@ -155,7 +155,8 @@ namespace GraphicsTestFramework
                     }
                     attachment = new Attachment(currentEntry.suiteName + ": ", true);
                 }
-                ResultsDataCommon common = BuildResultsDataCommon(currentEntry.groupName, currentEntry.testName); // Build results data common to retrieve results
+                string pipeline = Common.GetRenderPipelineName(TestStructure.Instance.GetTestRenderPipeline(currentEntry.suiteIndex, currentEntry.groupIndex, currentEntry.testIndex));
+                ResultsDataCommon common = BuildResultsDataCommon(currentEntry.groupName, currentEntry.testName, pipeline); // Build results data common to retrieve results
                 ResultsIOData data = ResultsIO.Instance.RetrieveEntry(currentEntry.suiteName, currentEntry.typeName, common, false, false); // Retrieve results data
                 if (data != null)
                 {
@@ -188,13 +189,13 @@ namespace GraphicsTestFramework
             currentMessage = new Message(message, attachmentArray);
         }
 
-        ResultsDataCommon BuildResultsDataCommon(string sceneName, string testName)
+        ResultsDataCommon BuildResultsDataCommon(string sceneName, string testName, string pipeline)
         {
             ResultsDataCommon common = new ResultsDataCommon();
             SystemData systemData = Master.Instance.GetSystemData();
             common.Platform = systemData.Platform;
             common.API = systemData.API;
-            common.RenderPipe = "Standard Legacy"; // TODO - Implement SRP support
+            common.RenderPipe = pipeline;
             common.GroupName = sceneName;
             common.TestName = testName;
             return common;

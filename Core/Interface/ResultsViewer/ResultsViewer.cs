@@ -623,7 +623,7 @@ namespace GraphicsTestFramework
             SystemData systemData = Master.Instance.GetSystemData();
             common.Platform = systemData.Platform;
             common.API = systemData.API;
-            common.RenderPipe = "Standard Legacy"; // TODO - Implement SRP support
+            common.RenderPipe = Common.GetCurrentRenderPipelineName(); // TODO - Implement SRP support
             common.GroupName = sceneName;
             common.TestName = testName;
             return common;

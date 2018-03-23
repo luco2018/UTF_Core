@@ -57,50 +57,61 @@ namespace GraphicsTestFramework
 		/// <param name="filetype">Filetype.</param>
 		public IEnumerator WriteDataFiles (ResultsIOData resultIOdata, fileType filetype)
 		{
-			string suite = resultIOdata.suite;
-			string testType = resultIOdata.testType;
-			ResultsDataCommon common = ResultsIO.Instance.GenerateRDC (resultIOdata.resultsRow [0].resultsColumn.ToArray ());
-			string[] fields = resultIOdata.fieldNames.ToArray ();
-			Console.Instance.Write(DebugLevel.File, MessageLevel.Log, "Beginning to write data for suite " + suite + " of the testType " + testType + " which contains " + resultIOdata.resultsRow.Count + " files to write"); // Write to console
-			string platformAPI = common.Platform + "_" + common.API;
-			string filePath = CreateDataDirectory (suite, platformAPI, common.RenderPipe, testType);
-			string prefix = "";
-			int suiteBaselineDataIndex = -1;
-			if (filetype == fileType.Baseline) { //if it's a baseline file we need to update latest baseline timesstamp
-				prefix = baselinePrefix;
-				ResultsIO.Instance.UpdateBaselineDictionary (suite, common.Platform, common.API, common.RenderPipe, out suiteBaselineDataIndex);
-			} else {
-				prefix = resultsCurrentPrefix;
-			}
-			List<string> data = new List<string> ();//list to create string for local file
-			//iterate through all the results in the current ResultsIOData
-			for(int i = 0; i < resultIOdata.resultsRow.Count; i++){
-				common = ResultsIO.Instance.GenerateRDC (resultIOdata.resultsRow [i].resultsColumn.ToArray ());
-				data.Clear ();//clear data for new file
-				for (int f = 0; f < fields.Length; f++) {//adding the data(values) and fields together
-					data.Add (fields [f]);//add the field name
-					data.Add (resultIOdata.resultsRow [i].resultsColumn[f]);//add the value
-				}
-				if (!Directory.Exists (filePath)) // check to see ig folder exists if not create it
-					Directory.CreateDirectory (filePath);
-				string fileName = prefix + "_" + common.GroupName + "_" + common.TestName + ".txt";//name the file
-				File.WriteAllLines (filePath + "/" + fileName, data.ToArray ());//write the contents of data line by line
-				while (!File.Exists (filePath + "/" + fileName)) {
-					Console.Instance.Write (DebugLevel.File, MessageLevel.Log, "Writing..."); // Write to console
-					yield return new WaitForEndOfFrame ();
-				}
-				//update baseline dictionary(not a dictionary) if baseline
-				if (filetype == fileType.Baseline) {
-					ResultsIO.Instance.BaselineDictionaryEntry (suiteBaselineDataIndex, testType, common.GroupName, common.TestName, common.DateTime);
-				}
-			}
-			Console.Instance.Write(DebugLevel.Full, MessageLevel.Log, "Wrote " + resultIOdata.resultsRow.Count + " files to disk"); // Write to console
-			//Write baseline dictionary for suite and update timestamp TODO might need work/tweaking
-			if (filetype == fileType.Baseline) {
-				yield return StartCoroutine (UpdateSuiteDataFiles());
-			}
-			yield return null;
-		}
+            if (resultIOdata.resultsRow.Count != 0)
+            {
+                string suite = resultIOdata.suite;
+                string testType = resultIOdata.testType;
+                ResultsDataCommon common = ResultsIO.Instance.GenerateRDC(resultIOdata.resultsRow[0].resultsColumn.ToArray());
+                string[] fields = resultIOdata.fieldNames.ToArray();
+                Console.Instance.Write(DebugLevel.File, MessageLevel.Log, "Beginning to write data for suite " + suite + " of the testType " + testType + " which contains " + resultIOdata.resultsRow.Count + " files to write"); // Write to console
+                string platformAPI = common.Platform + "_" + common.API;
+                string filePath = CreateDataDirectory(suite, platformAPI, common.RenderPipe, testType);
+                string prefix = "";
+                int suiteBaselineDataIndex = -1;
+                if (filetype == fileType.Baseline)
+                { //if it's a baseline file we need to update latest baseline timesstamp
+                    prefix = baselinePrefix;
+                    ResultsIO.Instance.UpdateBaselineDictionary(suite, common.Platform, common.API, common.RenderPipe, out suiteBaselineDataIndex);
+                }
+                else
+                {
+                    prefix = resultsCurrentPrefix;
+                }
+                List<string> data = new List<string>();//list to create string for local file
+                                                       //iterate through all the results in the current ResultsIOData
+                for (int i = 0; i < resultIOdata.resultsRow.Count; i++)
+                {
+                    common = ResultsIO.Instance.GenerateRDC(resultIOdata.resultsRow[i].resultsColumn.ToArray());
+                    data.Clear();//clear data for new file
+                    for (int f = 0; f < fields.Length; f++)
+                    {//adding the data(values) and fields together
+                        data.Add(fields[f]);//add the field name
+                        data.Add(resultIOdata.resultsRow[i].resultsColumn[f]);//add the value
+                    }
+                    if (!Directory.Exists(filePath)) // check to see ig folder exists if not create it
+                        Directory.CreateDirectory(filePath);
+                    string fileName = prefix + "_" + common.GroupName + "_" + common.TestName + ".txt";//name the file
+                    File.WriteAllLines(filePath + "/" + fileName, data.ToArray());//write the contents of data line by line
+                    while (!File.Exists(filePath + "/" + fileName))
+                    {
+                        Console.Instance.Write(DebugLevel.File, MessageLevel.Log, "Writing..."); // Write to console
+                        yield return new WaitForEndOfFrame();
+                    }
+                    //update baseline dictionary(not a dictionary) if baseline
+                    if (filetype == fileType.Baseline)
+                    {
+                        ResultsIO.Instance.BaselineDictionaryEntry(suiteBaselineDataIndex, testType, common.GroupName, common.TestName, common.DateTime);
+                    }
+                }
+                Console.Instance.Write(DebugLevel.Full, MessageLevel.Log, "Wrote " + resultIOdata.resultsRow.Count + " files to disk"); // Write to console
+                                                                                                                                        //Write baseline dictionary for suite and update timestamp TODO might need work/tweaking
+                if (filetype == fileType.Baseline)
+                {
+                    yield return StartCoroutine(UpdateSuiteDataFiles());
+                }
+                yield return null;
+            }
+        }
 
 		/// <summary>
 		/// Updates the suite data files.
@@ -238,7 +249,7 @@ namespace GraphicsTestFramework
 						{
 							if(commonEnd == 0)
 								lines.Add(fileLines[i]);
-							if(fileLines[i] == "Custom")
+							if(fileLines[i] == "Custom" && i % 2 == 0)
 								commonEnd = 1;
 						}
 						fileLines = lines.ToArray();

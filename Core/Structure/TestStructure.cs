@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Experimental.Rendering;
 using UnityEngine.SceneManagement;
 
 namespace GraphicsTestFramework
@@ -82,6 +83,7 @@ namespace GraphicsTestFramework
                 Suite newSuite = new Suite(); // Create new suite instance
                 newSuite.suiteName = projectSettings.suiteList[su].suiteName; // Set suite name from suite list
                 newSuite.types = CloneTestTypeList(typeList); // Clone the type list
+                newSuite.suitePipeline = Common.GetRenderPipelineName(projectSettings.suiteList[su].defaultRenderPipeline);
                 for (int gr = 0; gr < projectSettings.suiteList[su].groups.Count; gr++) // Iterate groups
                 {
                     for (int te = 0; te < projectSettings.suiteList[su].groups[gr].tests.Count; te++) // Iterate tests
@@ -263,7 +265,9 @@ namespace GraphicsTestFramework
                         testStructure.suites[su].types[ty].groups[gr].baseline = true; // Set init state
                         for(int te = 0; te < testStructure.suites[su].types[ty].groups[gr].tests.Count; te++) // Iterate tests
                         {
-                            bool baseline = ResultsIO.Instance.BaselineExists(testStructure.suites[su].suiteName, "Standard Legacy", testStructure.suites[su].types[ty].typeName, testStructure.suites[su].types[ty].groups[gr].groupName, testStructure.suites[su].types[ty].groups[gr].tests[te].testName); // Get baseline state
+                            string pipeline;
+                            pipeline = testStructure.suites[su].suitePipeline;
+                            bool baseline = ResultsIO.Instance.BaselineExists(testStructure.suites[su].suiteName, pipeline, testStructure.suites[su].types[ty].typeName, testStructure.suites[su].types[ty].groups[gr].groupName, testStructure.suites[su].types[ty].groups[gr].tests[te].testName); // Get baseline state
                             testStructure.suites[su].types[ty].groups[gr].tests[te].baseline = baseline; // Set baseline state to structure
                             if(baseline == false) // If no baseline
                             {
@@ -661,6 +665,19 @@ namespace GraphicsTestFramework
             return testStructure.suites[index].suiteName; // Return suite name
         }
 
+        public RenderPipelineAsset GetTestRenderPipeline(int suite, int group, int test)
+        {
+            RenderPipelineAsset pipeline = null;
+            GraphicsTestFramework.Suite s = SuiteManager.GetSuiteByIndex(suite);
+            if(s != null)
+            {
+                pipeline = s.defaultRenderPipeline;
+                if(pipeline == null)
+                    pipeline = s.groups[group].renderPipelineOverride;
+            }
+            return pipeline;
+        }
+
         // ------------------------------------------------------------------------------------
         // Local Data Structures
 
@@ -675,6 +692,7 @@ namespace GraphicsTestFramework
         {
             public string suiteName;
             public int selectionState;
+            public string suitePipeline;
             public bool baseline;
             public List<TestType> types = new List<TestType>();
         }

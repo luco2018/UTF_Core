@@ -26,6 +26,7 @@ namespace GraphicsTestFramework
     public class Group
     {
         [SerializeField] public string groupName;
+        [SerializeField] public RenderPipelineAsset renderPipelineOverride;
         [SerializeField] public List<Test> tests = new List<Test>();
     }
 

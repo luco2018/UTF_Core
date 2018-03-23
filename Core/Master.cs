@@ -15,8 +15,7 @@ namespace GraphicsTestFramework
         // ------------------------------------------------------------------------------------
         // Variables
         public SQLmode _sqlMode;
-
-        public AltBaselineSettings _altBaselineSettings = null;
+        private AltBaselineSettings _altBaselineSettings = null;
         private static NameValueCollection _altBaselineSets;
 
         // Singleton

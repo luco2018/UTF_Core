@@ -165,7 +165,7 @@ namespace GraphicsTestFramework
             Console.Instance.Write(DebugLevel.Full, MessageLevel.Log, "Updating menu"); // Write to console
             if (TestStructure.Instance.CheckForBaselines()) // Baselines exist
             {
-                if (selectedId.currentLevel == 4) // If returning to meny from TestViewer go back one level
+                if (selectedId.currentLevel == 4) // If returning to menu from TestViewer go back one level
                     selectedId.currentLevel = 3; // Set
                 ClearList(); // Clear list
                 breadcrumb.home.SetupHome(); // Setup breadcrumb home button
