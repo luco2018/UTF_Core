@@ -83,7 +83,9 @@ namespace GraphicsTestFramework
                 Suite newSuite = new Suite(); // Create new suite instance
                 newSuite.suiteName = projectSettings.suiteList[su].suiteName; // Set suite name from suite list
                 newSuite.types = CloneTestTypeList(typeList); // Clone the type list
-                newSuite.suitePipeline = Common.GetRenderPipelineName(projectSettings.suiteList[su].defaultRenderPipeline);
+                RenderPipelineAsset pipeline = projectSettings.suiteList[su].defaultRenderPipeline;
+                if(pipeline != null)
+                    newSuite.suitePipeline = Common.GetRenderPipelineName(projectSettings.suiteList[su].defaultRenderPipeline);
                 for (int gr = 0; gr < projectSettings.suiteList[su].groups.Count; gr++) // Iterate groups
                 {
                     for (int te = 0; te < projectSettings.suiteList[su].groups[gr].tests.Count; te++) // Iterate tests
