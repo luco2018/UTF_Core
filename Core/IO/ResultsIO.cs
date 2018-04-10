@@ -115,7 +115,7 @@ namespace GraphicsTestFramework
 						CompareBaselineTimestamps (suiteName, dt.ToString ());
 				}
 
-				if (suiteBaselinesPullList.Count > 0) 
+                if (suiteBaselinesPullList.Count > 0) 
 				{
                     ResultsIOData[] data = null;
                     StartCoroutine(SQL.SQLIO.FetchBaselines(suiteBaselinesPullList.ToArray(), sysData.Platform, sysData.API, (value => { data = value; }))); // SQLCHECK

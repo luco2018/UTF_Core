@@ -176,9 +176,9 @@ namespace GraphicsTestFramework
             Texture2D output = new Texture2D(2, 2); // Create output Texture2D
             output.name = textureName; // Set texture name
             byte[] decodedBytes = new byte[input.Length / 2]; // Create byte array to hold data
-            for (int i = 0; i < input.Length; i += 2)
+            for (int i = 0; i < decodedBytes.Length; i ++)
             { // Convert input string from Hex to byte array
-                decodedBytes[i / 2] = Convert.ToByte(input.Substring(i, 2), 16);
+                decodedBytes[i] = Convert.ToByte(input.Substring(i*2, 2), 16);
             }
             output.LoadImage(decodedBytes); // Load image (PNG)
             return output; // Return
@@ -405,21 +405,20 @@ namespace GraphicsTestFramework
         // Get the active Render Pipeline name
         public static string GetCurrentRenderPipelineName()
         {
-            string defaultPipeline = "Standard Legacy"; // If no pipeline is loaded then will be set to this
-            if (GraphicsSettings.renderPipelineAsset == null)
-            {
-                return defaultPipeline; // return the default pipeline string
-            }
-            else
-            {
-                return GetRenderPipelineName(GraphicsSettings.renderPipelineAsset); // Gets the currently active pipeline name and type
-            }
+            return GetRenderPipelineName(GraphicsSettings.renderPipelineAsset); // Gets the currently active pipeline name and type
         }
 
         public static string GetRenderPipelineName(RenderPipelineAsset pipeline)
         {
-            String[] pipelineString = pipeline.GetType().ToString().Split('.');
-            return pipelineString[pipelineString.Length - 1] + "_" + pipeline.name; // Gets the currently active pipeline name and type
+            if (pipeline == null)
+            {
+                return  "Standard Legacy"; // If no pipeline is loaded then will be set to this
+            }
+            else
+            {
+                String[] pipelineString = pipeline.GetType().ToString().Split('.');
+                return pipelineString[pipelineString.Length - 1] + "_" + pipeline.name; // Gets the currently active pipeline name and type
+            }
         }
 
         // Generate random UUID
