@@ -18,6 +18,7 @@ namespace GraphicsTestFramework
         SerializedProperty m_TextureFormat;
         SerializedProperty m_FilterMode;
         SerializedProperty m_useBackBuffer;
+        SerializedProperty m_imageQuality;
         SerializedProperty m_sRGB;
 
         public override void OnInspectorGUI()
@@ -34,6 +35,7 @@ namespace GraphicsTestFramework
             m_TextureFormat = m_Object.FindProperty("m_Settings.textureFormat");
             m_FilterMode = m_Object.FindProperty("m_Settings.filterMode");
             m_useBackBuffer = m_Object.FindProperty("m_Settings.useBackBuffer");
+            m_imageQuality = m_Object.FindProperty("m_Settings.imageQuality");
 
             DrawCommon(m_Object); // Draw the SettingsBase settings (mandatory)
 
@@ -57,6 +59,7 @@ namespace GraphicsTestFramework
 
         public override void DrawAdvancedContent()
         {
+            EditorGUILayout.PropertyField(m_imageQuality, new GUIContent("Image Quality")); // Use alternatice capture method(multicam)
             EditorGUILayout.PropertyField(m_TextureFormat, new GUIContent("Texture Format")); // Draw texture format
             EditorGUILayout.PropertyField(m_FilterMode, new GUIContent("Filter Mode")); // Draw filter mode
             EditorGUILayout.PropertyField(m_useBackBuffer, new GUIContent("Use Backbuffer")); // Use alternatice capture method(multicam)

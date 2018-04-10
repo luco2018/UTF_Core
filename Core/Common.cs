@@ -169,30 +169,48 @@ namespace GraphicsTestFramework
         }
 
         // Convert a Base64 String to a Texture2D
-        // TODO - Remove commented code related to texture resolution, format and filtermode
-        public static Texture2D ConvertStringToTexture(string textureName, /*byte[] input*/string input/*, Vector2 resolution, TextureFormat format, FilterMode filterMode*/)
+        public static Texture2D ConvertStringToTexture(string textureName, string input)
         {
             Console.Instance.Write(DebugLevel.Full, MessageLevel.Log, "Converting String to Texture2D"); // Write to console
             Texture2D output = new Texture2D(2, 2); // Create output Texture2D
             output.name = textureName; // Set texture name
-            byte[] decodedBytes = new byte[input.Length / 2]; // Create byte array to hold data
-            for (int i = 0; i < input.Length; i += 2)
-            { // Convert input string from Hex to byte array
-                decodedBytes[i / 2] = Convert.ToByte(input.Substring(i, 2), 16);
+            byte[] decodedBytes = null; // byte array to fill
+            string fileKey = input.Substring(0, 25); // file key to know what file type/encoding it is
+
+            if (fileKey == FileTypeStrings.HexPNG) // Convert input string from Hex to byte array
+            {
+                decodedBytes = new byte[input.Length / 2];
+                for (int i = 0; i < input.Length; i += 2)
+                {
+                    decodedBytes[i / 2] = Convert.ToByte(input.Substring(i, 2), 16);
+                }
             }
-            output.LoadImage(decodedBytes); // Load image (PNG)
+            else if(fileKey == FileTypeStrings.Base64JPG || fileKey == FileTypeStrings.Base64PNG) // Convert input string from Base64
+            {
+                decodedBytes = Convert.FromBase64String(input);
+            }
+            output.LoadImage(decodedBytes); // Load image
             return output; // Return
         }
 
         // Convert a Texture2D to a HEX string
-        public static string ConvertTextureToString(Texture2D texture)
+        public static string ConvertTextureToString(Texture2D texture, ImageQuality qualityLevel)
         {
             Console.Instance.Write(DebugLevel.Full, MessageLevel.Log, "Converting Texture2D to String"); // Write to console
-            byte[] bytes = texture.EncodeToPNG(); // Create Byte array
-            StringBuilder sb = new StringBuilder();
-            foreach (byte b in bytes)
-                sb.Append(b.ToString("X2"));//Add bytes as Hex values
-            return sb.ToString(); // Return
+            byte[] bytes = null; // byte array to fill
+            switch(qualityLevel)
+            {
+                case ImageQuality.High:
+                    bytes = texture.EncodeToPNG();
+                    break;
+                case ImageQuality.Medium:
+                    bytes = texture.EncodeToJPG(50);
+                    break;
+                case ImageQuality.Low:
+                    bytes = texture.EncodeToJPG(15);
+                    break;
+            }
+            return Convert.ToBase64String(bytes); // Return
         }
 
         // Convert a RenderTexture to a Texture2D
@@ -502,7 +520,16 @@ namespace GraphicsTestFramework
             output.name = input.testName; // Set name as thats all we need
             return output; // Return
         }
-        
+
+        // ------------------------------------------------------------------------------------
+        // Image format strings (to check type from base64)
+
+        private static class FileTypeStrings
+        {
+            public static string HexPNG = "89504E470D0A1A0A0000000D4";
+            public static string Base64PNG = "iVBORw0KGgoAAAANSUhEUgAAA";
+            public static string Base64JPG = "/9j/4AAQSkZJRgABAQAAAQABA";
+        }        
     }    
 	
 	// ------------------------------------------------------------------------------------
@@ -564,5 +591,18 @@ namespace GraphicsTestFramework
         HD,
         [Tooltip("1920x1080")]
         FullHD
+    }
+
+    // ------------------------------------------------------------------------------------
+    // Image file formats for saving
+
+    public enum ImageQuality // TODO - Add EXR once big files separated from SQL
+    {
+        [Tooltip("High quality format is lossless PNG")]
+        High,
+        [Tooltip("Medium quality format is JPG saved with 50 quality")] // Default level is medium so enum 0
+        Medium,
+        [Tooltip("Low quality format is JPG saved with 15 quality")]
+        Low
     }
 }
