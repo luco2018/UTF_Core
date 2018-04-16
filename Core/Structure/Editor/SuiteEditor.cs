@@ -30,6 +30,7 @@ namespace GraphicsTestFramework.Experimental
         private string testSettingsTip = "This is the settings object used for the suite, it contains common runtime settings which you may want control over. If not assigned the default object is used.";
         private string srpTip = "This is the Scriptable Render Pipeline asset to use for all tests in this suite, this will be overriden if a test has one set. If not assigned the legacy rendering pipeline(Forward/Deferred) will be used.";
         private string grpNameTip = "This is the name for the test group, keep this short and clear.\nNote:Do not add the test type here as different test types will recieve their own subcatergory in the app, also take care not to double up on names within the same suite.";
+        private string grpOverridePipe = "You can assign a Scriptable Render Pipeline here and it will override the Suites pipeline for this group of tests";
         //private string runTip = "This checkbox tells the system to include this test, unchecking will essentially disable the test.";
         //private string typeTip = "This list is all the current test types available, select which ones you want this scene to run.";
         //private string platformTip = "This is a list of all platforms, here you can specify a test to only run on a selection of platforms.";
@@ -86,7 +87,7 @@ namespace GraphicsTestFramework.Experimental
                     testRect.y += 2;
 
                     //Rects for drawing test elements
-                    Rect runRect = new Rect(testRect.x, testRect.y, 20, EditorGUIUtility.singleLineHeight);
+                    Rect runRect = new Rect(testRect.x, testRect.y, 20, EditorGUIUtility.singleLineHeight + 2);
                     Rect sceneRect = new Rect(runRect.x + runRect.width, testRect.y, (testRect.width - runRect.width) * 0.35f, EditorGUIUtility.singleLineHeight + 2);
                     Rect typeRect = new Rect(sceneRect.x + sceneRect.width + 5, testRect.y, (testRect.width) * 0.24f, EditorGUIUtility.singleLineHeight + 2);
                     Rect platformRect = new Rect(typeRect.x + typeRect.width, testRect.y, (testRect.width) * 0.24f, EditorGUIUtility.singleLineHeight + 2);
@@ -130,22 +131,30 @@ namespace GraphicsTestFramework.Experimental
                     return l.count > 1;
                 };
 
-                //if test list is expanded, draw the reorderable list
-                if(tests.isExpanded)
-                    testList[index].DoList(new Rect(rect.x, rect.y + (EditorGUIUtility.singleLineHeight * 1.5f), rect.width, rect.height));
+                    //if test list is expanded, draw the reorderable list
+                    if (tests.isExpanded)
+                    {
+                        //Drawing group pipeline override
+                        Rect grpPipeRect = new Rect(rect.x, rect.y + (EditorGUIUtility.singleLineHeight * 1.5f), (rect.width), EditorGUIUtility.singleLineHeight);
+                        var grpPipeline = element.FindPropertyRelative("renderPipelineOverride");//Ref to the groupName
+                        EditorGUIUtility.labelWidth = rect.width * 0.3f;
+                        EditorGUI.PropertyField(grpPipeRect, grpPipeline, new GUIContent("Pipeline override", grpOverridePipe));//Draws the group name
+                        //Draw test list
+                        testList[index].DoList(new Rect(rect.x, rect.y + (EditorGUIUtility.singleLineHeight * 3), rect.width, rect.height));
+                    }
 
-            };
+                };
 
             //Since drawing is all custom(positional) we need to set teh height for each group entry manually
             groupList.elementHeightCallback = (index) => 
             { 
                 var list = groupList.serializedProperty.GetArrayElementAtIndex(index);
                 var element = list.FindPropertyRelative("tests");
-                var padding = EditorGUIUtility.singleLineHeight * 2;
+                var padding = 68 + (21.5f * element.arraySize);
                 if(!element.isExpanded){
                     padding = 5;
                 }
-                return (EditorGUI.GetPropertyHeight(element) * 1.16f) + padding;
+                return 25 + padding;//(EditorGUI.GetPropertyHeight(element) * 1.16f) + padding
             };
 
             //On add callback for adding groups, sets the name to "NewGroup", adds one blank test
