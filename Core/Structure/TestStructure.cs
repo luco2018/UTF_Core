@@ -87,6 +87,7 @@ namespace GraphicsTestFramework
                 newSuite.suitePipeline = Common.GetRenderPipelineName(pipeline);
                 for (int gr = 0; gr < projectSettings.suiteList[su].groups.Count; gr++) // Iterate groups
                 {
+                    RenderPipelineAsset grpPipeline = projectSettings.suiteList[su].groups[gr].renderPipelineOverride;
                     for (int te = 0; te < projectSettings.suiteList[su].groups[gr].tests.Count; te++) // Iterate tests
                     {
                         GraphicsTestFramework.Test test = projectSettings.suiteList[su].groups[gr].tests[te]; // Get test
@@ -100,6 +101,8 @@ namespace GraphicsTestFramework
                                 {
                                     newGroup = new Group(); // Create a new group instance
                                     newGroup.groupName = projectSettings.suiteList[su].groups[gr].groupName; // Set group name
+                                    if(grpPipeline != null)
+                                        newGroup.groupPipeline = Common.GetRenderPipelineName(grpPipeline); // Set the group pipeline name
                                     FindDuplicateTypeInSuite(newSuite, types[ty]).groups.Add(newGroup); // Add the group to the type
                                 }
                                 Test newTest = new Test(); // Create new test instance
@@ -267,7 +270,9 @@ namespace GraphicsTestFramework
                         for(int te = 0; te < testStructure.suites[su].types[ty].groups[gr].tests.Count; te++) // Iterate tests
                         {
                             string pipeline;
-                            pipeline = testStructure.suites[su].suitePipeline;
+                            pipeline = testStructure.suites[su].types[ty].groups[gr].groupPipeline; // fetch group pipeline
+                            if(pipeline == null)
+                                pipeline = testStructure.suites[su].suitePipeline; // if no group pipeline fetch teh suite pipeline
                             bool baseline = ResultsIO.Instance.BaselineExists(testStructure.suites[su].suiteName, pipeline, testStructure.suites[su].types[ty].typeName, testStructure.suites[su].types[ty].groups[gr].groupName, testStructure.suites[su].types[ty].groups[gr].tests[te].testName); // Get baseline state
                             testStructure.suites[su].types[ty].groups[gr].tests[te].baseline = baseline; // Set baseline state to structure
                             if(baseline == false) // If no baseline
@@ -713,6 +718,7 @@ namespace GraphicsTestFramework
         {
             public string groupName;
             public int selectionState;
+            public string groupPipeline;
             public bool baseline;
             public List<Test> tests = new List<Test>();
         }
