@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace GraphicsTestFramework
 {
@@ -130,14 +131,37 @@ namespace GraphicsTestFramework
         // ------------------------------------------------------------------------------------
         // Test Type Specific Methods
 
-        // Called on render
+        // Called on render(legacy pipeline)
         private void OnRenderImage(RenderTexture source, RenderTexture destination)
         {
-            Graphics.Blit(source, destination); // Blit source to destination for Deferred
+            if (!GraphicsSettings.renderPipelineAsset)
+            {
+                Graphics.Blit(source, destination); // Blit source to destination for Deferred
+                if (doCapture) // If running blit operations
+                {
+                    doCapture = false; // Reset
+                    var typedSettings = (FrameComparisonSettings)model.settings; // Set settings to local type
+                    Vector2 resolution = Vector2.zero; // Create vector2
+                    model.resolutionList.TryGetValue(typedSettings.frameResolution, out resolution); // Get resolution
+                    var rt1 = RenderTexture.GetTemporary((int)resolution.x, (int)resolution.y, 24, temporaryRt.format, RenderTextureReadWrite.sRGB); // Get a temporary RT for blitting to
+                    Graphics.Blit(temporaryRt, rt1); // Blit models camera to the RT
+                    resultsTexture = Common.ConvertRenderTextureToTexture2D(activeTestEntry.testName + "_Result", rt1, resolution, typedSettings.textureFormat, typedSettings.filterMode); // Convert the resulting render texture to a Texture2D
+                    typedSettings.captureCamera.targetTexture = null; // Set target texture to null
+                    RenderTexture.ReleaseTemporary(rt1); // Release the temporary RT
+                    temporaryRt.Release(); // Release main RT
+                    Console.Instance.Write(DebugLevel.Logic, MessageLevel.Log, this.GetType().Name + " completed blit operations for test " + activeTestEntry.testName); // Write to console
+                }
+            }
+        }
+
+        public override void SRPBeginCamera(Camera cam)
+        {
             if (doCapture) // If running blit operations
             {
-                doCapture = false; // Reset
                 var typedSettings = (FrameComparisonSettings)model.settings; // Set settings to local type
+                if(cam == typedSettings.captureCamera)
+                    return;
+                doCapture = false; // Reset
                 Vector2 resolution = Vector2.zero; // Create vector2
                 model.resolutionList.TryGetValue(typedSettings.frameResolution, out resolution); // Get resolution
                 var rt1 = RenderTexture.GetTemporary((int)resolution.x, (int)resolution.y, 24, temporaryRt.format, RenderTextureReadWrite.sRGB); // Get a temporary RT for blitting to

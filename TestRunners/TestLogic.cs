@@ -57,6 +57,10 @@ namespace GraphicsTestFramework
         void OnEnable()
         {
             ResultsIO.endResultsSave += ConfirmResultsSaved;
+#if UNITY_2018_1_OR_NEWER
+            RenderPipeline.beginFrameRendering += SRPBeginFrame;
+            RenderPipeline.beginCameraRendering += SRPBeginCamera;
+#endif
             waitCallback += ContinueTest;
         }
 
@@ -64,6 +68,10 @@ namespace GraphicsTestFramework
         void OnDisable()
         {
             ResultsIO.endResultsSave -= ConfirmResultsSaved;
+#if UNITY_2018_1_OR_NEWER
+            RenderPipeline.beginFrameRendering -= SRPBeginFrame;
+            RenderPipeline.beginCameraRendering -= SRPBeginCamera;
+#endif
             waitCallback -= ContinueTest;
         }
 
@@ -321,7 +329,7 @@ namespace GraphicsTestFramework
         public void CheckForBaseline()
         {
             ProgressScreen.Instance.SetState(true, ProgressType.LocalLoad, "Retrieving baseline data"); // Enable ProgressScreen
-            baselineExists = ResultsIO.Instance.BaselineExists(activeTestEntry.suiteName, "Standard Legacy", activeTestEntry.typeName/*testTypeName*/, activeTestEntry.groupName, activeTestEntry.testName); // Check for baseline
+            baselineExists = ResultsIO.Instance.BaselineExists(activeTestEntry.suiteName, GetRenderPipelineName(), activeTestEntry.typeName/*testTypeName*/, activeTestEntry.groupName, activeTestEntry.testName); // Check for baseline
         }
 
         //Convert an array on unknown type to a typed array
@@ -349,6 +357,38 @@ namespace GraphicsTestFramework
                     fieldInfo.SetValue(resultData, byteArray);
                     break;
             }
+        }
+
+        public string GetRenderPipelineName()
+        {
+            RenderPipelineAsset renderPipeline = GetRenderPipeline();
+            if (renderPipeline == null)
+                return "Standard Legacy";
+            else
+                return Common.GetRenderPipelineName(renderPipeline);
+        }
+
+        public RenderPipelineAsset GetRenderPipeline()
+        {
+            RenderPipelineAsset renderPipeline = null;
+            Suite suite = SuiteManager.GetSuiteByName(suiteName); // Get current suite
+            if (suite != null) // If suite was returned
+            {
+                renderPipeline = suite.groups[activeTestEntry.groupIndex].renderPipelineOverride; // Get the groups override render pipeline
+                if (renderPipeline == null) // if still null fallback to suite default
+                    renderPipeline = suite.defaultRenderPipeline; // Apply suite default
+            }
+            return renderPipeline;
+        }
+
+        public virtual void SRPBeginFrame(Camera[] cam)
+        {
+
+        }
+
+        public virtual void SRPBeginCamera(Camera cam)
+        {
+
         }
 
         // ------------------------------------------------------------------------------------
@@ -493,22 +533,18 @@ namespace GraphicsTestFramework
         // Check if Render Pipeline needs to be changed and change if necessary
         public void SetRenderPipeline()
         {
-            RenderPipelineAsset renderPipeline = model.settings.renderPipeline; // Get the models render pipeline
-            if (renderPipeline == null) // If none found
+            RenderPipelineAsset renderPipeline = null;
+            Suite suite = SuiteManager.GetSuiteByName(suiteName); // Get current suite
+            if (suite != null) // If suite was returned
             {
-                Suite suite = SuiteManager.GetSuiteByName(suiteName); // Get current suite
-                if (suite != null) // If suite was returned
-                {
+                renderPipeline = suite.groups[activeTestEntry.groupIndex].renderPipelineOverride; // Get the groups override render pipeline
+                if(renderPipeline == null) // if still null fallback to suite default
                     renderPipeline = suite.defaultRenderPipeline; // Apply suite default
-                }
             }
             RenderPipelineAsset currentRenderPipeline = Common.GetRenderPipeline();
             if(renderPipeline != currentRenderPipeline)
             {
-
                 GraphicsSettings.renderPipelineAsset = renderPipeline;
-
-
             }
         }
 

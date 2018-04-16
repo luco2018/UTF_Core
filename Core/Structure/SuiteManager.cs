@@ -60,6 +60,13 @@ namespace GraphicsTestFramework
             return null;
         }
 
+        // Get a specififc suite by index
+        public static Suite GetSuiteByIndex(int index)
+        {
+            ProjectSettings projectSettings = GetProjectSettings(); // Get the suite list
+            return projectSettings.suiteList[index];
+        }
+
         // Get a specific test
         public static Test GetTest(TestEntry inputEntry)
         {

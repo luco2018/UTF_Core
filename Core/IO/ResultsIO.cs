@@ -115,7 +115,7 @@ namespace GraphicsTestFramework
 						CompareBaselineTimestamps (suiteName, dt.ToString ());
 				}
 
-				if (suiteBaselinesPullList.Count > 0) 
+                if (suiteBaselinesPullList.Count > 0) 
 				{
                     ResultsIOData[] data = null;
                     StartCoroutine(SQL.SQLIO.FetchBaselines(suiteBaselinesPullList.ToArray(), sysData.Platform, sysData.API, (value => { data = value; }))); // SQLCHECK
@@ -163,7 +163,8 @@ namespace GraphicsTestFramework
             }
             ProgressScreen.Instance.SetState(true, ProgressType.LocalLoad, "Loading Baselines to Memory");
             BroadcastBaselineParsed();
-			Menu.Instance.UpdateMenu();
+            yield return null;
+            Menu.Instance.UpdateMenu();
 		}
 
 		/// ------------------------------------------------------------------------------------------------------------------------------------------------------------------------

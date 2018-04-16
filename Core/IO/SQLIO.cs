@@ -329,8 +329,7 @@ namespace GraphicsTestFramework.SQL
 		{
             List<string> tables = new List<string>();
             RawData rawData = new RawData();//RawData to be filled by the wwwRequest
-
-            IEnumerator i = SQLRequest(String.Format("SHOW TABLES LIKE '{0}%Baseline'", suite), (value => { rawData = value; }));
+            IEnumerator i = SQLRequest(String.Format("SHOW TABLES LIKE '{0}\\_%Baseline'", suite), (value => { rawData = value; }));
             while (i.MoveNext()) yield return null;
             i = null;
 
