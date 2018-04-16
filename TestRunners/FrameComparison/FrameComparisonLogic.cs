@@ -72,7 +72,7 @@ namespace GraphicsTestFramework
             else
                 doCapture = true; // Perform OnRenderImage logic (logic specific)
             do { yield return null; } while (resultsTexture == null); // Wait for OnRenderImage logic to complete (logic specific)
-            m_TempData.resultFrame = Common.ConvertTextureToString(resultsTexture); // Convert results texture to Base64 String and save to results data
+            m_TempData.resultFrame = Common.ConvertTextureToString(resultsTexture, typedSettings.imageQuality); // Convert results texture to Base64 String and save to results data
             if (baselineExists) // Comparison (mandatory)
             {
                 AltBaselineSettings altBaselineSettings = Master.Instance.GetCurrentPlatformAPI(); // current chosen API/plafrom
