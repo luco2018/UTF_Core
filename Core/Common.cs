@@ -204,10 +204,10 @@ namespace GraphicsTestFramework
                     bytes = texture.EncodeToPNG();
                     break;
                 case ImageQuality.Medium:
-                    bytes = texture.EncodeToJPG(50);
+                    bytes = texture.EncodeToJPG(75);
                     break;
                 case ImageQuality.Low:
-                    bytes = texture.EncodeToJPG(15);
+                    bytes = texture.EncodeToJPG(25);
                     break;
             }
             return Convert.ToBase64String(bytes); // Return
