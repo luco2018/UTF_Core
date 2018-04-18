@@ -31,6 +31,8 @@ namespace GraphicsTestFramework
 		{
 			#if UNITY_EDITOR
 			dataPath = (Application.dataPath).Substring (0, Application.dataPath.Length - 6) + "EditorResults";
+			#elif UNITY_PS4
+			dataPath = Application.temporaryCachePath;
 			#else
 			dataPath = Application.persistentDataPath;
 			#endif
