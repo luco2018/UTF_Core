@@ -57,8 +57,10 @@ namespace GraphicsTestFramework
         void OnEnable()
         {
             ResultsIO.endResultsSave += ConfirmResultsSaved;
+#if UNITY_2018_1_OR_NEWER
             RenderPipeline.beginFrameRendering += SRPBeginFrame;
             RenderPipeline.beginCameraRendering += SRPBeginCamera;
+#endif
             waitCallback += ContinueTest;
         }
 
@@ -66,8 +68,10 @@ namespace GraphicsTestFramework
         void OnDisable()
         {
             ResultsIO.endResultsSave -= ConfirmResultsSaved;
+#if UNITY_2018_1_OR_NEWER
             RenderPipeline.beginFrameRendering -= SRPBeginFrame;
             RenderPipeline.beginCameraRendering -= SRPBeginCamera;
+#endif
             waitCallback -= ContinueTest;
         }
 

@@ -279,7 +279,10 @@ namespace GraphicsTestFramework
                                 {
                                     string testName = structure.suites[su].types[ty].groups[gr].tests[te].testName; // Get test name
                                     string scenePath = structure.suites[su].types[ty].groups[gr].tests[te].scenePath; // Get scene path
-                                    ResultsDataCommon common = BuildResultsDataCommon(groupName, testName); // Build results data common to retrieve results
+                                    string pipeline = structure.suites[su].types[ty].groups[gr].groupPipeline;
+                                    if(pipeline == null)
+                                        pipeline = structure.suites[su].suitePipeline;
+                                    ResultsDataCommon common = BuildResultsDataCommon(groupName, testName, pipeline); // Build results data common to retrieve results
                                     ResultsIOData data = new ResultsIOData();
                                     var testResults = structure.suites[su].types[ty].groups[gr].tests[te] as TestStructure.TestResults;                                    if(TestRunner.Instance)
                                     {
@@ -617,13 +620,13 @@ namespace GraphicsTestFramework
         // Helper Functions
 
         // TODO - Should this be global?
-        ResultsDataCommon BuildResultsDataCommon(string sceneName, string testName)
+        ResultsDataCommon BuildResultsDataCommon(string sceneName, string testName, string pipeline)
         {
             ResultsDataCommon common = new ResultsDataCommon();
             SystemData systemData = Master.Instance.GetSystemData();
             common.Platform = systemData.Platform;
             common.API = systemData.API;
-            common.RenderPipe = Common.GetCurrentRenderPipelineName(); // TODO - Implement SRP support
+            common.RenderPipe = pipeline;
             common.GroupName = sceneName;
             common.TestName = testName;
             return common;
