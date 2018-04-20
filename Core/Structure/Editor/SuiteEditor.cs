@@ -29,8 +29,9 @@ namespace GraphicsTestFramework.Experimental
         private string suiteNameTip = "This is the name of the suite, make this clear and short.\nNote:Do not include the word 'Suite'.";
         private string testSettingsTip = "This is the settings object used for the suite, it contains common runtime settings which you may want control over. If not assigned the default object is used.";
         private string srpTip = "This is the Scriptable Render Pipeline asset to use for all tests in this suite, this will be overriden if a test has one set. If not assigned the legacy rendering pipeline(Forward/Deferred) will be used.";
+        private string alternateSettingsTip = "For each alternate settings, the test will be run again and compare to the default one.";
         private string grpNameTip = "This is the name for the test group, keep this short and clear.\nNote:Do not add the test type here as different test types will recieve their own subcatergory in the app, also take care not to double up on names within the same suite.";
-        private string grpOverridePipe = "You can assign a Scriptable Render Pipeline here and it will override the Suites pipeline for this group of tests";
+        private string grpOverridePipe = "You can assign a Scriptable Render Pipeline here and it will override the Suites pipeline for this group of tests.";
         //private string runTip = "This checkbox tells the system to include this test, unchecking will essentially disable the test.";
         //private string typeTip = "This list is all the current test types available, select which ones you want this scene to run.";
         //private string platformTip = "This is a list of all platforms, here you can specify a test to only run on a selection of platforms.";
@@ -139,8 +140,9 @@ namespace GraphicsTestFramework.Experimental
                         var grpPipeline = element.FindPropertyRelative("renderPipelineOverride");//Ref to the groupName
                         EditorGUIUtility.labelWidth = rect.width * 0.3f;
                         EditorGUI.PropertyField(grpPipeRect, grpPipeline, new GUIContent("Pipeline override", grpOverridePipe));//Draws the group name
+
                         //Draw test list
-                        testList[index].DoList(new Rect(rect.x, rect.y + (EditorGUIUtility.singleLineHeight * 3), rect.width, rect.height));
+                        testList[index].DoList(new Rect(rect.x, rect.y + (EditorGUIUtility.singleLineHeight * 3f), rect.width, rect.height));
                     }
 
                 };
@@ -195,9 +197,23 @@ namespace GraphicsTestFramework.Experimental
             suiteName.stringValue = EditorGUILayout.TextField(new GUIContent("Suite Name", suiteNameTip), suiteName.stringValue, GUILayout.ExpandWidth(true));//Draw Suite name text box
             suiteName.stringValue = Regex.Replace(suiteName.stringValue, @"[^a-zA-Z0-9]", "");//Validate the suiteName
             EditorGUILayout.PropertyField(serializedObject.FindProperty("isDebugSuite"), false);// Draw debugCheckbox;
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("defaultTestSettings"), new GUIContent("Suite Test Settings", testSettingsTip), false);// Draw test settings;
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("defaultRenderPipeline"), new GUIContent("Suite SRP Asset", srpTip), false); // Draw render pipeline;
-            
+
+            SerializedProperty s_defaultTestSettings = serializedObject.FindProperty("defaultTestSettings");
+            SerializedProperty s_defaultRenderPipeline = serializedObject.FindProperty("defaultRenderPipeline");
+
+            EditorGUILayout.PropertyField(s_defaultTestSettings, new GUIContent("Suite Test Settings", testSettingsTip), false);// Draw test settings;
+            EditorGUILayout.PropertyField(s_defaultRenderPipeline, new GUIContent("Suite SRP Asset", srpTip), false); // Draw render pipeline;
+
+            if (s_defaultRenderPipeline.objectReferenceValue != null || s_defaultTestSettings.objectReferenceValue != null) // Don't display the alternate if there is no default settings
+            {
+                EditorGUI.BeginChangeCheck(); 
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("alternateSettings"), new GUIContent("Suite additional settings", alternateSettingsTip), true); // Draw additional render pipelines.
+                if (EditorGUI.EndChangeCheck())
+                {
+                    serializedObject.ApplyModifiedProperties();
+                }
+            }
+
             EditorGUILayout.Space();//Space :D
             
             EditorGUILayout.LabelField("Tests List", bigLabels);//Title for the tests

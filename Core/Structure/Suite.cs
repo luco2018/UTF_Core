@@ -18,6 +18,7 @@ namespace GraphicsTestFramework
         [SerializeField] public bool isDebugSuite;
         [SerializeField] public TestSettings defaultTestSettings;
         [SerializeField] public RenderPipelineAsset defaultRenderPipeline;
+        [SerializeField] public AlternateSettings[] alternateSettings;
         [SerializeField] public List<Group> groups = new List<Group>();
         [SerializeField] public int suiteVersion = 0;
     }
@@ -37,8 +38,15 @@ namespace GraphicsTestFramework
         [SerializeField] public UnityEngine.Object scene;
         [SerializeField] public string scenePath;
         [SerializeField] public int testTypes;
-        [SerializeField] public int minimumUnityVersion;
+        [SerializeField] public int minimumUnityVersion; // See Common.cs unityVersionList
         [SerializeField] public int platforms = -1;
         [SerializeField] public bool run = true;
+    }
+
+    [Serializable]
+    public struct AlternateSettings
+    {
+        [SerializeField] public RenderPipelineAsset renderPipeline;
+        [SerializeField] public TestSettings testSettings;
     }
 }
