@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEngine;
+using System.IO;
 
 namespace GraphicsTestFramework
 {
@@ -27,6 +28,8 @@ namespace GraphicsTestFramework
         void OnGUI()
         {
             GUILayout.Label("Project Preperation", EditorStyles.boldLabel); // Label
+            if (GUILayout.Button("Open Master Scene")) // If button
+                OpenMasterScene(); // Open the master scene
             if (GUILayout.Button("Prepare Project")) // If button
                 PrepareBuild(); // Prepare build
             if (GUILayout.Button("Prepare Project (Debug)")) // If button
@@ -40,6 +43,21 @@ namespace GraphicsTestFramework
             buildConfiguration = (BuildConfiguration)EditorGUILayout.ObjectField(buildConfiguration, typeof(BuildConfiguration), false);
             if (GUILayout.Button("Execute Build Pipeline")) // If button
                 RunBuildPipeline(); // Prepare build
+        }
+
+        public void OpenMasterScene()
+        {
+            string[] guids = AssetDatabase.FindAssets("t:Scene Master");
+
+            foreach ( string guid in guids )
+            {
+                string scenePath = AssetDatabase.GUIDToAssetPath(guid);
+                if ( Path.GetFileName( Path.GetDirectoryName ( scenePath ) ) == "UTF_Core" ) // if the scene's parent direction is "UTF_Core"
+                {
+                    UnityEditor.SceneManagement.EditorSceneManager.OpenScene( scenePath, UnityEditor.SceneManagement.OpenSceneMode.Single );
+                    break;
+                }
+            }
         }
 
         public void RunBuildPipeline()
