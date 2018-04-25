@@ -8,18 +8,50 @@ using System.IO;
 
 using Assert = NUnit.Framework.Assert;
 
+
+#if UNITY_EDITOR
+using UnityEditor;
+using UnityEditor.SceneManagement;
+#endif
+
 namespace GraphicsTestFramework
 {
-	//[TestFixtureSource("SuitesList")]
-	public class UTR_Bridge
+	public class UTR_Bridge : IPrebuildSetup //, IPostBuildCleanup
 	{
-		private Suite suite;
+		#if UNITY_EDITOR
 
-		UTR_Bridge(Suite _suite)
+		static EditorBuildSettingsScene[] preSetupBuildScenes;
+		static SceneSetup[] preSetupSceneSetup;
+
+		#endif
+
+		
+		public void Setup()
 		{
-			suite = _suite;
+			Debug.Log("Coucou. Is playing ? "+Application.isPlaying);
+
+			#if UNITY_EDITOR
+			
+			preSetupBuildScenes = EditorBuildSettings.scenes;
+			preSetupSceneSetup = EditorSceneManager.GetSceneManagerSetup();
+
+			SuiteManager.GenerateSceneList(false, true);
+
+			#endif
 		}
 
+		public void Cleanup()
+		{
+			#if UNITY_EDITOR
+
+			EditorBuildSettings.scenes = preSetupBuildScenes;
+			EditorSceneManager.RestoreSceneManagerSetup(preSetupSceneSetup);
+			
+			#endif
+		}
+
+
+		// Data passed to the test function.
 		public struct TestData
 		{
 			public Suite suite;
@@ -42,48 +74,20 @@ namespace GraphicsTestFramework
 			}
 		}
 
+		// Test function registered in the TestRunner window.
 		[UnityTest]
 		public IEnumerator UTF_Test( [ValueSource("TestsList")] TestData testData)
 		{
 			Debug.Log(testData);
 
-			yield return null;
+			UnityEngine.SceneManagement.SceneManager.LoadScene( testData.test.scenePath, UnityEngine.SceneManagement.LoadSceneMode.Single );
 
-			UnityEngine.Assertions.Assert.IsTrue(true);
+			yield return new WaitForSeconds(0.5f);
+
+			UnityEngine.Assertions.Assert.IsTrue( UnityEngine.SceneManagement.SceneManager.GetSceneByName( testData.test.scenePath.Remove(testData.test.scenePath.Length-6, 6) ) != null );
 		}
 
-		public static IEnumerable SuitesList()
-		{
-			ProjectSettings projectSettings = SuiteManager.GetProjectSettings();
-			SuiteManager.GenerateSceneList(false, false);
-
-			for (int su = 0; su < projectSettings.suiteList.Count; su++) // Iterate scriptable object list
-			{
-				yield return new TestFixtureData( new object[]{projectSettings.suiteList[su]});
-			}
-		}
-
-		public static IEnumerable TestsInSuiteList()
-		{
-			/*
-			for (int gr = 0; gr < suite.groups.Count; gr++) // Iterate groups on the suite
-			{
-				for (int te = 0; te < suite.groups[gr].tests.Count; te++) // Iterate tests on the group
-				{
-					string sceneName = suite.groups[gr].tests[te].name;
-					sceneName = Path.GetFileName( sceneName );
-					sceneName.Remove( sceneName.Length - 6 , 6);
-
-					string name = suite.groups[gr].groupName +"."+ sceneName;
-
-					yield return name;
-				}
-			}
-			*/
-			yield return "Pouet A";
-			yield return "Pouet B";
-		}
-
+		// Tests List enumerable passed to the test function through the ValueSource attribute.
 		public static IEnumerable TestsList()
 		{
 			ProjectSettings projectSettings = SuiteManager.GetProjectSettings();
