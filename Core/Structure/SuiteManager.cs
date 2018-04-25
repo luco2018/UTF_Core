@@ -115,7 +115,7 @@ namespace GraphicsTestFramework
 
         // Create Suite and Scene structure
         [ExecuteInEditMode]
-        public static void GenerateSceneList(bool debug)
+        public static void GenerateSceneList(bool debug, bool assignInBuildSettings = true)
         {
             ProjectSettings projectSettings = GetProjectSettings(); //Get the suite list
             projectSettings.suiteList.Clear(); // Clear suites list
@@ -143,7 +143,9 @@ namespace GraphicsTestFramework
                     }
                 }
             }
-            UnityEditor.EditorBuildSettings.scenes = buildSettingsScenes.ToArray(); // Set build settings scene list
+
+            if (assignInBuildSettings)
+                UnityEditor.EditorBuildSettings.scenes = buildSettingsScenes.ToArray(); // Set build settings scene list
         }
 
         // Generate a new suite list object
