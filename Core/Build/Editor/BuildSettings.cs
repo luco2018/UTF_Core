@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEditor.Build;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 using System.IO;
 
@@ -10,6 +11,8 @@ namespace GraphicsTestFramework
     public class BuildSettings : EditorWindow
     {
         public BuildConfiguration buildConfiguration;
+
+        bool isDebugProject = false;
 
         // Scripting defines for the core
         static string[] coreScriptingDefines = new string[1]
@@ -27,13 +30,11 @@ namespace GraphicsTestFramework
         // GUI
         void OnGUI()
         {
-            GUILayout.Label("Project Preperation", EditorStyles.boldLabel); // Label
-            if (GUILayout.Button("Open Master Scene")) // If button
-                OpenMasterScene(); // Open the master scene
-            if (GUILayout.Button("Prepare Project")) // If button
-                PrepareBuild(); // Prepare build
-            if (GUILayout.Button("Prepare Project (Debug)")) // If button
-                PrepareDebugBuild(); // Prepare debug build
+            GUILayout.Label("Run Tests", EditorStyles.boldLabel); // Label
+            if (GUILayout.Button("Run")) // If button
+                BuildSettings_BackupRestore.RunUTF(isDebugProject); // Run UTF
+            
+            isDebugProject = EditorGUILayout.Toggle("Debug", isDebugProject);
 
             EditorGUILayout.Space();
 
@@ -192,5 +193,135 @@ namespace GraphicsTestFramework
         #else
         private static List<int> depreciatedBuiltTargets = new List<int>() { 0, 3, 5, 6, 8, 9, 10, 11, 12, 15, 16 };
         #endif
+    }
+
+    // Static class that stores data in editor preferences to backup and restore the editor settings.
+    [InitializeOnLoad]
+    public static class BuildSettings_BackupRestore
+    {
+        // Bool value to know if play mode was trigger by the "Run UTF" button
+        static bool utfIsRunning 
+        {
+            get { return EditorPrefs.GetBool("UTF_IsRunning"); }
+            set { EditorPrefs.SetBool("UTF_IsRunning", value); }
+        }
+
+        // The play mode start scene GUID
+        static SceneAsset previousPlayModeStartScene
+        {
+            get
+            {
+                SceneAsset o = null;
+
+                string data = EditorPrefs.GetString("UTF_PreviousPlayModeStartScene");
+                if (!string.IsNullOrEmpty(data))
+                    o = AssetDatabase.LoadAssetAtPath<SceneAsset>( AssetDatabase.GUIDToAssetPath(data) );
+                
+                return o;
+            }
+            set
+            {
+                string data = AssetDatabase.AssetPathToGUID( AssetDatabase.GetAssetPath(value) );
+                EditorPrefs.SetString("UTF_PreviousPlayModeStartScene", data);
+            }
+        }
+
+        // Store the scenes of build settings in a big string that is split. The format is : GUID1//enabled1||GUID2//enabled2|| ...
+        static EditorBuildSettingsScene[] previousBuildScenes
+        {
+            get
+            {
+                List<EditorBuildSettingsScene> o = new List<EditorBuildSettingsScene>();
+
+                string data = EditorPrefs.GetString("UTF_PeviousBuildScenes");
+                if (!string.IsNullOrEmpty(data))
+                {
+                    string[] datas = data.Split(new string[]{"||"}, StringSplitOptions.None);
+
+                    for (int i=0 ; i<datas.Length ; ++i)
+                    {
+                        string[] sceneData = datas[i].Split(new string[]{"//"}, StringSplitOptions.None);
+
+                        GUID sceneGUID;
+                        if ( GUID.TryParse( sceneData[0], out sceneGUID ) )
+                        {
+                            EditorBuildSettingsScene scene = new EditorBuildSettingsScene();
+                            scene.guid = sceneGUID;
+                            scene.path = AssetDatabase.GUIDToAssetPath(sceneData[0]);
+                            scene.enabled = bool.Parse(sceneData[1]);
+
+                            o.Add(scene);
+                        }
+                    }
+                }
+                
+                return o.ToArray();
+            }
+            set
+            {
+                string data = "";
+
+                for (int i=0 ; i<value.Length ; ++i)
+                {
+                    if (i>0) data += "||";
+
+                    data += value[i].guid.ToString() + "//"+value[i].enabled.ToString();
+                }
+
+                EditorPrefs.SetString("UTF_PeviousBuildScenes", data);
+            }
+        }
+
+        // Class construction called at Domain Reload, to add the callback to PlayModeStateChange event.
+        static BuildSettings_BackupRestore()
+        {
+            EditorApplication.playModeStateChanged += PlayModeStateTracker;
+        }
+
+        // PlayModeStateChange callback
+        public static void PlayModeStateTracker( PlayModeStateChange state )
+        {
+            if (state == PlayModeStateChange.ExitingPlayMode) // When exiting play mode (Badicaly, end of tests)
+            {
+                if (utfIsRunning) StopUTF(); // If we were running UTF, call the restore function.
+            }
+        }
+
+        // Called by the window button.
+        public static void RunUTF( bool debug )
+        {
+            if (EditorApplication.isPlaying) return; // Prevent to call if it is already in play mode.
+
+            if (EditorCommon.masterScene == null) // Check for Master Scene
+            {
+                return;
+            }
+
+            // Backup and setup Master scene to start at play mode.
+            previousPlayModeStartScene = EditorSceneManager.playModeStartScene;
+            EditorSceneManager.playModeStartScene = EditorCommon.masterScene;
+
+            previousBuildScenes = EditorBuildSettings.scenes; // Backup scenes in build settings
+
+            // Prepare the build.
+            if (debug)
+                BuildSettings.PrepareDebugBuild();
+            else
+                BuildSettings.PrepareBuild();
+
+            utfIsRunning = true; // Store UTF state
+
+            EditorApplication.isPlaying = true; // Start play mode
+        }
+
+        // Called when exiting play mode after UTF tests.
+        public static void StopUTF()
+        {
+            utfIsRunning = false;
+
+            EditorSceneManager.playModeStartScene = previousPlayModeStartScene; // Restore original scene to start at play mode.
+
+            EditorBuildSettings.scenes = previousBuildScenes; // Restore scenes in build settings
+        }
     }
 }
