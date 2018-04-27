@@ -18,6 +18,8 @@ namespace GraphicsTestFramework
 {
 	public class UTR_Bridge : IPrebuildSetup //, IPostBuildCleanup
 	{
+		static bool resultsIOInitialized = false;
+
 		#if UNITY_EDITOR
 
 		static EditorBuildSettingsScene[] preSetupBuildScenes;
@@ -28,8 +30,6 @@ namespace GraphicsTestFramework
 		
 		public void Setup()
 		{
-			Debug.Log("Coucou. Is playing ? "+Application.isPlaying);
-
 			#if UNITY_EDITOR
 			
 			preSetupBuildScenes = EditorBuildSettings.scenes;
@@ -37,7 +37,11 @@ namespace GraphicsTestFramework
 
 			SuiteManager.GenerateSceneList(false, true);
 
+			//EditorSceneManager.OpenScene( AssetDatabase.GetAssetPath( EditorCommon.masterScene ), OpenSceneMode.Single );
+
 			#endif
+
+			Debug.Log("Finished Setup, start test(s).");
 		}
 
 		public void Cleanup()
@@ -48,6 +52,17 @@ namespace GraphicsTestFramework
 			EditorSceneManager.RestoreSceneManagerSetup(preSetupSceneSetup);
 			
 			#endif
+		}
+
+		
+		[OneTimeSetUp]
+		public void OneTimeSetUp()
+		{
+			Debug.Log("OneTimeSetUp");
+
+			UnityEngine.SceneManagement.SceneManager.LoadScene(0, UnityEngine.SceneManagement.LoadSceneMode.Single);
+
+			resultsIOInitialized = false;
 		}
 
 
@@ -74,17 +89,82 @@ namespace GraphicsTestFramework
 			}
 		}
 
+		[UnityTest]
+		public IEnumerator DummyTest()
+		{
+			yield return null;
+			Assert.True( true );
+		}
+
 		// Test function registered in the TestRunner window.
 		[UnityTest]
 		public IEnumerator UTF_Test( [ValueSource("TestsList")] TestData testData)
 		{
-			Debug.Log(testData);
+			yield return null; // Skip first frame
 
-			UnityEngine.SceneManagement.SceneManager.LoadScene( testData.test.scenePath, UnityEngine.SceneManagement.LoadSceneMode.Single );
+			if (!resultsIOInitialized)
+			{
+				// Don't spam on slack please :-)
+				Slack slackComponent = UnityEngine.GameObject.FindObjectOfType<Slack>();
+				slackComponent.enableSlackIntegration = false;
 
-			yield return new WaitForSeconds(0.5f);
+				yield return ( ResultsIO.Instance.Init() ); // Init results.
 
-			UnityEngine.Assertions.Assert.IsTrue( UnityEngine.SceneManagement.SceneManager.GetSceneByName( testData.test.scenePath.Remove(testData.test.scenePath.Length-6, 6) ) != null );
+				resultsIOInitialized = true;
+
+				yield return null; // Just to be sure that the TestStructure has been initialized.
+			}
+
+
+			// Select the current test in the test structure.
+			foreach ( var su in TestStructure.Instance.testStructure.suites )
+			{
+				bool suiteEnabled = su.suiteName == testData.suite.suiteName;
+
+				su.selectionState = suiteEnabled? 1 : 0; // Select Suite if names match.
+
+				foreach( var tp in su.types )
+				{
+					int typeMask = 1 << tp.typeIndex;
+					int r = testData.test.testTypes & typeMask;
+
+					bool typeEnabled = r != 0;
+					typeEnabled &= suiteEnabled;
+
+					tp.selectionState = typeEnabled? 1 : 0; // Select type if type is in typemask && suiteEnabled
+
+					foreach( var gp in tp.groups)
+					{
+						bool groupEnabled = gp.groupName == testData.group.groupName;
+						groupEnabled &= typeEnabled;
+
+						gp.selectionState = groupEnabled? 1 : 0; // Select Group if names match && typeEnabled && suiteEnabled
+
+						foreach( var te in gp.tests)
+						{
+							string name = Path.GetFileName(testData.test.name); // Keep only the scene name.
+							name = name.Remove(name.Length-6, 6); // Remove ".unity"
+
+							bool testEnabled = te.testName == name;
+							testEnabled &= groupEnabled;
+
+							te.selectionState = testEnabled? 1 : 0; // Select Test if names match && groupEnabled && typeEnabled && suiteEnabled
+						}
+					}
+				}
+			}
+
+			GenerateTestRunner(RunnerType.Automation);
+
+			for(int i=0 ; i<15 ; ++i) yield return null;
+			while (TestRunner.Instance.isRunning) yield return null;
+			yield return null;
+
+			//UnityEngine.SceneManagement.SceneManager.LoadScene( testData.test.scenePath, UnityEngine.SceneManagement.LoadSceneMode.Single );
+
+			// yield return new WaitForSeconds(2f);
+
+			UnityEngine.Assertions.Assert.IsTrue( TestTypeManager.Instance.GetActiveTestLogic().activeResultData.common.PassFail, "Test failed" );
 		}
 
 		// Tests List enumerable passed to the test function through the ValueSource attribute.
@@ -111,5 +191,18 @@ namespace GraphicsTestFramework
 				}
 			}
 		}
+
+		// Commes from Menu.cs
+		// Generate and execute a new test runner
+        public void GenerateTestRunner(RunnerType type)
+        {
+            Console.Instance.Write(DebugLevel.Full, MessageLevel.Log, "Generating a test runner"); // Write to console
+            TestRunner newRunner; // Store a reference to call on
+            if (!Master.Instance.gameObject.GetComponent<TestRunner>()) // If no test runner
+                newRunner = Master.Instance.gameObject.AddComponent<TestRunner>(); // Generate one
+            else
+                newRunner = Master.Instance.gameObject.GetComponent<TestRunner>(); // Get current
+            newRunner.SetupRunner(type); // Setup the runner
+        }
 	}
 }

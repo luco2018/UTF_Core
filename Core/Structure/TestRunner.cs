@@ -47,6 +47,7 @@ namespace GraphicsTestFramework
         public RunnerType runnerType;
         public Runner runner;
         bool runnerIsWaiting;
+        public bool isRunning {get{return runnerIsWaiting;}}
         public int currentTestIndex;
         public Test activeTest;
 
