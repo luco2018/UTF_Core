@@ -18,6 +18,7 @@ namespace GraphicsTestFramework
         [SerializeField] public bool isDebugSuite;
         [SerializeField] public TestSettings defaultTestSettings;
         [SerializeField] public RenderPipelineAsset defaultRenderPipeline;
+        [SerializeField] public string suiteID;
         [SerializeField] public List<Group> groups = new List<Group>();
         [SerializeField] public int suiteVersion = 0;
     }
@@ -40,5 +41,6 @@ namespace GraphicsTestFramework
         [SerializeField] public int minimumUnityVersion;
         [SerializeField] public int platforms = -1;
         [SerializeField] public bool run = true;
+        [SerializeField] public string caseID;//testrail caseID
     }
 }

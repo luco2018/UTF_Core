@@ -28,11 +28,21 @@ public class SubmitResultsToTestRail : MonoBehaviour {
 		return client;
 	}
 
-	// private void AddResultToTestRail(APIClient client, string runID, string caseID, string status_id)
-	// {
-	// 	var resultObject = CreateResultData(status_id);
-	// 	JObject jObj = (JObject)client.SendPost("add_result_for_case/"+runID+"/"+caseID, resultObject);
-	// }
+    public void SendResultsToTestRailOnClick()
+    {
+        try
+        {
+            APIClient client = ConnectToTestrail();
+            
+            //BuildResults(client, runID); //Need to know where runID is coming from
+            // should run be made manually, or suite id recorded and runs made from within utf?
+        }
+        catch
+        {
+            //login failed
+        }
+        
+    }
 
 	private Dictionary<string,object> CreateResultData(string status_id)
 	{
@@ -66,16 +76,16 @@ public class SubmitResultsToTestRail : MonoBehaviour {
 						string caseID = structure.suites[su].types[ty].groups[gr].tests[te].caseID;
 						string scenePath = structure.suites[su].types[ty].groups[gr].tests[te].scenePath; // Get scene path
 						ResultsDataCommon common = Common.BuildResultsDataCommon(groupName, testName); // Build results data common to retrieve results
-						ResultsIOData data = ResultsIO.Instance.RetrieveResult(suiteName, typeName, common); // Retrieve results data
+						ResultsIOData data = ResultsIO.Instance.RetrieveEntry(suiteName, typeName, common, false, true); // Retrieve results data
 
 						int passFail = 0; // Set default state (no results)
 						if (data != null) // If results data exists
 						{ 
 							passFail = data.resultsRow[0].resultsColumn[21] == "True" ? 1 : 5; // Set pass fail state
-							//listOfPassFail.Add(passFail);
-							var resultObject = CreateResultData(passFail.ToString());
-							JObject jObj = (JObject)client.SendPost("add_result_for_case/"+runID+"/"+caseID, resultObject);
-						}
+                                                                                               
+                            var resultObject = CreateResultData(passFail.ToString());
+                            JObject jObj = (JObject)client.SendPost("add_result_for_case/" + runID + "/" + caseID, resultObject);
+                        }
 						yield return null;
 					}
 				}

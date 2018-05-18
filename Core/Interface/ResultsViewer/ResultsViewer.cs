@@ -280,6 +280,7 @@ namespace GraphicsTestFramework
                                     string testName = structure.suites[su].types[ty].groups[gr].tests[te].testName; // Get test name
                                     string scenePath = structure.suites[su].types[ty].groups[gr].tests[te].scenePath; // Get scene path
 <<<<<<< HEAD
+<<<<<<< HEAD
                                     ResultsDataCommon common = Common.BuildResultsDataCommon(groupName, testName); // Build results data common to retrieve results
                                     ResultsIOData data = ResultsIO.Instance.RetrieveResult(suiteName, typeName, common); // Retrieve results data
 =======
@@ -287,6 +288,9 @@ namespace GraphicsTestFramework
                                     if(pipeline == null)
                                         pipeline = structure.suites[su].suitePipeline;
                                     ResultsDataCommon common = BuildResultsDataCommon(groupName, testName, pipeline); // Build results data common to retrieve results
+=======
+                                    ResultsDataCommon common = Common.BuildResultsDataCommon(groupName, testName); // Build results data common to retrieve results
+>>>>>>> origin/testrail-integration
                                     ResultsIOData data = new ResultsIOData();
                                     var testResults = structure.suites[su].types[ty].groups[gr].tests[te] as TestStructure.TestResults;                                    if(TestRunner.Instance)
                                     {
@@ -305,7 +309,10 @@ namespace GraphicsTestFramework
                                     if(testResults != null)
                                         dataB = testResults.dataB;
 
+<<<<<<< HEAD
 >>>>>>> master
+=======
+>>>>>>> origin/testrail-integration
                                     if (resultsDropdown.value != 0) // If filtering based on results
                                     {
                                         int passFail = 2; // Set default state (no results)

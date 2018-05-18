@@ -7,6 +7,7 @@ namespace GraphicsTestFramework
     // ------------------------------------------------------------------------------------
     // MenuSettings
     // - Controller for the settings menu
+    //Major TODO - this scripts needs refactoring for resetting certain settings and clearing others, hot fix for testrail intergration
 
     public class MenuSettings : MonoBehaviour
     {
@@ -52,7 +53,11 @@ namespace GraphicsTestFramework
         private void SetUiState()
         {
             testViewerOnAutomationFailToggle.isOn = tempSettings.testviewerOnAutomationTestFail; // Reset
+<<<<<<< HEAD
             //saveButton.interactable = false; // Disable save button
+=======
+            //saveButton.interactable = false; // Disable save button TODO - Need to fix
+>>>>>>> origin/testrail-integration
         }
 
         // ------------------------------------------------------------------------------------
@@ -93,6 +98,10 @@ namespace GraphicsTestFramework
             Console.Instance.Write(DebugLevel.Full, MessageLevel.Log, "Clicked: Save Settings"); // Write to console
             Configuration.Instance.settings = CloneSettings(tempSettings); // Clone settings and save to configuration
             //saveButton.interactable = false; // Disable save button
+<<<<<<< HEAD
+=======
+            SetState(false);
+>>>>>>> origin/testrail-integration
         }
 
         Configuration.Settings CloneSettings (Configuration.Settings input)

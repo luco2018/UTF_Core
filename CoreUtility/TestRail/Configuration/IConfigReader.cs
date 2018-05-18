@@ -14,4 +14,6 @@ public interface IConfigReader
 	/// Should return any other configuration values you need within your middleware/plugins.
 	/// </summary>
 	T GetConfigEntry<T>(string entryName);
+
+    void SetConfigEntry<T>(string entryName, T value);
 }

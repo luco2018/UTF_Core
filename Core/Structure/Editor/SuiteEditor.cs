@@ -29,6 +29,8 @@ namespace GraphicsTestFramework.Experimental
         private string suiteNameTip = "This is the name of the suite, make this clear and short.\nNote:Do not include the word 'Suite'.";
         private string testSettingsTip = "This is the settings object used for the suite, it contains common runtime settings which you may want control over. If not assigned the default object is used.";
         private string srpTip = "This is the Scriptable Render Pipeline asset to use for all tests in this suite, this will be overriden if a test has one set. If not assigned the legacy rendering pipeline(Forward/Deferred) will be used.";
+        private string suiteIDTip = "This is the ID for the matching suite on TestRail.";
+
         private string grpNameTip = "This is the name for the test group, keep this short and clear.\nNote:Do not add the test type here as different test types will recieve their own subcatergory in the app, also take care not to double up on names within the same suite.";
         private string grpOverridePipe = "You can assign a Scriptable Render Pipeline here and it will override the Suites pipeline for this group of tests";
         //private string runTip = "This checkbox tells the system to include this test, unchecking will essentially disable the test.";
@@ -87,17 +89,29 @@ namespace GraphicsTestFramework.Experimental
                     testRect.y += 2;
 
                     //Rects for drawing test elements
+<<<<<<< HEAD
                     Rect runRect = new Rect(testRect.x, testRect.y, 20, EditorGUIUtility.singleLineHeight + 2);
                     Rect sceneRect = new Rect(runRect.x + runRect.width, testRect.y, (testRect.width - runRect.width) * 0.35f, EditorGUIUtility.singleLineHeight + 2);
                     Rect typeRect = new Rect(sceneRect.x + sceneRect.width + 5, testRect.y, (testRect.width) * 0.24f, EditorGUIUtility.singleLineHeight + 2);
                     Rect platformRect = new Rect(typeRect.x + typeRect.width, testRect.y, (testRect.width) * 0.24f, EditorGUIUtility.singleLineHeight + 2);
                     Rect versionRect = new Rect(platformRect.x + platformRect.width, testRect.y, (testRect.width) * 0.12f, EditorGUIUtility.singleLineHeight + 2);
+=======
+                    Rect runRect = new Rect(testRect.x, testRect.y, 20, EditorGUIUtility.singleLineHeight);
+                    Rect sceneRect = new Rect(runRect.x + runRect.width, testRect.y, (testRect.width - runRect.width) * 0.5f, EditorGUIUtility.singleLineHeight + 2);
+                    Rect testRailcaseID = new Rect(sceneRect.x + sceneRect.width, testRect.y, (testRect.width - runRect.width) * 0.5f, EditorGUIUtility.singleLineHeight + 2);
+                    Rect typeRect = new Rect(sceneRect.x, testRect.y + 24, (testRect.width) * 0.4f, EditorGUIUtility.singleLineHeight + 2);
+                    Rect platformRect = new Rect(typeRect.x + typeRect.width, testRect.y + 24, (testRect.width) * 0.4f, EditorGUIUtility.singleLineHeight + 2);
+                    Rect versionRect = new Rect(platformRect.x + platformRect.width, testRect.y + 24, (testRect.width) * 0.17f, EditorGUIUtility.singleLineHeight + 2);
+>>>>>>> origin/testrail-integration
 
                     EditorGUI.PropertyField(runRect, testElement.FindPropertyRelative("run"), GUIContent.none); // Draw run
                     var scene = testElement.FindPropertyRelative("scene");//Ref to the scene value
                     if(scene.objectReferenceValue == null)//If it's not assigned check bool to show error message
                         emptyTests = true;
-                    EditorGUI.PropertyField(sceneRect, scene, GUIContent.none);//Draw he scene property
+                    EditorGUI.PropertyField(sceneRect, scene, GUIContent.none);//Draw the scene property
+                    var caseID = testElement.FindPropertyRelative("caseID");//Ref to the testrail CaseID value
+                    EditorGUIUtility.labelWidth = 90;
+                    caseID.stringValue = EditorGUI.TextField(testRailcaseID, "Testrail CaseID", caseID.stringValue);
                     var testType = testElement.FindPropertyRelative("testTypes");//Ref to the test type value
                     testType.intValue = EditorGUI.MaskField(typeRect, GUIContent.none, testType.intValue, TestTypes.GetTypeStringList());//Draw the test types mask
                     testType.intValue = FixBitmask(testType.intValue);//if all current types selected(-1 everything) convert to a bitmask of just those things
@@ -131,6 +145,7 @@ namespace GraphicsTestFramework.Experimental
                     return l.count > 1;
                 };
 
+<<<<<<< HEAD
                     //if test list is expanded, draw the reorderable list
                     if (tests.isExpanded)
                     {
@@ -142,6 +157,17 @@ namespace GraphicsTestFramework.Experimental
                         //Draw test list
                         testList[index].DoList(new Rect(rect.x, rect.y + (EditorGUIUtility.singleLineHeight * 3), rect.width, rect.height));
                     }
+=======
+                testList[index].elementHeightCallback = (i) =>
+                {
+                    var elementHeight = testList[index].serializedProperty.GetArrayElementAtIndex(i);
+                    return EditorGUIUtility.singleLineHeight * 3f;
+                };
+
+                //if test list is expanded, draw the reorderable list
+                if(tests.isExpanded)
+                    testList[index].DoList(new Rect(rect.x, rect.y + (EditorGUIUtility.singleLineHeight * 1.5f), rect.width, rect.height));
+>>>>>>> origin/testrail-integration
 
                 };
 
@@ -150,11 +176,19 @@ namespace GraphicsTestFramework.Experimental
             { 
                 var list = groupList.serializedProperty.GetArrayElementAtIndex(index);
                 var element = list.FindPropertyRelative("tests");
+<<<<<<< HEAD
                 var padding = 68 + (21.5f * element.arraySize);
                 if(!element.isExpanded){
                     padding = 5;
                 }
                 return 25 + padding;//(EditorGUI.GetPropertyHeight(element) * 1.16f) + padding
+=======
+                var padding = EditorGUIUtility.singleLineHeight;
+                if(!element.isExpanded){
+                    padding = 5;
+                }
+                return (EditorGUI.GetPropertyHeight(element) * 2.65f) - padding;
+>>>>>>> origin/testrail-integration
             };
 
             //On add callback for adding groups, sets the name to "NewGroup", adds one blank test
@@ -197,7 +231,8 @@ namespace GraphicsTestFramework.Experimental
             EditorGUILayout.PropertyField(serializedObject.FindProperty("isDebugSuite"), false);// Draw debugCheckbox;
             EditorGUILayout.PropertyField(serializedObject.FindProperty("defaultTestSettings"), new GUIContent("Suite Test Settings", testSettingsTip), false);// Draw test settings;
             EditorGUILayout.PropertyField(serializedObject.FindProperty("defaultRenderPipeline"), new GUIContent("Suite SRP Asset", srpTip), false); // Draw render pipeline;
-            
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("suiteID"), new GUIContent("Testrail SuiteID", suiteIDTip), false);// Draw the testrail suite ID
+
             EditorGUILayout.Space();//Space :D
             
             EditorGUILayout.LabelField("Tests List", bigLabels);//Title for the tests

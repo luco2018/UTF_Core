@@ -305,7 +305,8 @@ namespace GraphicsTestFramework
 		}
 
 		public void ClearLocalData(){
-			Directory.Delete (dataPath, true);
+            Console.Instance.Write(DebugLevel.File, MessageLevel.LogWarning, "Clearing local data files, this is irreversable.");
+            Directory.Delete (dataPath, true);
 			Directory.CreateDirectory (dataPath);
             Button[] buttons = new Button[2]; // Create button array
             bool openDialogue = Dialogue.Instance.TryDialogue(true, 2, out buttons); // Try for dialogue window and out buttons
