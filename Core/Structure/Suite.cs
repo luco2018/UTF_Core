@@ -19,18 +19,21 @@ namespace GraphicsTestFramework
         [SerializeField] public TestSettings defaultTestSettings;
         [SerializeField] public RenderPipelineAsset defaultRenderPipeline;
         [SerializeField] public List<Group> groups = new List<Group>();
+        [SerializeField] public int suiteVersion = 0;
     }
 
     [Serializable]
     public class Group
     {
         [SerializeField] public string groupName;
+        [SerializeField] public RenderPipelineAsset renderPipelineOverride;
         [SerializeField] public List<Test> tests = new List<Test>();
     }
 
     [Serializable]
     public class Test
     {
+        [SerializeField] public string name = "";
         [SerializeField] public UnityEngine.Object scene;
         [SerializeField] public string scenePath;
         [SerializeField] public int testTypes;

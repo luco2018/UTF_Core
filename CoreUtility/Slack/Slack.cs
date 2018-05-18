@@ -155,8 +155,9 @@ namespace GraphicsTestFramework
                     }
                     attachment = new Attachment(currentEntry.suiteName + ": ", true);
                 }
-                ResultsDataCommon common = BuildResultsDataCommon(currentEntry.groupName, currentEntry.testName); // Build results data common to retrieve results
-                ResultsIOData data = ResultsIO.Instance.RetrieveResult(currentEntry.suiteName, currentEntry.typeName, common); // Retrieve results data
+                string pipeline = Common.GetRenderPipelineName(TestStructure.Instance.GetTestRenderPipeline(currentEntry.suiteIndex, currentEntry.groupIndex, currentEntry.testIndex));
+                ResultsDataCommon common = BuildResultsDataCommon(currentEntry.groupName, currentEntry.testName, pipeline); // Build results data common to retrieve results
+                ResultsIOData data = ResultsIO.Instance.RetrieveEntry(currentEntry.suiteName, currentEntry.typeName, common, false, false); // Retrieve results data
                 if (data != null)
                 {
                     resultsFound = true;
@@ -182,18 +183,19 @@ namespace GraphicsTestFramework
                 globalFailCount += localFailCount;
             }
             SystemData sysData = Master.Instance.GetSystemData();
-            string message = "*UTF completed run. Ran " + globalTestCount.ToString() + ", Passed " + (globalTestCount - globalFailCount).ToString() + ", Failed " + globalFailCount.ToString() +"*" + Environment.NewLine + "_" + sysData.Device + "_" + Environment.NewLine + "_" + sysData.Platform + " - " + sysData.API + "_" + Environment.NewLine + "_" + sysData.UnityVersion + "_";
+            string runID = TestRunner.runUUID == "null" ? "No Run ID" : TestRunner.runUUID;
+            string message = "*UTF completed Run #" + runID + ". Ran " + globalTestCount.ToString() + ", Passed " + (globalTestCount - globalFailCount).ToString() + ", Failed " + globalFailCount.ToString() +"*" + Environment.NewLine + "_" + sysData.Device + "_" + Environment.NewLine + "_" + sysData.Platform + " - " + sysData.API + "_" + Environment.NewLine + "_" + sysData.UnityVersion + "_";
             Attachment[] attachmentArray = attachments.ToArray();
             currentMessage = new Message(message, attachmentArray);
         }
 
-        ResultsDataCommon BuildResultsDataCommon(string sceneName, string testName)
+        ResultsDataCommon BuildResultsDataCommon(string sceneName, string testName, string pipeline)
         {
             ResultsDataCommon common = new ResultsDataCommon();
             SystemData systemData = Master.Instance.GetSystemData();
             common.Platform = systemData.Platform;
             common.API = systemData.API;
-            common.RenderPipe = "Standard Legacy"; // TODO - Implement SRP support
+            common.RenderPipe = pipeline;
             common.GroupName = sceneName;
             common.TestName = testName;
             return common;

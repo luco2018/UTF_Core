@@ -15,7 +15,9 @@ namespace GraphicsTestFramework
         Automation,
         Manual,
         Results,
-        Resolve
+        Resolve,
+        Analytic,
+        AnalyticComparison
     };
 
     // ------------------------------------------------------------------------------------
@@ -45,7 +47,7 @@ namespace GraphicsTestFramework
         public RunnerType runnerType;
         public Runner runner;
         bool runnerIsWaiting;
-        int currentTestIndex;
+        public int currentTestIndex;
         public Test activeTest;
 
         // UUID for automated run
@@ -56,6 +58,11 @@ namespace GraphicsTestFramework
         private void OnLevelWasLoaded(int iLevel)
         {
             levelWasLoaded = true;
+        }
+
+        public bool isAnalytic
+        {
+            get { return (runnerType == RunnerType.Analytic || runnerType == RunnerType.AnalyticComparison) ? true : false; }
         }
 
         // ------------------------------------------------------------------------------------
@@ -82,8 +89,10 @@ namespace GraphicsTestFramework
             Console.Instance.Write(DebugLevel.Full, MessageLevel.Log, "Setting up runner"); // Write to console
             ProgressScreen.Instance.SetState(true, ProgressType.LocalLoad, "Generating and processing new Test Runner"); // Enable ProgressScreen
             runnerType = runType; // Set runner type
-            if(runnerType != RunnerType.Results) // If not results
+            if (runnerType != RunnerType.Results && runnerType != RunnerType.Analytic) // If not results or analytic
                 GenerateTestRunner(TestStructure.Instance.GetStructure()); // Generate test runner
+            else if (runnerType == RunnerType.Analytic) // If analytic
+                ResultsViewer.Instance.SetState(5); // Enable results viewer
         }
 
         // Convert the test structure into a runner based on current selection and runner type
@@ -149,6 +158,12 @@ namespace GraphicsTestFramework
                     currentTestIndex = 0; // Current index is always 0
                     StartCoroutine(LoadTest()); // Load tests manually from 0
                     break;
+                case RunnerType.Analytic: // Analytic Comparison (runs comparisons on recreated results data)
+                    StartCoroutine(IterateTests()); // Iterate the runner
+                    break;
+                case RunnerType.AnalyticComparison: // Analytic Comparison (runs comparisons on recreated results data)
+                    StartCoroutine(IterateTests()); // Iterate the runner
+                    break;
             }
         }
 
@@ -157,7 +172,7 @@ namespace GraphicsTestFramework
         {
             Console.Instance.Write(DebugLevel.Logic, MessageLevel.Log, "Starting automation run"); // Write to console
             runUUID = "";
-            StartCoroutine(SQL.SQLIO.Instance.RunUUID((value => { runUUID = value; })));
+            StartCoroutine(SQL.SQLIO.RunUUID((value => { runUUID = value; }))); // SQLCHECK
             while(runUUID == "") { yield return null; }
             for (int i = 0; i < runner.tests.Count; i++) // Iterate tests
             {
@@ -169,9 +184,14 @@ namespace GraphicsTestFramework
             do { yield return null; } while (runnerIsWaiting == true); // Wait for previous test to finish before enabling menus
             Console.Instance.Write(DebugLevel.Logic, MessageLevel.Log, "Ended automation run"); // Write to console
             ProgressScreen.Instance.SetState(false, ProgressType.LocalLoad, ""); // Disable ProgressScreen
-            yield return Slack.Instance.SendSlackResults(); // Send results to slack
-            if(Common.GetArg("automation") == "true") // Check for automation arg
+            if(Master.Instance._sqlMode == SQLmode.Live && !TestRunner.Instance.isAnalytic)
+            {
+                yield return Slack.Instance.SendSlackResults(); // Send results to slack
+            }
+            if (Common.GetArg("automation") == "true") // Check for automation arg
                 Common.QuitApplication(); // Quick application
+            else if (isAnalytic) // IF analytic
+                ResultsViewer.Instance.SetState(5); // Enable ResultViewer
             else
                 Menu.Instance.SetMenuState(true); // Enable menu
         }
@@ -179,12 +199,15 @@ namespace GraphicsTestFramework
         // Load Test of currentTestIndex
         IEnumerator LoadTest()
         {
-            if (SceneManager.GetActiveScene().name != runner.tests[currentTestIndex].scenePath) // If current scene name does not match requested
+            if(!isAnalytic) // If not analytic
             {
-                SceneManager.LoadScene(runner.tests[currentTestIndex].scenePath); // Load requested scene
-                while (!levelWasLoaded) // Wait for load
-                    yield return null;
-                levelWasLoaded = false; // Reset
+                if (SceneManager.GetActiveScene().name != runner.tests[currentTestIndex].scenePath) // If current scene name does not match requested
+                {
+                    SceneManager.LoadScene(runner.tests[currentTestIndex].scenePath); // Load requested scene
+                    while (!levelWasLoaded) // Wait for load
+                        yield return null;
+                    levelWasLoaded = false; // Reset
+                }
             }
             Console.Instance.Write(DebugLevel.Logic, MessageLevel.Log, "Loading test "+ runner.tests[currentTestIndex].testName); // Write to console
             StartTest(runner.tests[currentTestIndex], runnerType); // Start the test
@@ -254,15 +277,24 @@ namespace GraphicsTestFramework
         public void StartTest(TestEntry inputTest, RunnerType runnerType)
         {
             Console.Instance.Write(DebugLevel.Logic, MessageLevel.Log, "Starting test " + inputTest.testName); // Write to console
-            activeTest = SuiteManager.GetTest(inputTest); // Get the active test
-            TestLogicBase activeTestLogic = GetLogicInstance(SuiteManager.GetSuiteName(inputTest.suiteIndex), activeTest, inputTest); // Get active test logic instance
+            TestLogicBase activeTestLogic = null;
+            if (!isAnalytic) // If not analytic mode
+            {
+                activeTest = SuiteManager.GetTest(inputTest); // Get the active test from suite manager
+                activeTestLogic = GetLogicInstance(SuiteManager.GetSuiteName(inputTest.suiteIndex), inputTest); // Get active test logic instance
+            }   
+            else
+            {
+                activeTest = Common.GenerateTestFromTestEntry(inputTest); // Get the active test from structure
+                activeTestLogic = GetLogicInstance(TestStructure.Instance.GetSuiteNameFromIndex(inputTest.suiteIndex), inputTest); // Get active test logic instance
+            }
             StartCoroutine(activeTestLogic.SetupTest(inputTest, runnerType)); // Setup test
         }
 
         TestModelBase activeModelInstance;
 
         // Get a logic instance and set model instance on it
-        TestLogicBase GetLogicInstance(string suiteName, Test activeTest, TestEntry activeEntry)
+        TestLogicBase GetLogicInstance(string suiteName, TestEntry activeEntry)
         {
             Console.Instance.Write(DebugLevel.Full, MessageLevel.Log, "Getting logic instance"); // Write to console
             TestLogicBase output; // Create logic instance
@@ -306,7 +338,7 @@ namespace GraphicsTestFramework
         // End the current Test (called by TestLogic.EndTestAction)
         public void EndTest()
         {
-            Console.Instance.Write(DebugLevel.Logic, MessageLevel.Log, "Ended test " + activeTest.scenePath.ToString()); // Write to console
+            Console.Instance.Write(DebugLevel.Logic, MessageLevel.Log, "Ended test " + activeTest.name.ToString()); // Write to console
             if(runnerType == RunnerType.Manual) // If manual run
                 ProgressScreen.Instance.SetState(false, ProgressType.LocalLoad, ""); // Disable ProgressScreen
             FinalizeTest(); // Finalize test on TestRunner

@@ -7,19 +7,12 @@ namespace GraphicsTestFramework
     // ExampleLogic
     // - Serves only as example of logic custom setup
 
-    public class ExampleLogic : TestLogic<ExampleModel, ExampleDisplay, ExampleResults, ExampleSettings> // Set types here for matching: < ModelType , DisplayType, ResultsType, SettingsType >
+    public class ExampleLogic : TestLogic<ExampleModel, ExampleDisplay, ExampleResults, ExampleSettings, ExampleComparison> // Set types here for matching: < ModelType , DisplayType, ResultsType, SettingsType >
 	{
         // ------------------------------------------------------------------------------------
         // Variables
 
         float timeWaited; // Used for example
-
-        // Structure for comparison results (Do not rename class. Class contents can be anything)
-        [System.Serializable]
-        public class ComparisonData
-        {
-            public float SomeFloatDiff; // Just some example data. Well use this for comparison.
-        }
 
         // ------------------------------------------------------------------------------------
         // Execution Overrides
@@ -53,22 +46,32 @@ namespace GraphicsTestFramework
             m_TempData = GetDummyData(m_TempData.common); // Just get some dummy data for the example (logic specific)
             if (baselineExists) // Comparison (mandatory)
             {
-                ExampleResults referenceData = (ExampleResults)DeserializeResults(ResultsIO.Instance.RetrieveBaseline(suiteName, testTypeName, m_TempData.common)); // Deserialize baseline data (mandatory)
-                ComparisonData comparisonData = (ComparisonData)ProcessComparison(referenceData, m_TempData);  // Prrocess comparison (mandatory)
-                if (comparisonData.SomeFloatDiff < model.settings.passFailThreshold)  // Pass/fail decision logic (logic specific)
-                    m_TempData.common.PassFail = true;
-                else
-                    m_TempData.common.PassFail = false;
-                comparisonData = null;  // Null comparison (mandatory)
+                AltBaselineSettings altBaselineSettings = Master.Instance.GetCurrentPlatformAPI(); // current chosen API/plafrom
+                ResultsDataCommon m_BaselineData = m_TempData.common.SwitchPlatformAPI(altBaselineSettings.Platform, altBaselineSettings.API); // makes new ResultsDataCommon to grab baseline
+                ExampleResults referenceData = (ExampleResults)DeserializeResults(ResultsIO.Instance.RetrieveEntry(suiteName, testTypeName, m_TempData.common, true, true)); // Deserialize baseline data (mandatory)
+                m_TempData.common.PassFail = GetComparisonResult(m_TempData, referenceData); // Get comparison results
             }
             BuildResultsStruct(m_TempData); // Submit (mandatory)
+        }
+
+        // Get a comparison result from any given result and baseline
+        public override bool GetComparisonResult(ResultsBase results, ResultsBase baseline)
+        {
+            ExampleComparison comparisonData = (ExampleComparison)ProcessComparison(baseline, results);  // Prrocess comparison (mandatory)
+            bool output = false;
+            if (comparisonData.SomeFloatDiff < model.settings.passFailThreshold)  // Pass/fail decision logic (logic specific)
+                output = true;
+            else
+                output = false;
+            comparisonData = null;  // Null comparison (mandatory)
+            return output;
         }
 
         // Logic for comparison process (mandatory)
         // TODO - Will use last run test model, need to get this for every call from Viewers?
         public override object ProcessComparison(ResultsBase baselineData, ResultsBase resultsData)
         {
-            ComparisonData newComparison = new ComparisonData(); // Create new ComparisonData instance (mandatory)
+            ExampleComparison newComparison = new ExampleComparison(); // Create new ComparisonData instance (mandatory)
             ExampleResults baselineDataTyped = (ExampleResults)baselineData;
             ExampleResults resultsDataTyped = (ExampleResults)resultsData;
             newComparison.SomeFloatDiff = resultsDataTyped.SomeFloat - baselineDataTyped.SomeFloat; // Perform comparison logic (logic specific)

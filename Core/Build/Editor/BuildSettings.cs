@@ -45,7 +45,7 @@ namespace GraphicsTestFramework
         public void RunBuildPipeline()
         {
             GetUnityVersionInfo(); // Get unity version info
-            SetApplicationSettings(null, ""); // Set application settings
+            //SetApplicationSettings(null); // Set application settings
             SetScriptingDefines(); // Set defines
             SetPlayerSettings(); // Set player settings
             SetQualitySettings(); // Set quality settings
@@ -58,7 +58,7 @@ namespace GraphicsTestFramework
         {
             GetUnityVersionInfo(); // Get unity version info
             SuiteManager.GenerateSceneList(false); // Create suite structure
-            SetApplicationSettings(null, ""); // Set application settings
+            SetApplicationSettings(null); // Set application settings
             SetScriptingDefines(); // Set defines
             SetPlayerSettings(); // Set player settings
             SetQualitySettings(); // Set quality settings
@@ -70,7 +70,7 @@ namespace GraphicsTestFramework
         {
             GetUnityVersionInfo(); // Get unity version info
             SuiteManager.GenerateSceneList(true); // Create suite structure
-            SetApplicationSettings(null, ""); // Set application settings
+            SetApplicationSettings(null); // Set application settings
             SetScriptingDefines(); // Set defines
             SetPlayerSettings(); // Set player settings
             SetQualitySettings(); // Set quality settings
@@ -100,7 +100,8 @@ namespace GraphicsTestFramework
             int platformCount = Enum.GetNames(typeof(BuildTargetGroup)).Length; // Get platform count
             for (int i = 0; i < platformCount; i++) // Iterate all platforms
             {
-                PlayerSettings.SetScriptingDefineSymbolsForGroup((BuildTargetGroup)i, output); // Add custom to current
+                if(!depreciatedBuiltTargets.Contains(i))
+                    PlayerSettings.SetScriptingDefineSymbolsForGroup((BuildTargetGroup)i, output); // Add custom to current
             }
         }
 
@@ -110,6 +111,7 @@ namespace GraphicsTestFramework
             PlayerSettings.gpuSkinning = true;
             PlayerSettings.colorSpace = ColorSpace.Linear;
             //QualitySettings.vSyncCount = 0;
+            Application.runInBackground = true; //ignored on mobiles
         }
 
         // Set quality settings
@@ -122,7 +124,7 @@ namespace GraphicsTestFramework
         }
 
         // Set various application specific settings
-        public static void SetApplicationSettings(BuildTarget target, string append)
+        public static void SetApplicationSettings(BuildTarget target)
         {
             PlayerSettings.companyName = "Unity Technologies";
             string productName = "";
@@ -151,32 +153,26 @@ namespace GraphicsTestFramework
                 Debug.LogError("No Settings object found. Aborting.");
                 return;
             }
-            productName += append;
+            productName += BuildPipeline.AppendProductName(target);
             PlayerSettings.productName = productName;
-            if(target != null)
-            {
-                if (target.platform == UnityEditor.BuildTarget.iOS)
-                    productName = productName.Replace("_", "-");
-            }
+            
             int platformCount = Enum.GetNames(typeof(BuildTargetGroup)).Length; // Get platform count
             for (int i = 0; i < platformCount; i++) // Iterate all platforms
-                PlayerSettings.SetApplicationIdentifier((BuildTargetGroup)i, "com.UnityTechnologies."+productName); // Set bundle identifiers
+            {
+                if (!depreciatedBuiltTargets.Contains(i))
+                {
+                    if((BuildTargetGroup)i == BuildTargetGroup.iOS)
+                        PlayerSettings.SetApplicationIdentifier((BuildTargetGroup)i, "com.UnityTechnologies." + productName.Replace("_", "-")); // Set bundle identifier for iOS
+                    else
+                        PlayerSettings.SetApplicationIdentifier((BuildTargetGroup)i, "com.UnityTechnologies." + productName); // Set bundle identifiers for other
+                }
+            }
         }
-    }
 
-    // Build preprocess steps
-    class MyCustomBuildProcessor : IPreprocessBuild
-    {
-        public int callbackOrder { get { return 0; } }
-
-        public void OnPreprocessBuild(UnityEditor.BuildTarget target, string path)
-        {
-#if UNITY_EDITOR
-            //BuildSettings.GetUnityVersionInfo(); // Get unity version info
-            //BuildSettings.SetApplicationSettings(); // Set application settings
-            //BuildSettings.SetScriptingDefines(); // Set defines
-            //BuildSettings.SetPlayerSettings(); // Set player settings
-#endif
-        }
+        #if UNITY_2017_1_OR_NEWER
+        private static List<int> depreciatedBuiltTargets = new List<int>(){ 0 , 2, 3, 5, 6, 8, 9, 10, 11, 12, 15, 16, 17, 20, 22};
+        #else
+        private static List<int> depreciatedBuiltTargets = new List<int>() { 0, 3, 5, 6, 8, 9, 10, 11, 12, 15, 16 };
+        #endif
     }
 }

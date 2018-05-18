@@ -91,11 +91,13 @@ namespace GraphicsTestFramework
     {
         public TestEntry testEntry;
         public ResultsIOData resultsData;
+        public ResultsIOData resultsDataB;
 
-        public ResultsEntryData(TestEntry inputEntry, ResultsIOData inputData)
+        public ResultsEntryData(TestEntry inputEntry, ResultsIOData inputData, ResultsIOData inputDataB)
         {
             testEntry = inputEntry;
             resultsData = inputData;
+            resultsDataB = inputDataB;
         }
     }
 }

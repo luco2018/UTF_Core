@@ -52,7 +52,7 @@ namespace GraphicsTestFramework
         private void SetUiState()
         {
             testViewerOnAutomationFailToggle.isOn = tempSettings.testviewerOnAutomationTestFail; // Reset
-            saveButton.interactable = false; // Disable save button
+            //saveButton.interactable = false; // Disable save button
         }
 
         // ------------------------------------------------------------------------------------
@@ -78,7 +78,7 @@ namespace GraphicsTestFramework
         {
             Console.Instance.Write(DebugLevel.Full, MessageLevel.Log, "Open Test Viewer on Automation Fail set to "+input); // Write to console
             tempSettings.testviewerOnAutomationTestFail = input; // Set
-            saveButton.interactable = true; // Enable save button
+            //saveButton.interactable = true; // Enable save button
         }
 
         // Clear all local data
@@ -92,7 +92,7 @@ namespace GraphicsTestFramework
         {
             Console.Instance.Write(DebugLevel.Full, MessageLevel.Log, "Clicked: Save Settings"); // Write to console
             Configuration.Instance.settings = CloneSettings(tempSettings); // Clone settings and save to configuration
-            saveButton.interactable = false; // Disable save button
+            //saveButton.interactable = false; // Disable save button
         }
 
         Configuration.Settings CloneSettings (Configuration.Settings input)
@@ -108,6 +108,22 @@ namespace GraphicsTestFramework
                 field.SetValue(output, System.Convert.ChangeType(value, field.FieldType)); // Set value to configuration
             }
             return output; // Return
+        }
+
+        // Settings save and revert delagates
+        public static event Broadcast.SaveMenuSettings saveSettings;
+        public void SaveSettings()
+        {
+            if (saveSettings != null)
+                saveSettings();
+            SetState(false);
+        }
+
+        public static event Broadcast.RevertMenuSettings revertSettings;
+        public void RevertSettings()
+        {
+            if (revertSettings != null)
+                revertSettings();
         }
     }
 }

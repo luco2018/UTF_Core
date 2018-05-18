@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Specialized;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace GraphicsTestFramework
 {
@@ -12,8 +14,9 @@ namespace GraphicsTestFramework
     {
         // ------------------------------------------------------------------------------------
         // Variables
-
         public SQLmode _sqlMode;
+        private AltBaselineSettings _altBaselineSettings = null;
+        private static NameValueCollection _altBaselineSets;
 
         // Singleton
         private static Master _Instance = null;
@@ -34,6 +37,60 @@ namespace GraphicsTestFramework
         private void Awake()
         {
             DontDestroyOnLoad(gameObject); // Set this object to DontDestroy
+
+            #if !UNITY_STANDALONE
+            Application.targetFrameRate = 300;
+            #endif
+        }
+
+        // ------------------------------------------------------------------------------------
+        // Setting/Getting current baseline set
+
+        public void SetCurrentPlatformAPI(string platform, string api)
+        {
+            if (_altBaselineSettings == null || platform != _altBaselineSettings.Platform || api != _altBaselineSettings.API)
+            {
+                _altBaselineSettings = new AltBaselineSettings(platform, api);
+                if (platform != GetSystemData().Platform || api != GetSystemData().API)
+                {
+                    if (_sqlMode == SQLmode.Live)
+                        _sqlMode = SQLmode.Disabled;
+                    else if (_sqlMode == SQLmode.Staging)
+                        _sqlMode = SQLmode.DisabledStaging;
+                }
+                else
+                {
+                    {
+                        if (_sqlMode == SQLmode.Disabled)
+                            _sqlMode = SQLmode.Live;
+                        else if (_sqlMode == SQLmode.DisabledStaging)
+                            _sqlMode = SQLmode.Staging;
+                    }
+                }
+                BroadcastBaselineChange();
+            }
+        }
+        public AltBaselineSettings GetCurrentPlatformAPI()
+        {
+            return _altBaselineSettings;
+        }
+
+        public static void SetAltBaselines(NameValueCollection sets)
+        {
+            _altBaselineSets = sets;
+        }
+
+        public static NameValueCollection GetAltBaselines()
+        {
+            return _altBaselineSets;
+        }
+
+        public static event Broadcast.AltBaselineChanged baselinesChanged;
+
+        public void BroadcastBaselineChange()
+        {
+            if (baselinesChanged != null)
+                baselinesChanged();
         }
 
         // ------------------------------------------------------------------------------------
@@ -76,7 +133,6 @@ namespace GraphicsTestFramework
             UnityEditor.EditorApplication.isPlaying = false; // If editor stop play mode
 #endif
         }
-
     }
 
     // ------------------------------------------------------------------------------------
@@ -99,7 +155,21 @@ namespace GraphicsTestFramework
     {
         Live,
         Staging,
-        Disabled
+        Disabled,
+        DisabledStaging
+    }
+
+    // Class for holding current  platform and API if different from devices
+    [System.Serializable]
+    public class AltBaselineSettings
+    {
+        public string Platform;
+        public string API;
+        public AltBaselineSettings(string platform, string api)
+        {
+            Platform = platform;
+            API = api;
+        }
     }
 
 }

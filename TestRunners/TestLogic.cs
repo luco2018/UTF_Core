@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Reflection;
 using System.Collections;
 using System.Collections.Generic;
@@ -57,6 +57,10 @@ namespace GraphicsTestFramework
         void OnEnable()
         {
             ResultsIO.endResultsSave += ConfirmResultsSaved;
+#if UNITY_2018_1_OR_NEWER
+            RenderPipeline.beginFrameRendering += SRPBeginFrame;
+            RenderPipeline.beginCameraRendering += SRPBeginCamera;
+#endif
             waitCallback += ContinueTest;
         }
 
@@ -64,6 +68,10 @@ namespace GraphicsTestFramework
         void OnDisable()
         {
             ResultsIO.endResultsSave -= ConfirmResultsSaved;
+#if UNITY_2018_1_OR_NEWER
+            RenderPipeline.beginFrameRendering -= SRPBeginFrame;
+            RenderPipeline.beginCameraRendering -= SRPBeginCamera;
+#endif
             waitCallback -= ContinueTest;
         }
 
@@ -103,15 +111,22 @@ namespace GraphicsTestFramework
         // Set initial information for test at beginning of test run
         public IEnumerator SetupTest(TestEntry inputEntry, RunnerType runType)
         {
-            ProgressScreen.Instance.SetState(true, ProgressType.LocalSave, "Preparing test"); // Enable ProgressScreen
-            testWasRan = false; // Reset
             activeTestEntry = inputEntry; // Store active TestEntry
             activeRunType = runType; // Store active RunnerType
-            SetSettings(); // Set settings to internal
-            yield return new WaitForEndOfFrame(); // Wait for settings
-            SetupResultsStructs(); // Setup the results structs to be filled
-            CheckForBaseline(); // Check for baselines
-            Console.Instance.Write(DebugLevel.Full, MessageLevel.Log, this.GetType().Name + " set up test " + activeTestEntry.testName); // Write to console
+            if(!TestRunner.Instance.isAnalytic) // If not analytic
+            {
+                ProgressScreen.Instance.SetState(true, ProgressType.LocalSave, "Preparing test"); // Enable ProgressScreen
+                testWasRan = false; // Reset
+                SetSettings(); // Set settings to internal
+                yield return new WaitForEndOfFrame(); // Wait for settings
+                SetupResultsStructs(); // Setup the results structs to be filled
+                CheckForBaseline(); // Check for baselines
+                Console.Instance.Write(DebugLevel.Full, MessageLevel.Log, this.GetType().Name + " set up test " + activeTestEntry.testName); // Write to console
+            }
+            else
+            {
+                SetSettings(); // Set settings to internal
+            }
             ResultsIOData localResult; // Used for certain active run types
             switch (activeRunType)
             {
@@ -119,21 +134,29 @@ namespace GraphicsTestFramework
                     TestPreProcess(); // Start pre-process
                     break;
                 case RunnerType.Manual:
-                    localResult = ResultsIO.Instance.RetrieveResult(suiteName, GetType().ToString().Replace("GraphicsTestFramework.", "").Replace("Logic", ""), activeResultData.common); // Try get local result
+                    localResult = ResultsIO.Instance.RetrieveEntry(suiteName, GetType().ToString().Replace("GraphicsTestFramework.", "").Replace("Logic", ""), activeResultData.common, false, true); // Try get local result
                     if (localResult == null) // If not found
                         TestPreProcess(); // Start pre-process
                     else // If found
                         UseLocalResult(localResult); // Use local
                     break;
                 case RunnerType.Results:
-                    localResult = ResultsIO.Instance.RetrieveResult(suiteName, GetType().ToString().Replace("GraphicsTestFramework.", "").Replace("Logic", ""), activeResultData.common); // Try get local result
+                    localResult = ResultsIO.Instance.RetrieveEntry(suiteName, GetType().ToString().Replace("GraphicsTestFramework.", "").Replace("Logic", ""), activeResultData.common, false, true); // Try get local result
                     UseLocalResult(localResult); // Use local
                     break;
                 case RunnerType.Resolve:
                     TestPreProcess(); // Start pre-process
                     break;
+                case RunnerType.Analytic:
+                    break;
+                case RunnerType.AnalyticComparison:
+                    StartCoroutine(ProcessAnalyticComparison());
+                    break;
             }
         }
+
+        // Analytic comparson Logic
+        public abstract IEnumerator ProcessAnalyticComparison();
 
         // First injection point for custom code. Runs before any test logic.
         public virtual void TestPreProcess()
@@ -145,7 +168,7 @@ namespace GraphicsTestFramework
         // Start main test logic
         public void StartTest()
         {
-            ProgressScreen.Instance.SetState(true, ProgressType.LocalSave, "Running test"); // Enable ProgressScreen
+            ProgressScreen.Instance.SetState(true, ProgressType.LocalSave, string.Format("Running Test {2}/{3}\n{0} | {1}", activeTestEntry.groupName, activeTestEntry.testName, TestRunner.Instance.currentTestIndex + 1, TestRunner.Instance.runner.tests.Count)); // Enable ProgressScreen
             Console.Instance.Write(DebugLevel.Logic, MessageLevel.Log, this.GetType().Name + " started test " + activeTestEntry.testName); // Write to console
             testWasRan = true; // Track
             StartCoroutine(ProcessResult()); // Process test results
@@ -200,6 +223,9 @@ namespace GraphicsTestFramework
                     break;
                 case RunnerType.Resolve:
                     GetComponent<TestDisplayBase>().EnableTestViewer(activeResultData, new TestViewerToolbar.State(false, false, false, true, true)); // Enable test viewer with active results data
+                    break;
+                case RunnerType.AnalyticComparison:
+                    BroadcastEndTestAction(); // Broadcast to TestList that rest is completed
                     break;
             }
         }
@@ -268,9 +294,11 @@ namespace GraphicsTestFramework
         // Comparison Methods
 
         // Get comparison data
-        public object GetComparisonData(ResultsBase resultsData)
+        public object ProcessComparison(ResultsBase resultsData)
         {
-            ResultsIOData baselineFetch = ResultsIO.Instance.RetrieveBaseline(suiteName, testTypeName, resultsData.common); // Get baseline data
+            AltBaselineSettings altBaselineSettings = Master.Instance.GetCurrentPlatformAPI(); // current chosen API/plafrom
+            ResultsDataCommon m_BaselineData = resultsData.common.SwitchPlatformAPI(altBaselineSettings.Platform, altBaselineSettings.API); // makes new ResultsDataCommon to grab baseline
+            ResultsIOData baselineFetch = ResultsIO.Instance.RetrieveEntry(suiteName, testTypeName, m_BaselineData, true, true); // Get baseline data
             if (baselineFetch != null) // If successful
             {
                 ResultsBase baselineData = (ResultsBase)DeserializeResults(baselineFetch); // Convert to results class
@@ -301,7 +329,7 @@ namespace GraphicsTestFramework
         public void CheckForBaseline()
         {
             ProgressScreen.Instance.SetState(true, ProgressType.LocalLoad, "Retrieving baseline data"); // Enable ProgressScreen
-            baselineExists = ResultsIO.Instance.BaselineExists(activeTestEntry.suiteName, "Standard Legacy", activeTestEntry.typeName/*testTypeName*/, activeTestEntry.groupName, activeTestEntry.testName); // Check for baseline
+            baselineExists = ResultsIO.Instance.BaselineExists(activeTestEntry.suiteName, GetRenderPipelineName(), activeTestEntry.typeName/*testTypeName*/, activeTestEntry.groupName, activeTestEntry.testName); // Check for baseline
         }
 
         //Convert an array on unknown type to a typed array
@@ -329,6 +357,38 @@ namespace GraphicsTestFramework
                     fieldInfo.SetValue(resultData, byteArray);
                     break;
             }
+        }
+
+        public string GetRenderPipelineName()
+        {
+            RenderPipelineAsset renderPipeline = GetRenderPipeline();
+            if (renderPipeline == null)
+                return "Standard Legacy";
+            else
+                return Common.GetRenderPipelineName(renderPipeline);
+        }
+
+        public RenderPipelineAsset GetRenderPipeline()
+        {
+            RenderPipelineAsset renderPipeline = null;
+            Suite suite = SuiteManager.GetSuiteByName(suiteName); // Get current suite
+            if (suite != null) // If suite was returned
+            {
+                renderPipeline = suite.groups[activeTestEntry.groupIndex].renderPipelineOverride; // Get the groups override render pipeline
+                if (renderPipeline == null) // if still null fallback to suite default
+                    renderPipeline = suite.defaultRenderPipeline; // Apply suite default
+            }
+            return renderPipeline;
+        }
+
+        public virtual void SRPBeginFrame(Camera[] cam)
+        {
+
+        }
+
+        public virtual void SRPBeginCamera(Camera cam)
+        {
+
         }
 
         // ------------------------------------------------------------------------------------
@@ -398,7 +458,7 @@ namespace GraphicsTestFramework
     // - Next level TestLogic class that all user facing logics derive from
     // - Adds an abstraction layer for defining model type
 
-    public abstract class TestLogic<M, D, R, S> : TestLogicBase where M : TestModelBase where D : TestDisplayBase where R : ResultsBase where S : SettingsBase
+    public abstract class TestLogic<M, D, R, S, C> : TestLogicBase where M : TestModelBase where D : TestDisplayBase where R : ResultsBase where S : SettingsBase where C : ComparisonBase
     {
         // ------------------------------------------------------------------------------------
         // Variables
@@ -473,22 +533,18 @@ namespace GraphicsTestFramework
         // Check if Render Pipeline needs to be changed and change if necessary
         public void SetRenderPipeline()
         {
-            RenderPipelineAsset renderPipeline = model.settings.renderPipeline; // Get the models render pipeline
-            if (renderPipeline == null) // If none found
+            RenderPipelineAsset renderPipeline = null;
+            Suite suite = SuiteManager.GetSuiteByName(suiteName); // Get current suite
+            if (suite != null) // If suite was returned
             {
-                Suite suite = SuiteManager.GetSuiteByName(suiteName); // Get current suite
-                if (suite != null) // If suite was returned
-                {
+                renderPipeline = suite.groups[activeTestEntry.groupIndex].renderPipelineOverride; // Get the groups override render pipeline
+                if(renderPipeline == null) // if still null fallback to suite default
                     renderPipeline = suite.defaultRenderPipeline; // Apply suite default
-                }
             }
             RenderPipelineAsset currentRenderPipeline = Common.GetRenderPipeline();
             if(renderPipeline != currentRenderPipeline)
             {
-
                 GraphicsSettings.renderPipelineAsset = renderPipeline;
-
-
             }
         }
 
@@ -502,7 +558,8 @@ namespace GraphicsTestFramework
             newResultsData.common = Common.GetCommonResultsData(); // Initialize common
             newResultsData.common.GroupName = activeTestEntry.groupName; // Set scene name
             newResultsData.common.TestName = activeTestEntry.testName; // Set test name
-            newResultsData.common.Custom += Common.CustomEntry("runID", TestRunner.runUUID);
+            if(TestRunner.runUUID != null || TestRunner.runUUID != "null")
+                newResultsData.common.Custom += Common.CustomEntry("runID", TestRunner.runUUID);
             activeResultData = newResultsData; // Set as active
         }
 
@@ -591,6 +648,22 @@ namespace GraphicsTestFramework
 			}
 		}
 
+        // Analytic comparson logic
+        public override IEnumerator ProcessAnalyticComparison()
+        {
+            ResultsIOData resultsA = new ResultsIOData(); // Create results A
+            yield return StartCoroutine(SQL.SQLIO.FetchSpecificEntry(TestStructure.Instance.RequestAnalyticData(0, activeTestEntry), (value => { resultsA = value; }))); // Get full results A // SQLCHECK
+            var rawResultsA = (R)DeserializeResults(resultsA); // Deserialize
+            ResultsIOData resultsB = new ResultsIOData(); // Create results A
+            yield return StartCoroutine(SQL.SQLIO.FetchSpecificEntry(TestStructure.Instance.RequestAnalyticData(1, activeTestEntry), (value => { resultsB = value; }))); // Get full results A // SQLCHECK
+            var rawResultsB = (R)DeserializeResults(resultsB); // Deserialize
+            bool passFail = GetComparisonResult(rawResultsA, rawResultsB); // Get Comparison result
+            resultsA.resultsRow[0].resultsColumn[Common.FindResultsDataIOFieldIdByName(resultsA, "PassFail")] = passFail.ToString(); // Set pass fail
+            EndTest(); // End test
+        }
+
+        public abstract bool GetComparisonResult(ResultsBase results, ResultsBase baseline);
+
         // ------------------------------------------------------------------------------------
         // Stable Framerate
 
@@ -664,7 +737,6 @@ namespace GraphicsTestFramework
             BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static;
             FieldInfo[] commonFields = typeof(ResultsDataCommon).GetFields(bindingFlags);
             FieldInfo[] customFields = results.GetFields(bindingFlags);
-
             List<string> commonDataRaw = resultsIOData.resultsRow[0].resultsColumn.GetRange(0, commonFields.Length);
             List<string> resultsDataRaw = resultsIOData.resultsRow[0].resultsColumn.GetRange(commonFields.Length, resultsIOData.resultsRow[0].resultsColumn.Count - (commonFields.Length));
 

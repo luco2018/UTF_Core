@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace GraphicsTestFramework
 {
@@ -9,7 +10,7 @@ namespace GraphicsTestFramework
     // - Results: Captures a screenshot from models test camera
     // - Comparison: Gets average value of pixel differences between results screenshot and baseline
 
-    public class FrameComparisonLogic : TestLogic<FrameComparisonModel, FrameComparisonDisplay, FrameComparisonResults, FrameComparisonSettings>
+    public class FrameComparisonLogic : TestLogic<FrameComparisonModel, FrameComparisonDisplay, FrameComparisonResults, FrameComparisonSettings, FrameComparisonComparison>
     {
         // ------------------------------------------------------------------------------------
         // Variables
@@ -18,16 +19,7 @@ namespace GraphicsTestFramework
         Camera menuCamera;
         RenderTexture temporaryRt;
         Texture2D resultsTexture;
-        bool doCapture;        
-
-        // Structure for comparison
-        [System.Serializable]
-        public class ComparisonData
-        {
-            public float DiffPercentage;
-            public Texture2D baselineTex;
-            public Texture2D resultsTex;
-        }
+        bool doCapture;     
 
         // ------------------------------------------------------------------------------------
         // Execution Overrides
@@ -58,7 +50,7 @@ namespace GraphicsTestFramework
         public override IEnumerator ProcessResult()
         {
             var typedSettings = (FrameComparisonSettings)model.settings; // Set settings to local type
-            if(!typedSettings.useBackBuffer)
+            if (!typedSettings.useBackBuffer)
             {
                 typedSettings.captureCamera.targetTexture = temporaryRt; // Set capture cameras target texture to temporary RT (logic specific)
                 dummyCamera.enabled = true;
@@ -70,23 +62,26 @@ namespace GraphicsTestFramework
             }
             var m_TempData = (FrameComparisonResults)GetResultsStruct(); // Get a results struct (mandatory)
             yield return WaitForTimer(); // Wait for timer
-            if(typedSettings.useBackBuffer)
+            if (typedSettings.useBackBuffer)
+            {
+                if(Debug.developerConsoleVisible)
+                {
+                    Debug.ClearDeveloperConsole(); // Clear the dev console if it's visible before capturing the backbuffer.
+                }
                 BackBufferCapture();
-	    else
-	    	doCapture = true; // Perform OnRenderImage logic (logic specific)
+            }
+            else
+                doCapture = true; // Perform OnRenderImage logic (logic specific)
             do { yield return null; } while (resultsTexture == null); // Wait for OnRenderImage logic to complete (logic specific)
-			m_TempData.resultFrame = Common.ConvertTextureToString (resultsTexture); // Convert results texture to Base64 String and save to results data
+            m_TempData.resultFrame = Common.ConvertTextureToString(resultsTexture, typedSettings.imageQuality); // Convert results texture to Base64 String and save to results data
             if (baselineExists) // Comparison (mandatory)
             {
-                FrameComparisonResults referenceData = (FrameComparisonResults)DeserializeResults(ResultsIO.Instance.RetrieveBaseline(suiteName, testTypeName, m_TempData.common)); // Deserialize baseline data (mandatory)
-                ComparisonData comparisonData = (ComparisonData)ProcessComparison(referenceData, m_TempData);  // Prrocess comparison (mandatory)
-                if (comparisonData.DiffPercentage < model.settings.passFailThreshold)  // Pass/fail decision logic (logic specific)
-                    m_TempData.common.PassFail = true;
-                else
-                    m_TempData.common.PassFail = false;
-                comparisonData = null;  // Null comparison (mandatory)
+                AltBaselineSettings altBaselineSettings = Master.Instance.GetCurrentPlatformAPI(); // current chosen API/plafrom
+                ResultsDataCommon m_BaselineData = m_TempData.common.SwitchPlatformAPI(altBaselineSettings.Platform, altBaselineSettings.API); // makes new ResultsDataCommon to grab baseline
+                FrameComparisonResults referenceData = (FrameComparisonResults)DeserializeResults(ResultsIO.Instance.RetrieveEntry(suiteName, testTypeName, m_BaselineData, true, true)); // Deserialize baseline data (mandatory)
+                m_TempData.common.PassFail = GetComparisonResult(m_TempData, referenceData); // Get comparison results
             }
-            if(typedSettings.useBackBuffer)
+            if (typedSettings.useBackBuffer)
             {
                 ProgressScreen.Instance.progressObject.SetActive(true); // Show progress screen again
                 menuCamera.enabled = true;
@@ -107,11 +102,24 @@ namespace GraphicsTestFramework
             EndTest(); // End test
         }
 
+        // Get a comparison result from any given result and baseline
+        public override bool GetComparisonResult(ResultsBase results, ResultsBase baseline)
+        {
+            FrameComparisonComparison comparisonData = (FrameComparisonComparison)ProcessComparison(baseline, results);  // Prrocess comparison (mandatory)
+            bool output = false;
+            if (comparisonData.DiffPercentage < model.settings.passFailThreshold)  // Pass/fail decision logic (logic specific)
+                output = true;
+            else
+                output = false;
+            comparisonData = null;  // Null comparison (mandatory)
+            return output;
+        }
+
         // Logic for comparison process (mandatory)
         // TODO - Will use last run test model, need to get this for every call from Viewers?
         public override object ProcessComparison(ResultsBase baselineData, ResultsBase resultsData)
         {
-            ComparisonData newComparison = new ComparisonData(); // Create new ComparisonData instance (mandatory)
+            FrameComparisonComparison newComparison = new FrameComparisonComparison(); // Create new ComparisonData instance (mandatory)
             FrameComparisonResults baselineDataTyped = (FrameComparisonResults)baselineData; // Set baseline data to local type
             FrameComparisonResults resultsDataTyped = (FrameComparisonResults)resultsData; // Set results data to local type
             newComparison.baselineTex = Common.ConvertStringToTexture(resultsDataTyped.common.TestName + "_Reference", baselineDataTyped.resultFrame); // Convert baseline frame to Texture2D (logic specific)
@@ -123,14 +131,37 @@ namespace GraphicsTestFramework
         // ------------------------------------------------------------------------------------
         // Test Type Specific Methods
 
-        // Called on render
+        // Called on render(legacy pipeline)
         private void OnRenderImage(RenderTexture source, RenderTexture destination)
         {
-            Graphics.Blit(source, destination); // Blit source to destination for Deferred
+            if (!GraphicsSettings.renderPipelineAsset)
+            {
+                Graphics.Blit(source, destination); // Blit source to destination for Deferred
+                if (doCapture) // If running blit operations
+                {
+                    doCapture = false; // Reset
+                    var typedSettings = (FrameComparisonSettings)model.settings; // Set settings to local type
+                    Vector2 resolution = Vector2.zero; // Create vector2
+                    model.resolutionList.TryGetValue(typedSettings.frameResolution, out resolution); // Get resolution
+                    var rt1 = RenderTexture.GetTemporary((int)resolution.x, (int)resolution.y, 24, temporaryRt.format, RenderTextureReadWrite.sRGB); // Get a temporary RT for blitting to
+                    Graphics.Blit(temporaryRt, rt1); // Blit models camera to the RT
+                    resultsTexture = Common.ConvertRenderTextureToTexture2D(activeTestEntry.testName + "_Result", rt1, resolution, typedSettings.textureFormat, typedSettings.filterMode); // Convert the resulting render texture to a Texture2D
+                    typedSettings.captureCamera.targetTexture = null; // Set target texture to null
+                    RenderTexture.ReleaseTemporary(rt1); // Release the temporary RT
+                    temporaryRt.Release(); // Release main RT
+                    Console.Instance.Write(DebugLevel.Logic, MessageLevel.Log, this.GetType().Name + " completed blit operations for test " + activeTestEntry.testName); // Write to console
+                }
+            }
+        }
+
+        public override void SRPBeginCamera(Camera cam)
+        {
             if (doCapture) // If running blit operations
             {
-                doCapture = false; // Reset
                 var typedSettings = (FrameComparisonSettings)model.settings; // Set settings to local type
+                if(cam == typedSettings.captureCamera)
+                    return;
+                doCapture = false; // Reset
                 Vector2 resolution = Vector2.zero; // Create vector2
                 model.resolutionList.TryGetValue(typedSettings.frameResolution, out resolution); // Get resolution
                 var rt1 = RenderTexture.GetTemporary((int)resolution.x, (int)resolution.y, 24, temporaryRt.format, RenderTextureReadWrite.sRGB); // Get a temporary RT for blitting to
@@ -173,13 +204,13 @@ namespace GraphicsTestFramework
                 if (settings.captureCamera == null) // If no main camera found
                 {
                     Camera[] cams = FindObjectsOfType<Camera>(); // Find all cameras
-                    settings.captureCamera = cams[cams.Length-1]; // Set to last in found array so avoid setting to UI or dummy cameras
+                    settings.captureCamera = cams[cams.Length - 1]; // Set to last in found array so avoid setting to UI or dummy cameras
                 }
-                if(settings.captureCamera == null) // If still not found
+                if (settings.captureCamera == null) // If still not found
                 {
                     dummyCamera.enabled = true; // Enable dummy camera
                     settings.captureCamera = dummyCamera; // Set to dummy camera as fallback
-                    Console.Instance.Write(DebugLevel.Critical, MessageLevel.LogWarning, "Frame Comparison test found no camera inside test "+activeTestEntry.testName); // Write to console
+                    Console.Instance.Write(DebugLevel.Critical, MessageLevel.LogWarning, "Frame Comparison test found no camera inside test " + activeTestEntry.testName); // Write to console
                 }
                 model.settings = settings; // Set settings back
             }

@@ -14,6 +14,15 @@ namespace GraphicsTestFramework
         public string resultFrame;
     }
 
+    // Structure for comparison
+    [Serializable]
+    public class FrameComparisonComparison : ComparisonBase
+    {
+        public float DiffPercentage;
+        public Texture2D baselineTex;
+        public Texture2D resultsTex;
+    }
+
     // ------------------------------------------------------------------------------------
     // Settings Data Structures
 
@@ -26,6 +35,7 @@ namespace GraphicsTestFramework
         [SerializeField] public TextureFormat textureFormat; //Format of the frame capture
         [SerializeField] public FilterMode filterMode; //Filter mode of the frame capture
         [SerializeField] public bool useBackBuffer; //Uses the backbuffer for cases where you need multi cam support
+        [SerializeField] public ImageQuality imageQuality; //Image quality setting(PNG, LPG 50, JPG 15)
 
         public static FrameComparisonSettings defaultSettings
         {
@@ -40,8 +50,9 @@ namespace GraphicsTestFramework
                     frameResolution = FrameResolution.qHD, //Resolution of the frame capture
                     textureFormat = TextureFormat.RGB24, //Format of the frame capture
                     filterMode = FilterMode.Bilinear, //Filter mode of the frame capture
-                    useBackBuffer = false, // Use alternatice capture method(multicam)
-                };
+                    useBackBuffer = false, // Use alternate capture method(multicam)
+                    imageQuality = ImageQuality.Medium, // Image quality setting for file storage
+            };
             }
         }
     }

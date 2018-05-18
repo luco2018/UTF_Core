@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -31,8 +32,11 @@ namespace GraphicsTestFramework
         public GameObject menuParent;
         public List list;
         public Breadcrumb breadcrumb;
+        private bool topLevel = true;//bool for checking if the breadcrumb is at the top level
         public Actions actions;
         public ResolveWindow resolveWindow;
+        public AltBaselineWindow altBaselineWindow;
+        public InformationDrawer menuInformation;
         public Color[] colors;
         public GameObject menuListEntryPrefab;
         public GameObject listEntryPrefab;
@@ -48,7 +52,18 @@ namespace GraphicsTestFramework
         // Start
         private void Start()
         {
+            MakeCanvasScaleWithScreenSize(menuParent);
+
             StartCoroutine(WaitForTestStructure()); // Begin waiting for TestStructure
+        }
+
+        public void MakeCanvasScaleWithScreenSize(GameObject canvas)
+        {
+            #if UNITY_IOS || UNITY_ANDROID
+                canvas.GetComponent<CanvasScaler>().uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+                if (Screen.orientation != ScreenOrientation.LandscapeLeft)
+                    Screen.orientation = ScreenOrientation.LandscapeLeft;
+            #endif
         }
 
         // Have to wait for Test Structure to generate before generating menus (TODO - move this to a delegate?)
@@ -71,21 +86,25 @@ namespace GraphicsTestFramework
                     breadcrumb.suite.Setup(inputData, 1, 0);
                     breadcrumb.type.Setup(inputData, 1, 1);
                     breadcrumb.group.Setup(inputData, 1, 2);
+                    topLevel = true;
                     break;
                 case 0:     // Suite
                     breadcrumb.suite.Setup(inputData, 0, 0);
                     breadcrumb.type.Setup(inputData, 1, 1);
                     breadcrumb.group.Setup(inputData, 1, 2);
+                    topLevel = false;
                     break;
                 case 1:     // Type
                     breadcrumb.suite.Setup(inputData, 2, 0);
                     breadcrumb.type.Setup(inputData, 0, 1);
                     breadcrumb.group.Setup(inputData, 1, 2);
+                    topLevel = false;
                     break;
                 case 2:     // Scene
                     breadcrumb.suite.Setup(inputData, 2, 0);
                     breadcrumb.type.Setup(inputData, 2, 1);
                     breadcrumb.group.Setup(inputData, 0, 2);
+                    topLevel = false;
                     break;
             }
         }
@@ -128,7 +147,6 @@ namespace GraphicsTestFramework
         // First time initialize
         void Initialize()
         {
-            //ResultsViewer.Instance.Setup(); // Setup results viewer
             UpdateMenu(); // Update menu
         }
 
@@ -142,12 +160,12 @@ namespace GraphicsTestFramework
         }
 
         // Update the menu
-        void UpdateMenu()
+        public void UpdateMenu()
         {
             Console.Instance.Write(DebugLevel.Full, MessageLevel.Log, "Updating menu"); // Write to console
             if (TestStructure.Instance.CheckForBaselines()) // Baselines exist
             {
-                if (selectedId.currentLevel == 4) // If returning to meny from TestViewer go back one level
+                if (selectedId.currentLevel == 4) // If returning to menu from TestViewer go back one level
                     selectedId.currentLevel = 3; // Set
                 ClearList(); // Clear list
                 breadcrumb.home.SetupHome(); // Setup breadcrumb home button
@@ -180,6 +198,7 @@ namespace GraphicsTestFramework
             GenerateTestRunner(RunnerType.Resolve); // Generate a test runner of type Resolve
             ProgressScreen.Instance.SetState(false, ProgressType.LocalLoad, ""); // disable progress screen
             EnableResolveMenu(); // Enable resolve menu
+            StartCoroutine(GenerateAltBaselineList()); // Checking for alt baselines;
         }
 
         // Enable the resolve menu
@@ -217,6 +236,62 @@ namespace GraphicsTestFramework
             int listCount = resolveWindow.contentRect.transform.childCount; // Get resolve list entries
             for (int i = 0; i < listCount; i++) // Iterate
                 Destroy(resolveWindow.contentRect.GetChild(i).gameObject); // Destroy them
+            resolveWindow.parent.SetActive(false); // Disable the window
+        }
+
+        // ------------------------------------------------------------------------------------
+        // AltBaseline Menu
+        // - Menu for chosing alternative baselines if current baselines are incomplete
+
+        // Generate a resolve list
+        IEnumerator GenerateAltBaselineList()
+        {
+            Console.Instance.Write(DebugLevel.Full, MessageLevel.Log, "Generating alternative baseline list"); // Write to console
+        
+            NameValueCollection fullSet = null;
+            SQL.SQLIO.StartCoroutine(SQL.SQLIO.BaselineSetCheck(SuiteManager.GetSuiteNames(), (value => { fullSet = value; })));
+            while(fullSet == null) yield return null;
+
+            Master.SetAltBaselines(fullSet);
+
+            int count = 0;
+            foreach(string key in fullSet.AllKeys)
+            {
+                foreach(string val in fullSet.GetValues(key))
+                {
+                    GameObject go = Instantiate(altBaselineWindow.listEntryPrefab, altBaselineWindow.contentRect, false);
+                    MenuAltBaselineListEntry newEntry = go.GetComponent<MenuAltBaselineListEntry>();
+                    newEntry.Setup(key, val);
+                    count++;
+                }
+            }
+            if (count == 0)
+            {
+                altBaselineWindow.button.interactable = false;
+                altBaselineWindow.altBaselineButton.text = String.Format("No Alternative Baselines Available", count);
+            }
+            else
+            {
+                altBaselineWindow.button.interactable = true;
+                altBaselineWindow.altBaselineButton.text = String.Format("Alternative Baselines  ( {0} )", count);
+            }
+        }
+
+        // // When chicking alternative baseline button
+        public void OnClickAltBaseline()
+        {
+            Console.Instance.Write(DebugLevel.Full, MessageLevel.Log, "Clicked: Alt Baseline, Now pulling baseline"); // Write to console
+            CleanupAltBaselineMenu(); // Clean up
+            // restart baseline pull/etc...
+        }
+
+        // // Cleanup
+        void CleanupAltBaselineMenu()
+        {
+            Console.Instance.Write(DebugLevel.Full, MessageLevel.Log, "Cleaning up alt baseline menu"); // Write to console
+            int listCount = altBaselineWindow.contentRect.transform.childCount; // Get resolve list entries
+            for (int i = 0; i < listCount; i++) // Iterate
+                Destroy(altBaselineWindow.contentRect.GetChild(i).gameObject); // Destroy them
             resolveWindow.parent.SetActive(false); // Disable the window
         }
 
@@ -319,14 +394,21 @@ namespace GraphicsTestFramework
         // Called every time a breadcrumb entry is clicked (button listener)
         public void OnBreadcrumbEntryClick(MenuBreadcrumbEntry clicked)
         {
-            Console.Instance.Write(DebugLevel.Full, MessageLevel.Log, "Clicked: Breadcrumb entry"); // Write to console
-            MenuEntryData entryData = CloneMenuEntryData(clicked.entryData); // Clone the entry data of the clicked entry
-            ClearList(); // Clear the list
-            selectedId = entryData.id; // Set selected id
-            GenerateBreadcrumb(clicked.entryData); // Generate new breadcrumb
-            selectedId.currentLevel++; // Increment current level
-            GenerateList(); // Generate a new list
-            CheckViewButtonStatus(); // Check view button status
+            if(topLevel)
+            {
+                Navigation.Instance.ReturnHome();
+            }
+            else
+            {
+                Console.Instance.Write(DebugLevel.Full, MessageLevel.Log, "Clicked: Breadcrumb entry"); // Write to console
+                MenuEntryData entryData = CloneMenuEntryData(clicked.entryData); // Clone the entry data of the clicked entry
+                ClearList(); // Clear the list
+                selectedId = entryData.id; // Set selected id
+                GenerateBreadcrumb(clicked.entryData); // Generate new breadcrumb
+                selectedId.currentLevel++; // Increment current level
+                GenerateList(); // Generate a new list
+                CheckViewButtonStatus(); // Check view button status
+            }
         }
 
         // Called when results button is clicked
@@ -459,6 +541,17 @@ namespace GraphicsTestFramework
             public Text message;
             public RectTransform contentRect;
             public Button resolveButton;
+        }
+
+        [Serializable]
+        public class AltBaselineWindow
+        {
+            public GameObject parent;
+            public Button button;
+            public Text altBaselineButton;
+            public RectTransform contentRect;
+            public GameObject listEntryPrefab;
+            public Dictionary<Button, string> altButtons = new Dictionary<Button, string>();
         }
     }
 

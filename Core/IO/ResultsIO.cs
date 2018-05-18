@@ -9,10 +9,9 @@ namespace GraphicsTestFramework
 	public class ResultsIO : MonoBehaviour
 	{
 		private static ResultsIO _Instance = null;
-		private List<string> suiteBaselinesPullList = new List<string> ();
+		private List<Suite> suiteBaselinesPullList = new List<Suite> ();
 		private SystemData sysData;
 		public bool isWaiting = false;
-		public bool companionMode = false;
 		[HideInInspector]
 		public bool writeLocal = true;
 		[HideInInspector]
@@ -30,12 +29,14 @@ namespace GraphicsTestFramework
 			}
 		}
 
-		private void Start ()
+		public void Start ()
 		{
 			//Grab the system data to share around
 			sysData = Master.Instance.GetSystemData ();
 
-			if(Master.Instance._sqlMode == SQLmode.Disabled)
+            Master.Instance.SetCurrentPlatformAPI(sysData.Platform, sysData.API);
+
+            if(Master.Instance._sqlMode == SQLmode.Disabled || Master.Instance._sqlMode == SQLmode.DisabledStaging)
 				writeCloud = false;
 
 			//setup local IO
@@ -43,13 +44,19 @@ namespace GraphicsTestFramework
 				gameObject.AddComponent<LocalIO> ();
 			LocalIO.Instance.Init ();
 			//setup SQL IO
-			if (SQL.SQLIO.Instance == null)
-				gameObject.AddComponent<SQL.SQLIO> ();
-			SQL.SQLIO.Instance.Init (sysData);
-
-			if (!companionMode)
-				StartCoroutine (Init ());
+			SQL.SQLIO.Init (sysData); // SQLCHECK
 		}
+
+		void Update()
+		{
+            SQL.SQLIO.Update();
+			
+			if (Master.Instance._sqlMode == SQLmode.Disabled || Master.Instance._sqlMode == SQLmode.DisabledStaging)
+                writeCloud = false;
+			else
+                writeCloud = true;
+
+        }
 
 		public void Restart ()
 		{
@@ -63,11 +70,11 @@ namespace GraphicsTestFramework
 
 			//Hardcoded wait for SuiteManager to populate - TODO might be cleaner way to do later
 			float timeout = 0f;
-			while (SuiteManager.GetSuiteNames ().Length == 0) {
+			while (SuiteManager.GetSuiteNames ().Length == 0) 
+			{
 				timeout += Time.deltaTime;
-				if (timeout > 5f) {
+				if (timeout > 5f)
 					break;
-				}
 				yield return new WaitForEndOfFrame ();
 			}
 
@@ -76,24 +83,31 @@ namespace GraphicsTestFramework
 			do {
 				yield return new WaitForEndOfFrame ();
 				timeout += Time.deltaTime;
-			} while(SQL.SQLIO.Instance.liveConnection == connectionStatus.Internet && timeout < 10f);
+			}while(SQL.SQLIO.liveConnection == connectionStatus.Internet && timeout < 10f); // SQLCHECK
 
-			//if timeout reaches 10f then no network
+            //if timeout reaches 10f then no network
 
-			//fetch suite names from the suite manager
-			string[] suiteNames = SuiteManager.GetSuiteNames ();
+            //fetch suite names from the suite manager
+            string[] suiteNames = SuiteManager.GetSuiteNames ();
 
-			if (suiteNames.Length == 0) {//if there are no suites loaded fail - TODO need to add code path for this
+			if (suiteNames.Length == 0) // if there are no suites loaded fail - TODO need to add code path for this
+            {
 				Console.Instance.Write (DebugLevel.Critical, MessageLevel.LogWarning, "No suites loaded in SuiteManager, unable to continue"); // Write to console
-			} else {
+			} 
+			else 
+			{
 
 				//now we check local timestamps vs server to make sure up to date, then add the outdated ones to be pulled
-				foreach (string suiteName in suiteNames) {
-					Console.Instance.Write (DebugLevel.File, MessageLevel.Log, "Fetching baseline timestamps from cloud");
+				ProgressScreen.Instance.SetState(true, ProgressType.CloudLoad, "Checking Cloud Timestamps");
+				foreach (string suiteName in suiteNames) 
+				{
+					Console.Instance.Write (DebugLevel.File, MessageLevel.Log, "Fetching baseline timestamps from cloud for " + suiteName);
                     //Get timestamp for suite via SQL
                     DateTime dt = DateTime.MaxValue;
-                    StartCoroutine(SQL.SQLIO.Instance.GetbaselineTimestamp(suiteName, (value => { dt = value; })));
-					while (dt == DateTime.MaxValue)
+                    IEnumerator i = SQL.SQLIO.GetbaselineTimestamp(suiteName, (value => { dt = value; }));
+                    SQL.SQLIO.StartCoroutine(i);
+                    //StartCoroutine(SQL.SQLIO.GetbaselineTimestamp(suiteName, (value => { dt = value; }))); // SQLCHECK
+                    while (dt == DateTime.MaxValue)
                     {
                         yield return null;
                     }
@@ -101,25 +115,56 @@ namespace GraphicsTestFramework
 						CompareBaselineTimestamps (suiteName, dt.ToString ());
 				}
 
-				if (suiteBaselinesPullList.Count > 0) {
+                if (suiteBaselinesPullList.Count > 0) 
+				{
                     ResultsIOData[] data = null;
-                    StartCoroutine(SQL.SQLIO.Instance.FetchBaselines(suiteBaselinesPullList.ToArray(), sysData.Platform, sysData.API, (value => { data = value; })));
-					while(data == null){
+                    StartCoroutine(SQL.SQLIO.FetchBaselines(suiteBaselinesPullList.ToArray(), sysData.Platform, sysData.API, (value => { data = value; }))); // SQLCHECK
+                    while(data == null){
                         yield return null;
                     }
                     //ResultsIOData[] data = SQL.SQLIO.Instance.FetchBaselines (suiteBaselinesPullList.ToArray (), sysData.Platform, sysData.API);
                     Console.Instance.Write (DebugLevel.File, MessageLevel.Log, "Cloud baselines pulled, writing local files");
-					foreach(ResultsIOData rd in data){
-						StartCoroutine (LocalIO.Instance.WriteDataFiles (rd, fileType.Baseline));
+                    ProgressScreen.Instance.SetState(true, ProgressType.LocalSave, "Writing Baselines to Disk");
+                    foreach(ResultsIOData rd in data){
+						yield return StartCoroutine (LocalIO.Instance.WriteDataFiles (rd, fileType.Baseline));
 					}
-					yield return new WaitForSeconds (0.5f);
-					_suiteBaselineData = LocalIO.Instance.ReadLocalBaselines ();
+					ProgressScreen.Instance.SetState(true, ProgressType.LocalLoad, "Loading Baselines to Memory");
 					BroadcastBaselineParsed ();
-				} else {
+				} 
+				else 
+				{
 					Console.Instance.Write (DebugLevel.Logic, MessageLevel.Log, "No cloud based baselines to pull"); // Write to console
 					BroadcastBaselineParsed ();
 				}
 			}
+		}
+
+		public void PullAltBaselines(string platform, string api)
+		{
+            Master.Instance.SetCurrentPlatformAPI(platform, api);
+            StartCoroutine(PullAlt(platform, api));
+        }
+
+		public IEnumerator PullAlt (string platform, string api)
+		{
+			ProgressScreen.Instance.SetState(true, ProgressType.CloudLoad, "Pulling Alternate Baselines");
+			ResultsIOData[] data = null;
+            StartCoroutine(SQL.SQLIO.FetchBaselines(SuiteManager.GetSuites(), platform, api, (value => { data = value; }))); // SQLCHECK
+            while (data == null)
+            {
+                yield return null;
+            }
+            //ResultsIOData[] data = SQL.SQLIO.Instance.FetchBaselines (suiteBaselinesPullList.ToArray (), sysData.Platform, sysData.API);
+            Console.Instance.Write(DebugLevel.File, MessageLevel.Log, "Cloud baselines pulled, writing local files");
+            ProgressScreen.Instance.SetState(true, ProgressType.LocalSave, "Writing Baselines to Disk");
+            foreach (ResultsIOData rd in data)
+            {
+                yield return StartCoroutine(LocalIO.Instance.WriteDataFiles(rd, fileType.Baseline));
+            }
+            ProgressScreen.Instance.SetState(true, ProgressType.LocalLoad, "Loading Baselines to Memory");
+            BroadcastBaselineParsed();
+            yield return null;
+            Menu.Instance.UpdateMenu();
 		}
 
 		/// ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -137,14 +182,17 @@ namespace GraphicsTestFramework
 		/// <param name="testName">Test name.</param>
 		public bool BaselineExists (string suiteName, string pipeline, string testType, string sceneName, string testName)
 		{
-			//check local file for current platform/api baseline
-			foreach (SuiteBaselineData SBD in _suiteBaselineData) {
-				if (SBD.suiteName == suiteName) {
+            AltBaselineSettings curBaselineData = Master.Instance.GetCurrentPlatformAPI();
+            //check local file for current platform/api baseline
+            foreach (SuiteBaselineData SBD in _suiteBaselineData) 
+			{
+				if (SBD.suiteName == suiteName) 
+				{
                     //Suite exists
-                    if (SBD.platform == sysData.Platform)
+                    if (SBD.platform == curBaselineData.Platform)
                     {
                         //Platform exists
-                        if (SBD.api == sysData.API)
+                        if (SBD.api == curBaselineData.API)
                         {
                             //API matches
                             if (SBD.pipeline == pipeline)
@@ -169,31 +217,41 @@ namespace GraphicsTestFramework
 		{
 			System.DateTime cloudTimestamp = System.DateTime.Parse (dateTime);
 
-			if (_suiteBaselineData.Count == 0) {//TODO - shouldnt add this to pull baselines as has issue with iOS trying to pull baselines for OSX
+			if (_suiteBaselineData.Count == 0) // TODO - shouldnt add this to pull baselines as has issue with iOS trying to pull baselines for OSX
+            {
 				Console.Instance.Write (DebugLevel.File, MessageLevel.Log, "Putting " + suiteName + " in the pull list"); // Write to console
-				suiteBaselinesPullList.Add (suiteName);
-			} else {
+				suiteBaselinesPullList.Add (SuiteManager.GetSuiteByName(suiteName));
+			} 
+			else 
+			{
 				int matches = 0;
-				foreach (SuiteBaselineData SBD in _suiteBaselineData) {
-					if (SBD.suiteName == suiteName && SBD.platform == sysData.Platform && SBD.api == sysData.API) {
+				foreach (SuiteBaselineData SBD in _suiteBaselineData) 
+				{
+					if (SBD.suiteName == suiteName && SBD.platform == sysData.Platform && SBD.api == sysData.API) 
+					{
 						matches++;
 						System.DateTime localTimestamp = System.DateTime.ParseExact (SBD.suiteTimestamp, Common.dateTimeFormat, null);
 						Console.Instance.Write (DebugLevel.File, MessageLevel.Log, string.Format ("Comparing cloud time {0} vs local time {1}", cloudTimestamp, localTimestamp));
 
 						int timeDiff = cloudTimestamp.CompareTo (localTimestamp);
-						if (timeDiff < 0f) {
+						if (timeDiff < 0f) 
+						{
 							Console.Instance.Write (DebugLevel.File, MessageLevel.Log, "Cloud Timestamp is old"); // Write to console
-						} else if (timeDiff > 0f) {
+						} 
+						else if (timeDiff > 0f) 
+						{
 							Console.Instance.Write (DebugLevel.File, MessageLevel.Log, "Cloud Timestamp is newer, adding " + suiteName + " to pull list"); // Write to console
-							suiteBaselinesPullList.Add (suiteName);
-						} else if (timeDiff == 0f) {
+							suiteBaselinesPullList.Add (SuiteManager.GetSuiteByName(suiteName));
+						} 
+						else if (timeDiff == 0f) 
+						{
 							Console.Instance.Write (DebugLevel.File, MessageLevel.Log, "Cloud Timestamp is the same"); // Write to console
 						}
 					}
 				}
 
 				if (matches == 0)
-					suiteBaselinesPullList.Add (suiteName);
+					suiteBaselinesPullList.Add (SuiteManager.GetSuiteByName(suiteName));
 
 			}
 		}
@@ -211,7 +269,7 @@ namespace GraphicsTestFramework
 		/// <param name="baseline">Baseline data?</param>
 		public IEnumerator ProcessResults (string suiteName, string testType, ResultsIOData inputData, int baseline)
 		{
-			ProgressScreen.Instance.SetState (true, ProgressType.CloudSave, "Saving local and cloud data");
+			ProgressScreen.Instance.SetState (true, ProgressType.CloudSave, "Saving cloud data");
 
 			inputData.suite = suiteName;
 			inputData.testType = testType;
@@ -219,24 +277,29 @@ namespace GraphicsTestFramework
 
 			if(writeCloud)
 			{
-                string sheetName = "Temp";
+                string sheetName;
                 if (baseline == 1) //Cloud upload for baseline
 					sheetName = suiteName + "_" + testType + "_Baseline";
 				else //cloud upload for results
 					sheetName = suiteName + "_" + testType + "_Results";
-				StartCoroutine(SQL.SQLIO.Instance.AddEntry(inputData, sheetName, baseline, (value) => { uploaded = value; }));
-			}else{
+				StartCoroutine(SQL.SQLIO.AddEntry(inputData, sheetName, baseline, (value) => { uploaded = value; })); // SQLCHECK
+				while (uploaded == -1)
+                {
+                    yield return null;
+                }
+			}
+			else
+			{
                 uploaded = 1;
             }
 
-			while(uploaded == -1){
-                yield return null;
-            }
+			ProgressScreen.Instance.SetState(true, ProgressType.LocalSave, "Saving local data");
 
 			if(writeLocal)
 			{
 				fileType ft = baseline == 1 ? fileType.Baseline : fileType.Result;
-				if (uploaded == 1) {//if the entry uploaded fine
+				if (uploaded == 1) // if the entry uploaded fine
+                {
 					StartCoroutine (LocalIO.Instance.WriteDataFiles (inputData, ft));
 				}
 			}
@@ -245,30 +308,16 @@ namespace GraphicsTestFramework
 		}
 
 		/// <summary>
-		/// Retrieves a result file.
+		/// Retrieves a file.
 		/// </summary>
-		/// <returns>The result.</returns>
+		/// <returns>The data.</returns>
 		/// <param name="suiteName">Suite name.</param>
 		/// <param name="testType">Test type.</param>
 		/// <param name="inputData">Input data.</param>
-		public ResultsIOData RetrieveResult (string suiteName, string testType, ResultsDataCommon inputData)
-		{
-			//string rawJSONdata = LocalIO.Instance.FetchDataFile (suiteName, testType, inputData, false);//fetch string from file
-			ResultsIOData data = LocalIO.Instance.FetchDataFile (suiteName, testType, inputData, false); //JSONHelper.FromJSON (rawJSONdata);//take JSON convert to ResultsIOData //REORG
-			return data;
-		}
-
-		/// <summary>
-		/// Retrieves a baseline file.
-		/// </summary>
-		/// <returns>The baseline.</returns>
-		/// <param name="suiteName">Suite name.</param>
-		/// <param name="testType">Test type.</param>
-		/// <param name="inputData">Input data.</param>
-		public ResultsIOData RetrieveBaseline (string suiteName, string testType, ResultsDataCommon inputData)
+		public ResultsIOData RetrieveEntry (string suiteName, string testType, ResultsDataCommon inputData, bool baseline, bool full)
 		{
 			//string rawJSONdata = LocalIO.Instance.FetchDataFile (suiteName, testType, inputData, true);//fetch string from file
-			ResultsIOData data = LocalIO.Instance.FetchDataFile (suiteName, testType, inputData, true);//JSONHelper.FromJSON (rawJSONdata);//take JSON convert to ResultsIOData //REORG
+			ResultsIOData data = LocalIO.Instance.FetchDataFile (suiteName, testType, inputData, baseline, full);//JSONHelper.FromJSON (rawJSONdata);//take JSON convert to ResultsIOData //REORG
 			return data;
 		}
 
@@ -278,16 +327,19 @@ namespace GraphicsTestFramework
 
 		public void ProcessBaselineTimestamp (List<string> objNames, List<string> jsonData)
 		{ // TODO- externalize JSON splitting for multiple json arrays from cloudconnector
-			if (jsonData [0].Length > 2) {
+			if (jsonData [0].Length > 2) 
+			{
 				jsonData [0] = jsonData [0].Remove (0, 1);
 				jsonData [0] = jsonData [0].Remove (jsonData [0].Length - 1, 1);
 				string[] separators = new string[] { "},{" };
 				string[] splitJson = jsonData [0].Split (separators, System.StringSplitOptions.None);
 
 
-				for (int i = 0; i < splitJson.Length; i++) {
+				for (int i = 0; i < splitJson.Length; i++) 
+				{
 					string jsonString = splitJson [i];
-					if (splitJson.Length > 1) {
+					if (splitJson.Length > 1) 
+					{
 						if (i == 0)
 							jsonString += "}";
 						else if (i == splitJson.Length - 1)
@@ -296,7 +348,8 @@ namespace GraphicsTestFramework
 							jsonString = "{" + jsonString + "}";
 					}
 					Dictionary<string, string> jsonDic = JSONHelper.JSON_Dictionary (jsonString);//REORG
-					if (jsonDic ["api"] == sysData.API && jsonDic ["platform"] == sysData.Platform) {
+					if (jsonDic ["api"] == sysData.API && jsonDic ["platform"] == sysData.Platform) 
+					{
 						CompareBaselineTimestamps (jsonDic ["suiteName"], jsonDic ["suiteTimestamp"]);
 					}
 				}
@@ -312,22 +365,25 @@ namespace GraphicsTestFramework
 		/// <param name="suite">Suite.</param>
 		/// <param name="renderPipe">Render pipe.</param>
 		/// <param name="baselineIndex">Baseline index in the list.</param>
-		public void UpdateBaselineDictionary (string suite, string renderPipe, out int baselineIndex)
+		public void UpdateBaselineDictionary (string suite, string platform, string api, string renderPipe, out int baselineIndex)
 		{
 			//Updates suiteListData, we need to find the matching suiteListData or create a new one
 			int suiteBaselineDataIndex = -1;
 			int suiteIndex = 0;
-			foreach (SuiteBaselineData SBD in _suiteBaselineData) {
-				if (SBD.platform == sysData.Platform && SBD.suiteName == suite && SBD.api == sysData.API && SBD.pipeline == renderPipe) {
+			foreach (SuiteBaselineData SBD in _suiteBaselineData) 
+			{
+				if (SBD.platform == platform && SBD.suiteName == suite && SBD.api == api && SBD.pipeline == renderPipe) 
+				{
 					suiteBaselineDataIndex = suiteIndex;
 				}
 				suiteIndex++;
 			}
-			if (suiteBaselineDataIndex == -1) {
+			if (suiteBaselineDataIndex == -1) 
+			{
 				SuiteBaselineData newSBD = new SuiteBaselineData ();
-				newSBD.api = sysData.API;
+				newSBD.api = api;
 				newSBD.pipeline = renderPipe;
-				newSBD.platform = sysData.Platform;
+				newSBD.platform = platform;
 				newSBD.suiteName = suite;
 				newSBD.suiteTimestamp = System.DateTime.UtcNow.ToString (Common.dateTimeFormat);
 				_suiteBaselineData.Add (newSBD);
@@ -347,21 +403,48 @@ namespace GraphicsTestFramework
 		/// <param name="dateTime">Date time.</param>
 		public void BaselineDictionaryEntry (int suiteIndex, string testType, string sceneName, string testName, string dateTime)
 		{
-
 			SuiteData sData = new SuiteData (testType, sceneName, testName, dateTime);
 			int check = -1;
-			for (int si = 0; si < _suiteBaselineData [suiteIndex]._suiteData.Count; si++) {
+			for (int si = 0; si < _suiteBaselineData [suiteIndex]._suiteData.Count; si++) 
+			{
 				SuiteData SD = _suiteBaselineData [suiteIndex]._suiteData [si];
-				if (SD.testType == testType && SD.sceneName == sceneName && SD.testName == testName) {
+				if (SD.testType == testType && SD.sceneName == sceneName && SD.testName == testName) 
+				{
 					_suiteBaselineData [suiteIndex]._suiteData [si] = sData;
 					check++;
 				}
 			}
-			if (check == -1) {
+			if (check == -1) 
+			{
 				_suiteBaselineData [suiteIndex]._suiteData.Add (sData);
 			}
 			_suiteBaselineData [suiteIndex].suiteTimestamp = System.DateTime.UtcNow.ToString (Common.dateTimeFormat);
 		}
+
+        /// ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+        /// Getters
+        /// ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+        public IEnumerator FetchSpecificEntry(ResultsIOData inputData, Action<ResultsIOData> outdata)
+        {
+            ResultsIOData data = new ResultsIOData();//ResultsIOData to send back to resultsIO for local processing
+            string suite = inputData.suite;
+            string testType = inputData.testType;
+
+            List<string> common = inputData.resultsRow[0].resultsColumn;
+            common.Add("");
+            ResultsDataCommon RDC = GenerateRDC(common.ToArray());
+			ResultsIOData localData = LocalIO.Instance.FetchDataFile(suite, testType, RDC, inputData.baseline, true);
+            if (localData == null)
+            {
+                yield return StartCoroutine(SQL.SQLIO.FetchSpecificEntry(inputData, (value => { data = value; })));
+            }
+			else
+			{
+                data = localData;
+            }
+            outdata(data);
+        }
 
 		/// ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		/// LISTENERS
@@ -386,10 +469,10 @@ namespace GraphicsTestFramework
 
 		//Convert list of strings to ResultsDataCommon
 		public ResultsDataCommon GenerateRDC(string[] inputData){
-			var common = new ResultsDataCommon(); //blank common data
+            var common = new ResultsDataCommon(); //blank common data
 			BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static;
 			FieldInfo[] commonFields = typeof(ResultsDataCommon).GetFields(bindingFlags);
-			for (int cf = 0; cf < commonFields.Length; cf++)
+            for (int cf = 0; cf < commonFields.Length; cf++)
 			{
 				string value = inputData[cf];
 				FieldInfo fieldInfo = common.GetType().GetField(commonFields[cf].Name);
@@ -424,6 +507,7 @@ namespace GraphicsTestFramework
 	{
 		public string suite;
 		public string testType;
+		public bool baseline;
 		public List<string> fieldNames = new List<string> ();//string list of fields
 		public List<ResultsIORow> resultsRow = new List<ResultsIORow> ();//list of row data
 	}

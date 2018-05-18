@@ -61,11 +61,20 @@ namespace GraphicsTestFramework
         public enum WaitType { Frames, Seconds, StableFramerate, Callback }
 
         public TestSettings testSettings; // Project settings for this test
-        public RenderPipelineAsset renderPipeline; // Render pipeline for this test
         public int platformMask = -1; // Mask for which platforms to use this model instance on
         public WaitType waitType = WaitType.Frames; // Type of measurement for waiting
         public int waitFrames = 0; // Count of frames or seconds to wait before capture
 		public float waitSeconds = 0f; // Count of frames or seconds to wait before capture
         public float passFailThreshold = 0.1f; // Threshold for comparison pass/fail
+    }
+
+    // ------------------------------------------------------------------------------------
+    // ComparisonBase
+    // - Base class for Comparison
+
+    [Serializable]
+    public class ComparisonBase
+    {
+        
     }
 }
