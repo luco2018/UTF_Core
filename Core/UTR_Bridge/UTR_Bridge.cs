@@ -28,6 +28,8 @@ namespace GraphicsTestFramework
 		#endif
 
 		
+		// When running in editor, this function is called in editor mode before OneTimeSetup, or before doing a build
+		// It will at all the test scenes + master to the build scenes list.
 		public void Setup()
 		{
 			#if UNITY_EDITOR
@@ -44,6 +46,8 @@ namespace GraphicsTestFramework
 			Debug.Log("Finished Setup, start test(s).");
 		}
 
+		// This should be executed after the build has been done, or after the tests have been run, but currently there is a bug that causes this function to be called just before entering play mode in editor, so all the rest would fail.
+		// Hense why IPostBuildCleanup is disabled
 		public void Cleanup()
 		{
 			#if UNITY_EDITOR
@@ -54,14 +58,14 @@ namespace GraphicsTestFramework
 			#endif
 		}
 
-		
+		// One Time Setup function called once when entering play mode for each batch of tests.
 		[OneTimeSetUp]
 		public void OneTimeSetUp()
 		{
-			Debug.Log("OneTimeSetUp");
-
+			// Load the master scene.
 			UnityEngine.SceneManagement.SceneManager.LoadScene(0, UnityEngine.SceneManagement.LoadSceneMode.Single);
 
+			// Be sure to disable this toggle.
 			resultsIOInitialized = false;
 		}
 
@@ -73,6 +77,7 @@ namespace GraphicsTestFramework
 			public Group group;
 			public Test test;
 
+			// Format the data in a readable way that will be shown in the TestRunner window.
 			public override string ToString()
 			{
 				string sceneName = test.name;
@@ -89,19 +94,14 @@ namespace GraphicsTestFramework
 			}
 		}
 
-		[UnityTest]
-		public IEnumerator DummyTest()
-		{
-			yield return null;
-			Assert.True( true );
-		}
-
 		// Test function registered in the TestRunner window.
+		// ValueSource will use "TestsList" function to grab all tests in all suites in the project.
 		[UnityTest]
 		public IEnumerator UTF_Test( [ValueSource("TestsList")] TestData testData)
 		{
 			yield return null; // Skip first frame
 
+			// If the results have not been initialized (typicaly, if this is the first test)
 			if (!resultsIOInitialized)
 			{
 				// Don't spam on slack please :-)
@@ -154,16 +154,17 @@ namespace GraphicsTestFramework
 				}
 			}
 
+			// Run the test
 			GenerateTestRunner(RunnerType.Automation);
 
+			// Wait 15 frames (arbitrary number) to allow the Test Runner to start.
 			for(int i=0 ; i<15 ; ++i) yield return null;
+			// Wait for the Test Runner to end.
 			while (TestRunner.Instance.isRunning) yield return null;
+			// And one more frame to be sure the results have been made.
 			yield return null;
 
-			//UnityEngine.SceneManagement.SceneManager.LoadScene( testData.test.scenePath, UnityEngine.SceneManagement.LoadSceneMode.Single );
-
-			// yield return new WaitForSeconds(2f);
-
+			// Assert the result in Test Runner.
 			UnityEngine.Assertions.Assert.IsTrue( TestTypeManager.Instance.GetActiveTestLogic().activeResultData.common.PassFail, "Test failed" );
 		}
 
